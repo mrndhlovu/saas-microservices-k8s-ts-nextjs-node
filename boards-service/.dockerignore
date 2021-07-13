@@ -1,0 +1,12 @@
+dist
+node_module
+npm-debug.log
+build
+
+Dockerfile
+docker-compose*
+.dockerignore
+.git 
+.gitignore
+.prettierrc
+.prettierignore
