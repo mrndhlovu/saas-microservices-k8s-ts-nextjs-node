@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from "express"
 
 class ErrorService {
-  constructor() {
-    this.catchAsyncError
-  }
   catchAsyncError = (asyncRequestHandler: any) => {
     return (req: Request, res: Response, next: NextFunction) => {
       return asyncRequestHandler(req, res, next).catch(

@@ -1,11 +1,6 @@
 import { Application, Request } from "express"
 
-import { BoardDocument } from "../models/Board"
-
-export interface IRequestExtended extends Request {
-  token: string
-  board: BoardDocument
-}
+import { BoardDocument } from "../../models/Board"
 
 export type RolesType = "admin" | "basic" | "guest"
 
@@ -18,18 +13,6 @@ export interface IConfigTypes {
   host: string
   apiUri: string
   authUri: string
-}
-
-export interface IProcessEnv {
-  [key: string]: string | undefined
-}
-
-export interface IExtendedServer extends Application {
-  close: any
-}
-
-export interface IJwtToken {
-  _id: string
 }
 
 export interface IBoardRoleJwtToken {
@@ -46,3 +29,21 @@ export type EncryptCallback = (
   err?: EncryptCallbackError,
   payload?: EncryptCallbackPayload
 ) => EncryptCallbackPayload | EncryptCallbackError | void
+
+declare global {
+  namespace Express {
+    interface Request {
+      token: string
+      board: BoardDocument
+    }
+  }
+
+  namespace NodeJS {
+    interface ProcessEnv {
+      NODE_ENV: "development" | "production"
+      PORT: string
+      BOARD_TOKEN_SIGNATURE: string
+      MONGO_DB_URI: string
+    }
+  }
+}

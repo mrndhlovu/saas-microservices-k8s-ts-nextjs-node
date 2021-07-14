@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express"
 
-import { IRequestExtended } from "../types"
+import { IRequestExtended } from "../utils/types"
 import Board from "../models/Board"
 import { Services } from "../services"
 

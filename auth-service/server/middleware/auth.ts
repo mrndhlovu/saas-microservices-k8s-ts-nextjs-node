@@ -1,26 +1,27 @@
 import { Response, NextFunction, Request } from "express"
 
-import { IRequestExtended } from "../types"
 import Services from "../services"
 import User from "../models/User"
+import { IObjectAuthTokenToSign } from "types"
 
 const { catchAsyncError } = Services.error
 
 class AuthMiddleWare {
   checkIsAuthenticated = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const _req = req as IRequestExtended
-
-      const decodedJWT = Services.auth.decodeJwtToken(_req.token)
+      const decodedJWT = Services.auth.decodeJwtToken(
+        req.token!
+      ) as IObjectAuthTokenToSign
 
       const user = await User.findOne({
-        _id: decodedJWT._id,
-        "tokens.access": _req.token,
+        _id: decodedJWT.userId,
+        email: decodedJWT.email,
+        "tokens.access": req.token,
       })
 
       if (!user) throw new Error("User not found.")
 
-      _req.user = user
+      req.user = user
 
       next()
     }
@@ -28,7 +29,6 @@ class AuthMiddleWare {
 
   validateRequiredAccessJwt = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const _req = req as IRequestExtended
       const { authorization } = req.headers
 
       if (!authorization) {
@@ -39,14 +39,13 @@ class AuthMiddleWare {
       if (bearer !== "Bearer" || !accessToken) {
         throw new Error("Authorization credentials are missing.")
       }
-      _req.token = accessToken
+      req.token = accessToken
       next()
     }
   )
 
   checkSignUpType = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const _req = req as IRequestExtended
       const { authorization } = req.headers
 
       if (!authorization) {
@@ -57,7 +56,7 @@ class AuthMiddleWare {
       if (bearer !== "Bearer" || !accessToken) {
         throw new Error("Authorization credentials are missing.")
       }
-      _req.token = accessToken
+      req.token = accessToken
       next()
     }
   )
@@ -80,24 +79,26 @@ class AuthMiddleWare {
 
   validateRequiredRefreshJwt = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const _req = req as IRequestExtended
-
-      const { refreshToken } = req.params || _req.cookies
+      const { refreshToken } = req.params || req.cookies
 
       if (!refreshToken) throw new Error("Refresh token is required.")
 
-      const decodedJWT = Services.auth.decodeJwtToken(refreshToken, "refresh")
+      const decodedJWT = Services.auth.decodeJwtToken(
+        refreshToken,
+        "refresh"
+      ) as IObjectAuthTokenToSign
 
       const user = await User.findOne({
-        _id: decodedJWT._id,
+        _id: decodedJWT.userId,
+        email: decodedJWT.email,
         "tokens.refresh": refreshToken,
       })
 
       if (!user)
         throw new Error("Authorization credentials are wrong or have expired.")
 
-      _req.token = refreshToken
-      _req.user = user
+      req.token = refreshToken
+      req.user = user
 
       next()
     }

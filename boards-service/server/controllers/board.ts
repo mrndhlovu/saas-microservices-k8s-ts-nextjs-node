@@ -2,22 +2,17 @@ import { ObjectID } from "mongodb"
 import { Request, Response } from "express"
 
 import { allowedBoardUpdateFields, ROLES } from "../utils/constants"
-import { IRequestExtended } from "../types"
 import { Services } from "../services"
 import Board from "../models/Board"
 
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-
-    let boards = await Board.find({ owner: _req.body.userId })
+    let boards = await Board.find({ owner: req.body.userId })
     res.send(boards)
   }
 
   getBoardById = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-
-    const board = await Services.board.populatedBoard(_req.params.boardId)
+    const board = await Services.board.populatedBoard(req.params.boardId)
 
     if (!board) throw new Error("Board with that id was not found")
 
@@ -25,11 +20,10 @@ class BoardController {
   }
 
   createBoard = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-    const userId = _req.body.userId
+    const userId = req.body.userId
 
     let board = new Board({
-      ..._req.body,
+      ...req.body,
       owner: userId,
       members: [userId],
     })
@@ -67,9 +61,7 @@ class BoardController {
   }
 
   deleteBoard = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-
-    _req.board.delete()
+    req.board.delete()
     res.status(200).send({ message: "Board deleted" })
   }
 }

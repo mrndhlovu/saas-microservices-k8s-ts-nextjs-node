@@ -1,5 +1,4 @@
 import { Request, Response } from "express"
-import { IRequestExtended } from "../types"
 import List from "../models/List"
 
 class ListController {
@@ -12,8 +11,7 @@ class ListController {
   }
 
   getListById = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-    const { userId, listId } = _req.query
+    const { userId, listId } = req.query
 
     const listIem = await List.findById({ _id: listId, owner: userId })
 
@@ -34,11 +32,10 @@ class ListController {
   }
 
   deleteList = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
     const { boardId, listId } = req.params
     const { deleteAll = "false" } = req.query
 
-    const list = await List.findById({ _id: listId, owner: _req.user._id })
+    const list = await List.findById({ _id: listId, owner: req.user._id })
 
     if (!list) throw new Error("List with that id was not found")
 

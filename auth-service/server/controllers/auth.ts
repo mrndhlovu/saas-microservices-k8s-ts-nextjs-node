@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
 
 import { editableUserFields } from "../utils/constants"
-import { IRequestExtended } from "../types"
 import { Services } from "../services"
 import User from "../models/User"
 
@@ -20,11 +19,9 @@ class AuthController extends Services {
   }
 
   getUserInfo = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
+    if (!req.user) throw new Error("User not found")
 
-    if (!_req.user) throw new Error("User not found")
-
-    res.status(200).send(_req.user.populate("refreshToken"))
+    res.status(200).send(req.user.populate("refreshToken"))
   }
 
   loginUser = async (req: Request, res: Response) => {
@@ -38,19 +35,15 @@ class AuthController extends Services {
   }
 
   logoutUser = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
+    req.user.updateOne({ $set: { tokens: { access: "", refresh: "" } } })
 
-    _req.user.updateOne({ $set: { tokens: { access: "", refresh: "" } } })
-
-    await _req.user.save()
+    await req.user.save()
 
     res.send({ success: true, message: "Logout successfully" })
   }
 
   updateUser = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-
-    const targetFields = Object.keys(_req.body)
+    const targetFields = Object.keys(req.body)
 
     const hasValidFields = this.auth.validatedUpdateFields(
       targetFields,
@@ -59,17 +52,15 @@ class AuthController extends Services {
 
     if (!hasValidFields) throw new Error("Field is not editable.")
 
-    _req.user.updateOne({ $set: { ...req.body } })
+    req.user.updateOne({ $set: { ...req.body } })
 
-    await _req.user.save()
+    await req.user.save()
 
-    res.send(_req.user)
+    res.send(req.user)
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-
-    const user = await User.findById(_req.user._id)
+    const user = await User.findById(req.user._id)
 
     if (!user) throw new Error("User not found")
 
@@ -79,9 +70,7 @@ class AuthController extends Services {
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const _req = req as IRequestExtended
-
-    const tokens = await this.auth.getAuthTokens(_req.user)
+    const tokens = await this.auth.getAuthTokens(req.user)
 
     res.status(200).send(tokens)
   }

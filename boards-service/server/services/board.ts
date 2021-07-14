@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb"
 import jwt, { VerifyErrors } from "jsonwebtoken"
 
-import { IBoardRoleJwtToken, IJwtToken, JWTSignKeyOption } from "types"
+import { IBoardRoleJwtToken, IJwtToken, JWTSignKeyOption } from "utils/types"
 import { Services } from "."
 import Board, { BoardDocument } from "../models/Board"
 

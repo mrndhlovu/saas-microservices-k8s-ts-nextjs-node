@@ -1,12 +1,14 @@
 import express from "express"
 import cookieParser from "cookie-parser"
-import cookieSession from "cookie-session"
+import dotenv from "dotenv"
 
 import { getRoutes } from "../routes"
 import Services from "../services"
 
 class Server {
   start() {
+    this.validateEnvVariables()
+
     const { NODE_ENV, PORT } = process.env
 
     const port = parseInt(PORT!, 10)
@@ -35,6 +37,22 @@ class Server {
     })
 
     Services.database.connect()
+  }
+
+  private validateEnvVariables() {
+    const dotenvResult = dotenv.config()
+    const { PORT, TOKEN_SIGNATURE, REFRESH_TOKEN_SIGNATURE, MONGO_DB_URI } =
+      process.env
+
+    if (dotenvResult.error) throw dotenvResult.error
+    if (
+      !PORT ||
+      !TOKEN_SIGNATURE ||
+      !REFRESH_TOKEN_SIGNATURE ||
+      !MONGO_DB_URI
+    ) {
+      throw new Error("Some Env variables are missing!")
+    }
   }
 }
 
