@@ -2,8 +2,7 @@ import isEmail from "validator/lib/isEmail"
 import { ObjectId } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 
-import { Services } from "../services"
-import database from "../services/db"
+import Services from "../services"
 
 const UserSchema: Schema<IUserDocument> = new Schema(
   {
@@ -62,6 +61,7 @@ const UserSchema: Schema<IUserDocument> = new Schema(
     loginTypes: {
       type: Array,
       default: [],
+      required: true,
     },
     avatar: {
       type: Array,
@@ -112,33 +112,15 @@ const UserSchema: Schema<IUserDocument> = new Schema(
   }
 )
 
-UserSchema.virtual("boards", {
-  ref: "Board",
-  localField: "_id",
-  foreignField: "owner",
-})
-
-UserSchema.virtual("template", {
-  ref: "Template",
-  localField: "_id",
-  foreignField: "owner",
-})
-
-UserSchema.virtual("comment", {
-  ref: "Comment",
-  localField: "_id",
-  foreignField: "owner",
-})
-
-UserSchema.virtual("boardInvites", {
-  ref: "Board",
-  localField: "_id",
-  foreignField: "owner",
-})
-
 UserSchema.methods.toJSON = function () {
-  const user = this
-  const userObject = user.toObject()
+  const userObject = this.toObject({
+    transform: function (_doc, ret, _options) {
+      ret.id = ret._id
+      delete ret._id
+      delete ret.__v
+      return ret
+    },
+  })
 
   return userObject
 }
@@ -161,6 +143,8 @@ interface IUseBoardRoles {
   [key: string]: ObjectId[]
 }
 
+type ILoginTypes = "email" | "username"
+
 interface IUser {
   username: string
   firstname: string
@@ -171,7 +155,7 @@ interface IUser {
   viewedRecent: string[]
   avatar: string
   bio: string
-  loginTypes: string[]
+  loginTypes: ILoginTypes[]
   roles: IUseBoardRoles[]
   tokens: IAccessTokens
   resetPasswordToken: string

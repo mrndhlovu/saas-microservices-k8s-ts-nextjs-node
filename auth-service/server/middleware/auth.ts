@@ -1,7 +1,7 @@
 import { Response, NextFunction, Request } from "express"
 
 import { IRequestExtended } from "../types"
-import { Services } from "../services"
+import Services from "../services"
 import User from "../models/User"
 
 const { catchAsyncError } = Services.error
@@ -27,6 +27,24 @@ class AuthMiddleWare {
   )
 
   validateRequiredAccessJwt = catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const _req = req as IRequestExtended
+      const { authorization } = req.headers
+
+      if (!authorization) {
+        throw new Error("Authorization credentials are missing.")
+      }
+
+      const [bearer, accessToken] = authorization!.split(" ")
+      if (bearer !== "Bearer" || !accessToken) {
+        throw new Error("Authorization credentials are missing.")
+      }
+      _req.token = accessToken
+      next()
+    }
+  )
+
+  checkSignUpType = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
       const _req = req as IRequestExtended
       const { authorization } = req.headers

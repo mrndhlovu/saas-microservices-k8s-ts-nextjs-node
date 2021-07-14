@@ -1,11 +1,8 @@
-import { Request, Response, NextFunction, ErrorRequestHandler } from "express"
+import { Response, NextFunction, ErrorRequestHandler } from "express"
 
-class ErrorService {
-  constructor() {
-    this.catchAsyncError
-  }
+class Error {
   catchAsyncError = (asyncRequestHandler: any) => {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: any, res: Response, next: NextFunction) => {
       return asyncRequestHandler(req, res, next).catch(
         (err: ErrorRequestHandler) => {
           next(err)
@@ -21,7 +18,4 @@ class ErrorService {
     res.json({ error: error.message })
   }
 }
-
-export const ErrorServices = ErrorService
-
-export default new ErrorService()
+export default new Error()

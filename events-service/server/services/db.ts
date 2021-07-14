@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-class Database {
+class database {
   private mongooseOptions = {
     useFindAndModify: false,
     useNewUrlParser: true,
@@ -47,4 +47,4 @@ class Database {
   }
 }
 
-export default new Database()
+export default new database()

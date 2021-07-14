@@ -1,8 +1,8 @@
 import { Router } from "express"
 
-import { Validator } from "../middleware"
+import Validator from "../middleware"
 import { Controller } from "../controllers"
-import { Services } from "../services"
+import Services from "../services"
 
 const router = Router()
 

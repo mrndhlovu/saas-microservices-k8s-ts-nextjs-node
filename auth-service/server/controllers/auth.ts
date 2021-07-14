@@ -5,12 +5,16 @@ import { IRequestExtended } from "../types"
 import { Services } from "../services"
 import User from "../models/User"
 
-class AuthController {
+class AuthController extends Services {
+  constructor() {
+    super()
+  }
+
   signUpUser = async (req: Request, res: Response) => {
     let user = new User({ ...req.body })
-    user = await Services.auth.getAuthTokens(user)
+    user = await this.auth.getAuthTokens(user)
 
-    await Services.auth.generateRequestCookies(res, user.tokens)
+    await this.auth.generateRequestCookies(res, user.tokens)
 
     res.status(201).send(user)
   }
@@ -26,10 +30,10 @@ class AuthController {
   loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body
 
-    const user = await Services.auth.findUserByCredentials(email, password)
-    await Services.auth.generateRequestCookies(res, user.tokens)
+    const user = await this.auth.findUserByCredentials(email, password)
+    await this.auth.generateRequestCookies(res, user.tokens)
 
-    await Services.auth.getAuthTokens(user)
+    await this.auth.getAuthTokens(user)
     res.send(user)
   }
 
@@ -48,7 +52,7 @@ class AuthController {
 
     const targetFields = Object.keys(_req.body)
 
-    const hasValidFields = Services.auth.validatedUpdateFields(
+    const hasValidFields = this.auth.validatedUpdateFields(
       targetFields,
       editableUserFields
     )
@@ -77,7 +81,7 @@ class AuthController {
   getRefreshToken = async (req: Request, res: Response) => {
     const _req = req as IRequestExtended
 
-    const tokens = await Services.auth.getAuthTokens(_req.user)
+    const tokens = await this.auth.getAuthTokens(_req.user)
 
     res.status(200).send(tokens)
   }

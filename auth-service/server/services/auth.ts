@@ -71,7 +71,6 @@ class AuthService {
 
   getAuthTokens = async (user: IUserDocument) => {
     user.tokens = this.generateTokens(user._id)
-    user.username = user.email.split("@")[0]
 
     await user.save()
 

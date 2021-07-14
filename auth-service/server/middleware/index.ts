@@ -1,3 +1,10 @@
 import auth from "./auth"
 
-export const Validator = { auth }
+class Validator {
+  constructor() {
+    this.auth
+  }
+  auth = auth
+}
+
+export default new Validator()

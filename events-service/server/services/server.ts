@@ -1,11 +1,10 @@
 import express from "express"
 import cookieParser from "cookie-parser"
-import cookieSession from "cookie-session"
 
 import { getRoutes } from "../routes"
-import Services from "../services"
+import { Services } from "."
 
-class Server {
+class server {
   start() {
     const { NODE_ENV, PORT } = process.env
 
@@ -14,7 +13,6 @@ class Server {
     const app = express()
     app.use(cookieParser())
     app.use(express.json())
-    // app.use(cookieSession())
     app.use(express.urlencoded({ extended: false }))
 
     app.enable("trust proxy")
@@ -38,4 +36,4 @@ class Server {
   }
 }
 
-export default new Server()
+export default new server()
