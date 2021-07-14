@@ -1,11 +1,11 @@
 import { Router } from "express"
 
-import listRoutes from "./list"
+import eventRoutes from "./event"
 
 const getRoutes = () => {
   const router = Router()
 
-  router.use("/lists", listRoutes())
+  router.use("/events", eventRoutes())
 
   return router
 }

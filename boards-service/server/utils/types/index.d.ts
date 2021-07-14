@@ -1,5 +1,3 @@
-import { Application, Request } from "express"
-
 import { BoardDocument } from "../../models/Board"
 
 export type RolesType = "admin" | "basic" | "guest"

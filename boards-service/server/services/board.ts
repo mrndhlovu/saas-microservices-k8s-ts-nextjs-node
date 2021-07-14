@@ -1,17 +1,11 @@
 import { ObjectId } from "mongodb"
 import jwt, { VerifyErrors } from "jsonwebtoken"
 
-import { IBoardRoleJwtToken, IJwtToken, JWTSignKeyOption } from "utils/types"
+import { IBoardRoleJwtToken, JWTSignKeyOption } from "utils/types"
 import { Services } from "."
 import Board, { BoardDocument } from "../models/Board"
 
 class BoardServices {
-  private decodedJwtCallback = (err: VerifyErrors, payload: IJwtToken) => {
-    if (err) throw new Error("Access token failed validation.")
-
-    return payload
-  }
-
   assignBoardRole = async (
     role: number,
     userId: string,
@@ -43,11 +37,7 @@ class BoardServices {
 
   decodeJwtToken(token: string, type?: JWTSignKeyOption) {
     const decodedJWT = <any>(
-      jwt.verify(
-        token,
-        process.env.BOARD_TOKEN_SIGNATURE!,
-        this.decodedJwtCallback as any
-      )
+      jwt.verify(token, process.env.BOARD_TOKEN_SIGNATURE!)
     )
 
     return decodedJWT as any

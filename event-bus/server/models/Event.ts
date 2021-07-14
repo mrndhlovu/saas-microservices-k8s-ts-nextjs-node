@@ -1,13 +1,13 @@
 import { Condition, ObjectId } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 
-interface IList {
+interface IEvent {
   title: string
   cards: string[]
   boardId: ObjectId
 }
 
-const ListSchema = new Schema(
+const EventSchema = new Schema(
   {
     title: {
       type: String,
@@ -32,10 +32,10 @@ const ListSchema = new Schema(
   }
 )
 
-export interface ListDocument extends IList, Document {
+export interface EventDocument extends IEvent, Document {
   _id: Condition<ObjectId>
 }
 
-const List = model<ListDocument>("List", ListSchema)
+const Event = model<EventDocument>("Event", EventSchema)
 
-export default List
+export default Event

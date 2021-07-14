@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express"
 
-import { IRequestExtended } from "../utils/types"
 import Board from "../models/Board"
 import { Services } from "../services"
 
@@ -10,7 +9,6 @@ class RoleValidator {
   }
 
   boardAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    const _req = req as IRequestExtended
     const _id = req.params.boardId
 
     const board = await Board.findById(_id)
@@ -28,7 +26,7 @@ class RoleValidator {
         throw new Error("Only admin can delete this board.")
       }
 
-      _req.board = board
+      req.board = board
       next()
     }
     if (!board) {

@@ -1,4 +1,4 @@
-import { IRoleOptions } from "../types"
+import { IRoleOptions } from "./types"
 
 export const allowedBoardUpdateFields: string[] = [
   "accessLevel",

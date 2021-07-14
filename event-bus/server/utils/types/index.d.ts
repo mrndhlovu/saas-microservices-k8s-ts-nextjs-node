@@ -1,3 +1,5 @@
+import { Application, Request } from "express"
+
 export type RolesType = "admin" | "basic" | "guest"
 
 export interface IRoleOptions {
@@ -23,13 +25,22 @@ export interface IBoardRoleJwtToken {
 export type JWTSignKeyOption = "refresh" | "role" | "access" | "board"
 
 declare global {
+  namespace Express {
+    interface Request {
+      user: IUserDocument
+      token: string
+    }
+  }
+
   namespace NodeJS {
     interface ProcessEnv {
       NODE_ENV: "development" | "production" | "testing"
       PORT: string
       TOKEN_SIGNATURE: string
       REFRESH_TOKEN_SIGNATURE: string
+      BOARD_TOKEN_SIGNATURE: string
       MONGO_DB_URI: string
+      BASE_URL: string
     }
   }
 }
