@@ -1,14 +1,14 @@
-FROM node:15
+FROM node:alpine
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json .
 
-RUN yarn install;
+RUN yarn install
 
-RUN  yarn add tsc -g
-
-COPY ./ ./
+COPY . .
 
 EXPOSE $PORT
+
+CMD [ "yarn", "start" ]
 

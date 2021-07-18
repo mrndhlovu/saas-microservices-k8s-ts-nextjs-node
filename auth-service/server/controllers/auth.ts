@@ -1,36 +1,32 @@
 import { Request, Response } from "express"
 
 import { editableUserFields } from "../utils/constants"
-import { Services } from "../services"
+import services from "../services"
 import User from "../models/User"
 
-class AuthController extends Services {
-  constructor() {
-    super()
-  }
-
+class AuthController {
   signUpUser = async (req: Request, res: Response) => {
     let user = new User({ ...req.body })
-    user = await this.auth.getAuthTokens(user)
+    user = await services.auth.getAuthTokens(user)
 
-    await this.auth.generateRequestCookies(res, user.tokens)
+    await services.auth.generateRequestCookies(res, user.tokens)
 
     res.status(201).send(user)
   }
 
   getUserInfo = async (req: Request, res: Response) => {
-    if (!req.user) throw new Error("User not found")
+    // if (!req.user) throw new Error("User not found")
 
-    res.status(200).send(req.user.populate("refreshToken"))
+    res.status(200).send("hello")
   }
 
   loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body
 
-    const user = await this.auth.findUserByCredentials(email, password)
-    await this.auth.generateRequestCookies(res, user.tokens)
+    const user = await services.auth.findUserByCredentials(email, password)
+    await services.auth.generateRequestCookies(res, user.tokens)
 
-    await this.auth.getAuthTokens(user)
+    await services.auth.getAuthTokens(user)
     res.send(user)
   }
 
@@ -45,7 +41,7 @@ class AuthController extends Services {
   updateUser = async (req: Request, res: Response) => {
     const targetFields = Object.keys(req.body)
 
-    const hasValidFields = this.auth.validatedUpdateFields(
+    const hasValidFields = services.auth.validatedUpdateFields(
       targetFields,
       editableUserFields
     )
@@ -70,7 +66,7 @@ class AuthController extends Services {
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const tokens = await this.auth.getAuthTokens(req.user)
+    const tokens = await services.auth.getAuthTokens(req.user)
 
     res.status(200).send(tokens)
   }

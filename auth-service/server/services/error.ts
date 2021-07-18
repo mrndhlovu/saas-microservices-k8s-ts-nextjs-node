@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from "express"
 
+import { CustomError, NotFoundError } from "../middleware/error"
+
 class ErrorService {
   catchAsyncError = (asyncRequestHandler: any) => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -11,14 +13,24 @@ class ErrorService {
     }
   }
 
-  errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
-    if (res.headersSent) return next(error)
+  handleNotFoundError() {
+    throw new NotFoundError()
+  }
 
-    res.status(500)
-    res.json({ error: error.message })
+  errorHandler: ErrorRequestHandler = (
+    error: CustomError | Error,
+    _req: Request,
+    res: Response,
+    _next: NextFunction
+  ) => {
+    if (error instanceof CustomError) {
+      return res
+        .status(error.statusCode)
+        .send({ errors: error.serialiseError() })
+    }
+
+    res.status(400).send({ errors: [{ message: error.message }] })
   }
 }
 
-export const ErrorServices = ErrorService
-
-export default new ErrorService()
+export default ErrorService

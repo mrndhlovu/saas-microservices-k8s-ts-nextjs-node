@@ -6,9 +6,9 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
-  node-app:
+  auth:
     container_name: node-server
-    image: ndhlovu/node-server
+    # image: ndhlovu/node-server
     build: .
     depends_on:
       - mongo

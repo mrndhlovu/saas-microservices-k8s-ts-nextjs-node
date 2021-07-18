@@ -1,15 +1,28 @@
 import { Response, NextFunction, Request } from "express"
+import { validationResult, body } from "express-validator"
 
-import Services from "../services"
+import services from "../services"
 import User from "../models/User"
 import { IObjectAuthTokenToSign } from "types"
+import { CustomRequestError, RequestQueryError } from "./error"
 
-const { catchAsyncError } = Services.error
-
+const { catchAsyncError } = services.error
 class AuthMiddleWare {
+  checkRequiredSignUpFields = [
+    body("email").isEmail().withMessage("Email must be valid"),
+    body("username")
+      .trim()
+      .isLength({ min: 4, max: 20 })
+      .withMessage("Username must be between 4 and 20 characters"),
+    body("password")
+      .trim()
+      .isLength({ min: 4, max: 20 })
+      .withMessage("Password must be between 4 and 20 characters"),
+  ]
+
   checkIsAuthenticated = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const decodedJWT = Services.auth.decodeJwtToken(
+      const decodedJWT = services.auth.decodeJwtToken(
         req.token!
       ) as IObjectAuthTokenToSign
 
@@ -22,6 +35,18 @@ class AuthMiddleWare {
       if (!user) throw new Error("User not found.")
 
       req.user = user
+
+      next()
+    }
+  )
+
+  handleValidationResults = catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const errors = validationResult(req)
+
+      if (!errors.isEmpty()) {
+        throw new CustomRequestError(errors.array())
+      }
 
       next()
     }
@@ -61,21 +86,21 @@ class AuthMiddleWare {
     }
   )
 
-  checkDuplicateEmail = catchAsyncError(
-    async (req: Request, _res: Response, next: NextFunction) => {
-      const existingUser = await Services.auth.findUserOnlyByEmail(
-        req.body.email
+  checkDuplicateEmail = async (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+  ) => {
+    const existingUser = await services.auth.findUserOnlyByEmail(req.body.email)
+
+    if (existingUser) {
+      throw new RequestQueryError(
+        `Account linked to the email [ ${req.body.email} ] already exists.`
       )
-
-      if (existingUser) {
-        throw new Error(
-          `Account linked to the email [ ${req.body.email} ] already exists.`
-        )
-      }
-
-      next()
     }
-  )
+
+    next()
+  }
 
   validateRequiredRefreshJwt = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
@@ -83,7 +108,7 @@ class AuthMiddleWare {
 
       if (!refreshToken) throw new Error("Refresh token is required.")
 
-      const decodedJWT = Services.auth.decodeJwtToken(
+      const decodedJWT = services.auth.decodeJwtToken(
         refreshToken,
         "refresh"
       ) as IObjectAuthTokenToSign

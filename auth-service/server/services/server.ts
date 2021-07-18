@@ -1,9 +1,10 @@
 import express from "express"
 import cookieParser from "cookie-parser"
 import dotenv from "dotenv"
+import "express-async-errors"
 
-import { getRoutes } from "../routes"
-import Services from "../services"
+import authRoutes from "../routes"
+import services from "../services"
 
 class Server {
   start() {
@@ -16,14 +17,15 @@ class Server {
     const app = express()
     app.use(cookieParser())
     app.use(express.json())
-    // app.use(cookieSession())
     app.use(express.urlencoded({ extended: false }))
 
-    app.enable("trust proxy")
-    app.use(Services.error.errorHandler)
-    app.use("/api", getRoutes())
-
     app.disable("x-powered-by")
+    app.enable("trust proxy")
+
+    app.use("/api/auth", authRoutes)
+
+    app.use(services.error.errorHandler)
+    app.all("*", services.error.handleNotFoundError)
 
     app.listen(port, () => {
       const serverStatus = [
@@ -36,7 +38,7 @@ class Server {
       console.table(serverStatus)
     })
 
-    Services.database.connect()
+    // services.database.connect()
   }
 
   private validateEnvVariables() {

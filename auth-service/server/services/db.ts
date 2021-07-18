@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 
+import { CustomDatabaseRequestError } from "../middleware/error"
 class Database {
   private mongooseOptions = {
     useFindAndModify: false,
@@ -40,9 +41,9 @@ class Database {
           },
         ]
         console.table(dbStatus)
-        console.error(err.message)
+        throw new CustomDatabaseRequestError(err.message)
 
-        setTimeout(this.connect, 2000)
+        // setTimeout(this.connect, 2000)
       })
   }
 }
