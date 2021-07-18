@@ -15,6 +15,13 @@ spec:
       containers:
         - name: auth
           image: ndhlovu/auth
+          env:
+            - name: JWT_TOKEN_SIGNATURE
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_TOKEN_SIGNATURE
+
 ---
 apiVersion: v1
 kind: Service

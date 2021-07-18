@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
 
+import { BadRequestError } from "../middleware/error"
 import { editableUserFields } from "../utils/constants"
 import services from "../services"
 import User from "../models/User"
@@ -9,24 +10,24 @@ class AuthController {
     let user = new User({ ...req.body })
     user = await services.auth.getAuthTokens(user)
 
-    await services.auth.generateRequestCookies(res, user.tokens)
+    services.auth.generateStoreCookies(req, user.tokens)
 
     res.status(201).send(user)
   }
 
   getUserInfo = async (req: Request, res: Response) => {
-    // if (!req.user) throw new Error("User not found")
-
-    res.status(200).send("hello")
+    res.status(200).send(req.user)
   }
 
   loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body
 
     const user = await services.auth.findUserByCredentials(email, password)
-    await services.auth.generateRequestCookies(res, user.tokens)
 
     await services.auth.getAuthTokens(user)
+
+    services.auth.generateStoreCookies(req, user.tokens)
+
     res.send(user)
   }
 
@@ -56,11 +57,7 @@ class AuthController {
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    const user = await User.findById(req.user._id)
-
-    if (!user) throw new Error("User not found")
-
-    await user.delete()
+    await req.user.delete()
 
     res.status(200).send({ message: "Account deleted", success: true })
   }

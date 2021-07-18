@@ -1,7 +1,7 @@
 import { Router } from "express"
 
+import controller from "../controllers"
 import middleware from "../middleware"
-import { Controller } from "../controllers"
 import services from "../services"
 
 const router = Router()
@@ -13,43 +13,48 @@ router.post(
   middleware.auth.checkRequiredSignUpFields,
   middleware.auth.handleValidationResults,
   middleware.auth.checkDuplicateEmail,
-  catchAsyncError(Controller.Auth.signUpUser)
+  catchAsyncError(controller.auth.signUpUser)
 )
 
 router.get(
   "/me",
   middleware.auth.validateRequiredAccessJwt,
   middleware.auth.checkIsAuthenticated,
-  catchAsyncError(Controller.Auth.getUserInfo)
+  catchAsyncError(controller.auth.getUserInfo)
 )
 
-router.post("/login", catchAsyncError(Controller.Auth.loginUser))
+router.post(
+  "/login",
+  middleware.auth.checkRequiredLoginFields,
+  middleware.auth.handleValidationResults,
+  catchAsyncError(controller.auth.loginUser)
+)
 
 router.get(
   "/logout",
   middleware.auth.validateRequiredAccessJwt,
   middleware.auth.checkIsAuthenticated,
-  catchAsyncError(Controller.Auth.logoutUser)
+  catchAsyncError(controller.auth.logoutUser)
 )
 
 router.patch(
   "/update",
   middleware.auth.validateRequiredAccessJwt,
   middleware.auth.checkIsAuthenticated,
-  catchAsyncError(Controller.Auth.updateUser)
+  catchAsyncError(controller.auth.updateUser)
 )
 
 router.delete(
   "/delete",
   middleware.auth.validateRequiredAccessJwt,
   middleware.auth.checkIsAuthenticated,
-  catchAsyncError(Controller.Auth.deleteUser)
+  catchAsyncError(controller.auth.deleteUser)
 )
 
 router.get(
   "/token/:refreshToken",
   middleware.auth.validateRequiredRefreshJwt,
-  catchAsyncError(Controller.Auth.getRefreshToken)
+  catchAsyncError(controller.auth.getRefreshToken)
 )
 
 export default router

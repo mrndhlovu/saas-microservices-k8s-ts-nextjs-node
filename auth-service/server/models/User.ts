@@ -15,13 +15,11 @@ const UserSchema: Schema<IUserDocument> = new Schema(
     },
     firstname: {
       type: String,
-      required: true,
       trim: true,
       minlength: 4,
     },
     lastname: {
       type: String,
-      required: true,
       trim: true,
       minlength: 4,
     },
@@ -118,6 +116,7 @@ UserSchema.methods.toJSON = function () {
       ret.id = ret._id
       delete ret._id
       delete ret.__v
+      delete ret.tokens
       return ret
     },
   })
@@ -145,24 +144,24 @@ interface IUseBoardRoles {
 
 type ILoginTypes = "email" | "username"
 
-interface IUser {
+export interface IUserAttributes {
   username: string
-  firstname: string
-  lastname: string
+  firstname?: string
+  lastname?: string
   email: string
   password: string
-  starred: string[]
-  viewedRecent: string[]
-  avatar: string
-  bio: string
+  starred?: string[]
+  viewedRecent?: string[]
+  avatar?: string
+  bio?: string
   loginTypes: ILoginTypes[]
   roles: IUseBoardRoles[]
   tokens: IAccessTokens
-  resetPasswordToken: string
-  resetPasswordExpires: string
+  resetPasswordToken?: string
+  resetPasswordExpires?: string
 }
 
-export interface IUserDocument extends IUser, Document {
+export interface IUserDocument extends IUserAttributes, Document {
   _id: ObjectId
 }
 

@@ -1,3 +1,3 @@
-import Auth from "./auth"
+import auth from "./auth"
 
-export const Controller = { Auth }
+export default { auth }

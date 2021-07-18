@@ -1,11 +1,10 @@
 import mongoose from "mongoose"
 
-import { CustomDatabaseRequestError } from "../middleware/error"
 class Database {
   private mongooseOptions = {
-    useFindAndModify: false,
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
   }
 
   private retryAttempts = 0
@@ -13,20 +12,25 @@ class Database {
   private alertAdmin(error: Error) {
     const dbStatus = [
       {
-        "database Status": "Offline",
+        "Database Status": "Offline",
 
         Attempts: this.retryAttempts,
       },
     ]
     console.table(dbStatus)
-    console.error(error.message)
+    console.log(error.message)
   }
 
-  connect = () => {
-    mongoose
+  connect = async () => {
+    await mongoose
       .connect(process.env.MONGO_DB_URI!, this.mongooseOptions)
       .then(() => {
-        const dbStatus = [{ "database Status": "Online" }]
+        const dbStatus = [
+          {
+            "Database Status": "Online",
+            "Database Name": "Mongo",
+          },
+        ]
         console.table(dbStatus)
       })
       .catch((err: Error) => {
@@ -36,14 +40,13 @@ class Database {
         }
         const dbStatus = [
           {
-            "database Status": "Error",
+            "Database Status": "Error",
             Attempts: this.retryAttempts,
           },
         ]
         console.table(dbStatus)
-        throw new CustomDatabaseRequestError(err.message)
 
-        // setTimeout(this.connect, 2000)
+        setTimeout(this.connect, 2000)
       })
   }
 }

@@ -1,4 +1,4 @@
-import { Response } from "express"
+import { Request } from "express"
 import jwt from "jsonwebtoken"
 import { ObjectId } from "mongodb"
 import bcrypt from "bcrypt"
@@ -7,20 +7,19 @@ import User, { IAccessTokens, IUserDocument } from "../models/User"
 import {
   IJwtRefreshTokens,
   IJwtAuthTokenToSign,
-  IUserJwtPayload,
   JWTSignKeyOption,
 } from "../types"
 
 class AuthService {
   private getSigningKey = (type?: JWTSignKeyOption) => {
-    const { REFRESH_TOKEN_SIGNATURE, TOKEN_SIGNATURE } = process.env
+    const { JWT_REFRESH_TOKEN_SIGNATURE, JWT_TOKEN_SIGNATURE } = process.env
 
     switch (type) {
       case "refresh":
-        return REFRESH_TOKEN_SIGNATURE!
+        return JWT_REFRESH_TOKEN_SIGNATURE!
 
       default:
-        return TOKEN_SIGNATURE!
+        return JWT_TOKEN_SIGNATURE!
     }
   }
 
@@ -30,18 +29,13 @@ class AuthService {
     return decodedJWT as IJwtAuthTokenToSign
   }
 
-  generateRequestCookies = async (res: Response, tokens: IAccessTokens) => {
-    const options = {
-      maxAge: 15,
-      httpOnly: false,
+  generateStoreCookies = (req: Request, tokens: IAccessTokens) => {
+    req.session = {
+      jwt: tokens,
     }
-
-    const cookieString = `access_token:${tokens.access}|refresh_token:${tokens.refresh}`
-
-    res.cookie("token", cookieString, options)
   }
 
-  generateTokens = (userId: ObjectId, email: string) => {
+  private generateTokens = (userId: ObjectId, email: string) => {
     const accessTokenExpiresIn: string = "15m"
     const refreshTokenExpiresIn: string = "12h"
 

@@ -28,39 +28,46 @@ class ErrorMiddleware extends CustomError {
 }
 
 class DatabaseErrorMiddleware extends CustomError {
-  statusCode = 400
-
   constructor(public message: string) {
     super("Invalid request parameters")
-    Object.setPrototypeOf(this, ErrorMiddleware.prototype)
+    Object.setPrototypeOf(this, DatabaseErrorMiddleware.prototype)
   }
 
   serialiseError() {
-    return [
-      {
-        message: this.message,
-      },
-    ]
+    return [{ message: this.message }]
   }
+  statusCode = 400
 }
 
 class NotFoundError extends CustomError {
-  statusCode = 404
   constructor() {
     super("Route not found")
     Object.setPrototypeOf(this, NotFoundError)
   }
 
   serialiseError() {
-    return [{ message: "Not found" }]
+    return [{ message: "Route not found" }]
   }
+  statusCode = 404
 }
 
-class RequestQueryError extends CustomError {
+class BadRequestError extends CustomError {
   statusCode = 404
   constructor(message: string) {
     super(message)
-    Object.setPrototypeOf(this, RequestQueryError)
+    Object.setPrototypeOf(this, BadRequestError)
+  }
+
+  serialiseError() {
+    return [{ message: this.message }]
+  }
+}
+
+class NotAuthorisedError extends CustomError {
+  statusCode = 401
+  constructor(message: string) {
+    super(message)
+    Object.setPrototypeOf(this, NotAuthorisedError)
   }
 
   serialiseError() {
@@ -73,5 +80,6 @@ export {
   ErrorMiddleware as CustomRequestError,
   DatabaseErrorMiddleware as CustomDatabaseRequestError,
   NotFoundError,
-  RequestQueryError,
+  BadRequestError,
+  NotAuthorisedError,
 }

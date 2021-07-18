@@ -4,7 +4,11 @@ import { validationResult, body } from "express-validator"
 import services from "../services"
 import User from "../models/User"
 import { IObjectAuthTokenToSign } from "types"
-import { CustomRequestError, RequestQueryError } from "./error"
+import {
+  CustomRequestError,
+  BadRequestError,
+  NotAuthorisedError,
+} from "./error"
 
 const { catchAsyncError } = services.error
 class AuthMiddleWare {
@@ -16,23 +20,37 @@ class AuthMiddleWare {
       .withMessage("Username must be between 4 and 20 characters"),
     body("password")
       .trim()
+      .notEmpty()
+      .withMessage("Password is required")
+      .isLength({ min: 4, max: 20 })
+      .withMessage("Password must be between 4 and 20 characters"),
+  ]
+
+  checkRequiredLoginFields = [
+    body("email").isEmail().withMessage("Email must be valid"),
+    body("password")
+      .trim()
       .isLength({ min: 4, max: 20 })
       .withMessage("Password must be between 4 and 20 characters"),
   ]
 
   checkIsAuthenticated = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
+      if (!req.session) {
+        throw new NotAuthorisedError("Authorization credentials are missing.")
+      }
+
       const decodedJWT = services.auth.decodeJwtToken(
-        req.token!
+        req.session.jwt.access
       ) as IObjectAuthTokenToSign
 
       const user = await User.findOne({
         _id: decodedJWT.userId,
         email: decodedJWT.email,
-        "tokens.access": req.token,
+        "tokens.access": req.session.jwt.access,
       })
 
-      if (!user) throw new Error("User not found.")
+      if (!user) throw new BadRequestError("User not found.")
 
       req.user = user
 
@@ -54,34 +72,10 @@ class AuthMiddleWare {
 
   validateRequiredAccessJwt = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const { authorization } = req.headers
-
-      if (!authorization) {
-        throw new Error("Authorization credentials are missing.")
+      if (!req.session || !req.session.jwt) {
+        throw new BadRequestError("Authorization credentials are missing.")
       }
 
-      const [bearer, accessToken] = authorization!.split(" ")
-      if (bearer !== "Bearer" || !accessToken) {
-        throw new Error("Authorization credentials are missing.")
-      }
-      req.token = accessToken
-      next()
-    }
-  )
-
-  checkSignUpType = catchAsyncError(
-    async (req: Request, _res: Response, next: NextFunction) => {
-      const { authorization } = req.headers
-
-      if (!authorization) {
-        throw new Error("Authorization credentials are missing.")
-      }
-
-      const [bearer, accessToken] = authorization!.split(" ")
-      if (bearer !== "Bearer" || !accessToken) {
-        throw new Error("Authorization credentials are missing.")
-      }
-      req.token = accessToken
       next()
     }
   )
@@ -94,7 +88,7 @@ class AuthMiddleWare {
     const existingUser = await services.auth.findUserOnlyByEmail(req.body.email)
 
     if (existingUser) {
-      throw new RequestQueryError(
+      throw new BadRequestError(
         `Account linked to the email [ ${req.body.email} ] already exists.`
       )
     }
@@ -106,7 +100,7 @@ class AuthMiddleWare {
     async (req: Request, _res: Response, next: NextFunction) => {
       const { refreshToken } = req.params || req.cookies
 
-      if (!refreshToken) throw new Error("Refresh token is required.")
+      if (!refreshToken) throw new BadRequestError("Refresh token is required.")
 
       const decodedJWT = services.auth.decodeJwtToken(
         refreshToken,
@@ -120,7 +114,9 @@ class AuthMiddleWare {
       })
 
       if (!user)
-        throw new Error("Authorization credentials are wrong or have expired.")
+        throw new BadRequestError(
+          "Authorization credentials are wrong or have expired."
+        )
 
       req.token = refreshToken
       req.user = user
