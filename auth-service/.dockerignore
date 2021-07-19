@@ -1,6 +1,5 @@
 dist
-node_module
-npm-debug.log
+node_modules
 build
 
 Dockerfile

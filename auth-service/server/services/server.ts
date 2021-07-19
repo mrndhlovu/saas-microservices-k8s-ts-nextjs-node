@@ -4,10 +4,10 @@ import cookieSession from "cookie-session"
 import dotenv from "dotenv"
 import "express-async-errors"
 
+import { errorService, BadRequestError } from "@tuskui/shared"
+
 import authRoutes from "../routes"
 import services from "../services"
-import { BadRequestError } from "../middleware/error"
-
 class Server {
   private validateEnvVariables() {
     const dotenvResult = dotenv.config()
@@ -48,8 +48,8 @@ class Server {
 
     app.use("/api/auth", authRoutes)
 
-    app.use(services.error.errorHandler)
-    app.all("*", () => services.error.handleNotFoundError())
+    app.use(errorService.errorHandler)
+    app.all("*", () => errorService.handleNotFoundError())
 
     await services.database.connect()
     app.listen(port, () => {

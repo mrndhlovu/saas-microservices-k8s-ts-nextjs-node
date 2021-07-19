@@ -1,4 +1,4 @@
-import { ROLES } from "../utils/constants"
+import { ROLES } from "@tuskui/shared"
 
 class RolesService {
   validateBoardAccess(permFlag: number) {
