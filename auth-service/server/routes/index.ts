@@ -2,30 +2,15 @@ import { Router } from "express"
 
 import { authMiddleware, errorService } from "@tuskui/shared"
 
-import authController from "../controller"
+import { authController } from "../controller"
 
 const router = Router()
-
-router.post(
-  "/signup",
-  authMiddleware.checkRequiredSignUpFields,
-  authMiddleware.handleValidationResults,
-  authMiddleware.checkDuplicateEmail,
-  errorService.catchAsyncError(authController.signUpUser)
-)
 
 router.get(
   "/me",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(authController.getUserInfo)
-)
-
-router.post(
-  "/login",
-  authMiddleware.checkRequiredLoginFields,
-  authMiddleware.handleValidationResults,
-  errorService.catchAsyncError(authController.loginUser)
 )
 
 router.get(

@@ -16,3 +16,12 @@ build:
         manual:
           - src: "server/**/*.ts"
             dest: .
+
+    - image: ndhlovu/client
+      context: client
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.js"
+            dest: .
