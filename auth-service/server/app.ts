@@ -6,8 +6,6 @@ import express from "express"
 import { errorService } from "@tuskui/shared"
 
 import authRoutes from "./routes"
-import { loginRouter } from "./routes/login"
-import { signupRouter } from "./routes/signup"
 
 const app = express()
 
@@ -18,8 +16,6 @@ app.use(express.json())
 app.use(cookieSession({ signed: false, secure: true }))
 app.use(express.urlencoded({ extended: false }))
 
-app.use(signupRouter)
-app.use(loginRouter)
 app.use("/api/auth", authRoutes)
 
 app.all("*", errorService.handleNotFoundError)

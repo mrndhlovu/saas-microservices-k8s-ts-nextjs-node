@@ -27,9 +27,9 @@ class AuthController {
   }
 
   loginUser = async (req: Request, res: Response) => {
-    const { email, password } = req.body
+    const { identifier, password } = req.body
 
-    const user = await authService.findUserByCredentials(email, password)
+    const user = await authService.findUserByCredentials(identifier, password)
 
     await authService.getAuthTokens(user)
 
