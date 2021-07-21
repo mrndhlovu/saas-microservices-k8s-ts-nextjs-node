@@ -35,6 +35,8 @@ const boardRoutes = () => {
 
   router.post(
     "/create",
+    boardMiddleware.checkRequiredBodyFields,
+    boardMiddleware.validateRequestBodyFields,
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
     errorService.catchAsyncError(boardController.createBoard)

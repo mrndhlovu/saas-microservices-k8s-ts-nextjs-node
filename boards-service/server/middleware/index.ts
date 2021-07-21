@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from "express"
+import { body, validationResult } from "express-validator"
 
 import Board, { BoardDocument, IBoardMember } from "../models/Board"
 import {
   authService,
   BadRequestError,
+  CustomRequestError,
   PermissionRequestError,
 } from "@tuskui/shared"
 
@@ -43,6 +45,22 @@ class BoardMiddleware {
       }
 
       req.board = board
+      next()
+    }
+  }
+
+  checkRequiredBodyFields = [
+    body("title").trim().isLength({ min: 2 }).withMessage("Title is required."),
+  ]
+
+  validateRequestBodyFields() {
+    return async (req: Request, _res: Response, next: NextFunction) => {
+      const errors = validationResult(req)
+
+      if (!errors.isEmpty()) {
+        throw new CustomRequestError(errors.array())
+      }
+
       next()
     }
   }
