@@ -1,6 +1,11 @@
 import { Request, Response } from "express"
 
-import { User, authService, IUserDocument } from "@tuskui/shared"
+import {
+  User,
+  authService,
+  IUserDocument,
+  BadRequestError,
+} from "@tuskui/shared"
 
 import { editableUserFields } from "../utils/constants"
 
@@ -40,10 +45,11 @@ class AuthController {
 
   logoutUser = async (req: Request, res: Response) => {
     req.user.updateOne({ $set: { tokens: { access: "", refresh: "" } } })
+    req.session = null
 
     await req.user.save()
 
-    res.send({ success: true, message: "Logout successfully" })
+    res.send({})
   }
 
   updateUser = async (req: Request, res: Response) => {
@@ -54,13 +60,19 @@ class AuthController {
       editableUserFields
     )
 
-    if (!hasValidFields) throw new Error("Field is not editable.")
+    if (!hasValidFields) throw new BadRequestError("Field is not editable.")
 
-    req.user.updateOne({ $set: { ...req.body } })
+    const updatedRecord = await User.findOneAndUpdate(
+      { _id: req.user._id },
+      { $set: { ...req.body } },
+      { new: true }
+    )
 
-    await req.user.save()
+    if (!updatedRecord) throw new BadRequestError("Failed to updated record.")
 
-    res.send(req.user)
+    await updatedRecord.save()
+
+    res.send(updatedRecord)
   }
 
   deleteUser = async (req: Request, res: Response) => {
