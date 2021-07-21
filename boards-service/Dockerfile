@@ -1,20 +1,12 @@
-FROM node:15
+FROM node:alpine
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json .
 
-# ARG NODE_ENV
-# RUN if [ "$NODE_ENV" = "development" ]; \
-#         then yarn install; \
-#         else yarn install --only=production; \
-#         fi
+RUN yarn install
 
-RUN yarn install;
+COPY . .
 
-RUN  yarn add tsc -g
-
-COPY ./ ./
-
-EXPOSE $PORT
+CMD [ "yarn", "start" ]
 

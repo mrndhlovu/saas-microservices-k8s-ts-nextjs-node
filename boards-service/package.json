@@ -1,46 +1,44 @@
 {
-  "name": "tusk-ui-boards-micro-service",
+  "name": "tuskui-board-micro-service",
   "version": "1.0.0",
   "main": "server/index.ts",
   "author": "Mduduzi Ndhlovu",
   "license": "MIT",
   "scripts": {
-    "start": "NODE_ENV=development nodemon -r dotenv/config server/index.ts",
+    "start": "NODE_ENV=development nodemon server/index.ts",
     "prod": "NODE_ENV=production nodemon -r dotenv/config server/index.ts",
     "docker:dev": "NODE_PATH=./build NODE_ENV=development  node build/index.js",
     "docker:prod": "NODE_PATH=./build NODE_ENV=production  node build/index.js",
     "build": "tsc -p ./tsconfig.json || true",
-    "debug": "export DEBUG=* && npm start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --coverage --watchAll --no-cache"
   },
   "dependencies": {
-    "axios": "^0.21.1",
-    "bcrypt": "^5.0.1",
+    "@tuskui/shared": "^1.0.47",
+    "@types/cookie-session": "^2.0.43",
     "cookie-parser": "^1.4.5",
+    "cookie-session": "^1.4.0",
     "dotenv": "^10.0.0",
     "express": "^4.16.1",
-    "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.21",
+    "express-async-errors": "^3.1.1",
+    "express-validator": "^6.12.0",
     "mongodb": "^3.6.9",
-    "mongoose": "^5.13.2",
-    "pino": "^6.11.3",
-    "pino-pretty": "^5.1.1",
-    "ts-node": "7.0.1",
-    "typescript": "3.1.1",
-    "validator": "^13.6.0"
+    "mongoose": "^5.13.2"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.0",
     "@types/config": "^0.0.39",
     "@types/cookie-parser": "^1.4.2",
     "@types/express": "^4.17.12",
-    "@types/jsdom": "^16.2.12",
-    "@types/jsonwebtoken": "^8.5.4",
+    "@types/jest": "^26.0.24",
     "@types/mongodb": "^3.6.19",
     "@types/node": "^15.14.0",
-    "@types/pino": "^6.3.9",
-    "@types/validator": "^13.6.3",
+    "@types/supertest": "^2.0.11",
+    "jest": "^27.0.6",
+    "mongodb-memory-server": "^7.0.0",
     "nodemon": "^2.0.9",
-    "ts-node-dev": "^1.1.8"
+    "supertest": "^6.1.3",
+    "ts-jest": "^27.0.3",
+    "ts-node": "7.0.1",
+    "ts-node-dev": "^1.1.8",
+    "typescript": "3.9.8"
   }
 }

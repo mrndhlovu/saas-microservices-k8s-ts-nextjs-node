@@ -31,11 +31,6 @@ const BoardSchema = new Schema<BoardDocument>(
       required: true,
       default: { private: true, public: false, team: false, workspace: false },
     },
-    owner: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     admin: {
       type: String,
       default: "",
@@ -51,8 +46,13 @@ const BoardSchema = new Schema<BoardDocument>(
       default: [],
     },
     members: {
-      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
-      default: [],
+      type: Array,
+      default: [
+        {
+          id: { type: Schema.Types.ObjectId, ref: "User" },
+          permissionFlag: 1,
+        },
+      ],
     },
     description: {
       type: String,
@@ -86,9 +86,14 @@ export interface IBoard {
   archived: boolean
   comments: string[]
   activities: string[]
-  members: string[]
+  members: IBoardMember[]
   description: string
   workspaces: string[]
+}
+
+export interface IBoardMember {
+  id: ObjectId
+  permissionFlag: number
 }
 
 export interface BoardDocument

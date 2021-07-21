@@ -1,8 +1,10 @@
 import { ObjectID } from "mongodb"
 import { Request, Response } from "express"
 
-import { allowedBoardUpdateFields, ROLES } from "../utils/constants"
-import { Services } from "../services"
+import { PERMISSION_FLAGS } from "@tuskui/shared"
+
+import { allowedBoardUpdateFields } from "../utils/constants"
+import { boardService } from "../services"
 import Board from "../models/Board"
 
 class BoardController {
@@ -12,7 +14,7 @@ class BoardController {
   }
 
   getBoardById = async (req: Request, res: Response) => {
-    const board = await Services.board.populatedBoard(req.params.boardId)
+    const board = await boardService.populatedBoard(req.params.boardId)
 
     if (!board) throw new Error("Board with that id was not found")
 
@@ -28,7 +30,11 @@ class BoardController {
       members: [userId],
     })
 
-    board = await Services.board.assignBoardRole(ROLES.ADMIN, userId, board)
+    board = await boardService.updateBoardMemberRole(
+      PERMISSION_FLAGS.ADMIN,
+      userId,
+      board
+    )
 
     board.save()
 
@@ -40,14 +46,14 @@ class BoardController {
 
     const updates = Object.keys(req.body)
 
-    const hasValidFields = Services.board.validateEditableFields(
+    const hasValidFields = boardService.validateEditableFields(
       allowedBoardUpdateFields,
       updates
     )
 
     if (!hasValidFields) throw new Error("Invalid update field")
 
-    const board = await Services.board.populatedBoard(_id)
+    const board = await boardService.populatedBoard(_id)
 
     if (!board) throw new Error("Board with that id was not found")
 
@@ -61,9 +67,11 @@ class BoardController {
   }
 
   deleteBoard = async (req: Request, res: Response) => {
-    req.board.delete()
+    req.board!.delete()
     res.status(200).send({ message: "Board deleted" })
   }
 }
 
-export default new BoardController()
+const boardController = new BoardController()
+
+export { boardController }
