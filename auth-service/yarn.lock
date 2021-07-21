@@ -544,10 +544,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@tuskui/shared@^1.0.38":
-  version "1.0.38"
-  resolved "https://registry.yarnpkg.com/@tuskui/shared/-/shared-1.0.38.tgz#821f22cc1ac17d812b79537fe982229fc9188e82"
-  integrity sha512-kcG7U8E7+XOrsBxuNyc2dNQ6wRMJoVDixN8c1/13eMjyMmlNJdjrUbP3Bhi4d0L6aM5lFE6muEoBhuii22i4CQ==
+"@tuskui/shared@^1.0.39":
+  version "1.0.39"
+  resolved "https://registry.yarnpkg.com/@tuskui/shared/-/shared-1.0.39.tgz#5cd95d2acc8fe39dbe7f6800069e2773f3de0676"
+  integrity sha512-uXUXFJR8QWPGVnQHQkqVVgPM3pNhSmWjPmrBWEr6BtmcMsgpiad9ijNfqEgq3+Epu1CKLSg0b+Et8iHdeTFMyg==
   dependencies:
     bcrypt "^5.0.1"
     express "^4.17.1"
