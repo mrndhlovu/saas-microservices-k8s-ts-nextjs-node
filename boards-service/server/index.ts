@@ -1,25 +1,21 @@
-import dotenv from "dotenv"
-
 import { BadRequestError } from "@tuskui/shared"
 
-import services from "./services"
+import { database } from "./services/db"
 import { app } from "./app"
 class Server {
   private validateEnvVariables() {
-    const dotenvResult = dotenv.config()
     const {
       PORT,
       JWT_TOKEN_SIGNATURE,
       JWT_REFRESH_TOKEN_SIGNATURE,
-      MONGO_DB_URI,
+      BOARDS_MONGO_URI,
     } = process.env
 
-    if (dotenvResult.error) throw dotenvResult.error
     if (
       !PORT ||
       !JWT_TOKEN_SIGNATURE ||
       !JWT_REFRESH_TOKEN_SIGNATURE ||
-      !MONGO_DB_URI
+      !BOARDS_MONGO_URI
     ) {
       throw new BadRequestError("Some Env variables are missing!")
     }
@@ -32,7 +28,7 @@ class Server {
 
     const port = parseInt(PORT!, 10)
 
-    await services.database.connect()
+    await database.connect()
     app.listen(port, () => {
       const serverStatus = [
         {

@@ -4,8 +4,16 @@ import { Request, Response } from "express"
 import { PERMISSION_FLAGS } from "@tuskui/shared"
 
 import { allowedBoardUpdateFields } from "../utils/constants"
-import { boardService } from "../services"
-import Board from "../models/Board"
+import { boardService } from "../services/board"
+import Board, { BoardDocument } from "../models/Board"
+
+declare global {
+  namespace Express {
+    interface Request {
+      board: BoardDocument | null | undefined
+    }
+  }
+}
 
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {

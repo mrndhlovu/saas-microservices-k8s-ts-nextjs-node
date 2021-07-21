@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-depl
+  name: boards-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth
+      app: boards
   template:
     metadata:
       labels:
-        app: auth
+        app: boards
     spec:
       containers:
-        - name: auth
-          image: ndhlovu/auth
+        - name: boards
+          image: ndhlovu/boards
           env:
             - name: JWT_TOKEN_SIGNATURE
               valueFrom:
@@ -28,28 +28,27 @@ spec:
                   name: jwt-secret
                   key: JWT_REFRESH_TOKEN_SIGNATURE
 
-            - name: AUTH_MONGO_URI
+            - name: BOARDS_MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: mongo-uri
-                  key: AUTH_MONGO_URI
+                  key: BOARDS_MONGO_URI
 
             - name: PORT
               valueFrom:
                 secretKeyRef:
                   name: mongo-port
                   key: PORT
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: auth-srv
+  name: boards-srv
 spec:
   selector:
-    app: auth
+    app: boards
   ports:
-    - name: auth
+    - name: boards
       protocol: TCP
       port: 3000
       targetPort: 3000

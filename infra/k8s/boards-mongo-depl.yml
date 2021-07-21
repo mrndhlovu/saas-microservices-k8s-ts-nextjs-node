@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: boards-mongo-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: boards-mongo
+  template:
+    metadata:
+      labels:
+        app: boards-mongo
+    spec:
+      containers:
+        - name: boards-mongo
+          image: mongo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: boards-mongo-srv
+spec:
+  selector:
+    app: boards-mongo
+  ports:
+    - name: db
+      protocol: TCP
+      port: 27017
+      targetPort: 27017

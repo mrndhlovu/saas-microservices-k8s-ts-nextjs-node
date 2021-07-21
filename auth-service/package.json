@@ -17,7 +17,6 @@
     "@types/cookie-session": "^2.0.43",
     "cookie-parser": "^1.4.5",
     "cookie-session": "^1.4.0",
-    "dotenv": "^10.0.0",
     "express": "^4.16.1",
     "express-async-errors": "^3.1.1",
     "express-validator": "^6.12.0",

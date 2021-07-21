@@ -29,7 +29,7 @@ const boardRoutes = () => {
     .delete(
       authMiddleware.validateRequiredAccessJwt,
       authMiddleware.checkIsAuthenticated,
-      boardMiddleware.checkActionPermission(PERMISSION_FLAGS.EDIT),
+      boardMiddleware.checkActionPermission(PERMISSION_FLAGS.ADMIN),
       errorService.catchAsyncError(boardController.deleteBoard)
     )
 

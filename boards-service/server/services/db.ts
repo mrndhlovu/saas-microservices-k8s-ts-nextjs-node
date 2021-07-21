@@ -24,11 +24,11 @@ class Database {
 
   connect = async () => {
     await mongoose
-      .connect(process.env.AUTH_MONGO_URI!, this.mongooseOptions)
+      .connect(process.env.BOARDS_MONGO_URI!, this.mongooseOptions)
       .then(() => {
         const dbStatus = [
           {
-            "Database Status [AS]": "Online",
+            "Database Status [BS]": "Online",
             "Database Name": "Mongo",
           },
         ]
@@ -41,7 +41,7 @@ class Database {
         }
         const dbStatus = [
           {
-            "Database Status [AS]": "Error",
+            "Database Status [BS]": "Error",
             Attempts: this.retryAttempts,
           },
         ]
@@ -52,4 +52,5 @@ class Database {
   }
 }
 
-export default new Database()
+const database = new Database()
+export { database }
