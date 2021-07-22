@@ -4,6 +4,15 @@ import { body, oneOf, check } from "express-validator"
 import { BadRequestError } from "@tuskui/shared"
 
 import { authService } from "../services/auth"
+import { IUserDocument } from "../models/User"
+
+declare global {
+  namespace Express {
+    interface Request {
+      currentUser?: IUserDocument
+    }
+  }
+}
 
 class AuthMiddleWare {
   checkRequiredSignUpFields = [
@@ -49,6 +58,22 @@ class AuthMiddleWare {
         `Account linked to the email ${req.body.email} already exists.`
       )
     }
+
+    next()
+  }
+
+  findCurrentUser = async (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+  ) => {
+    const currentUser = await authService.findUserByJwt(req.user)
+
+    if (!currentUser) {
+      throw new BadRequestError(`Authentication failed`)
+    }
+
+    req.currentUser = currentUser
 
     next()
   }

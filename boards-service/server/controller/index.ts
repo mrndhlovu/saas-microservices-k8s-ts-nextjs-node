@@ -1,7 +1,7 @@
 import { ObjectID } from "mongodb"
 import { Request, Response } from "express"
 
-import { authUtils, IJwtAuthToken, PERMISSION_FLAGS } from "@tuskui/shared"
+import { permissionManager, ROLES } from "@tuskui/shared"
 
 import { allowedBoardUpdateFields } from "../utils/constants"
 import { boardService } from "../services/board"
@@ -30,24 +30,19 @@ class BoardController {
   }
 
   createBoard = async (req: Request, res: Response) => {
-    console.log(
-      "🚀 ~ file: index.ts ~ line 34 ~ BoardController ~ createBoard= ~ boardId",
-      req.user.userId
-    )
-
-    const boardId = new ObjectID(req.user.userId)
+    const userId = new ObjectID(req.user.userId)
 
     let board = new Board({
       ...req.body,
-      owner: boardId,
+      owner: userId,
     })
 
-    board = await boardService.updateBoardMemberRole(
-      PERMISSION_FLAGS.ADMIN,
-      boardId,
-      board,
-      true
-    )
+    board = await boardService.updateBoardMemberRole(board, {
+      currentPermFlag: permissionManager.permissions.BLOCKED,
+      isNew: true,
+      newRole: ROLES.OWNER,
+      userId,
+    })
 
     board.save()
 
@@ -55,8 +50,6 @@ class BoardController {
   }
 
   updateBoard = async (req: Request, res: Response) => {
-    const _id = new ObjectID(req.params.boardId)
-
     const updates = Object.keys(req.body)
 
     const hasValidFields = boardService.validateEditableFields(
@@ -66,17 +59,13 @@ class BoardController {
 
     if (!hasValidFields) throw new Error("Invalid update field")
 
-    const board = await boardService.populatedBoard(_id)
-
-    if (!board) throw new Error("Board with that id was not found")
-
     updates.forEach(async (update: string) => {
-      await board.updateOne({ $set: { [update]: req.body[update] } })
+      await req.board!.updateOne({ $set: { [update]: req.body[update] } })
     })
 
-    board.save()
+    req.board!.save()
 
-    res.status(200).send(board)
+    res.status(200).send(req.board)
   }
 
   deleteBoard = async (req: Request, res: Response) => {

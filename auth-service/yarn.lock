@@ -544,10 +544,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@tuskui/shared@^1.0.49":
-  version "1.0.49"
-  resolved "https://registry.yarnpkg.com/@tuskui/shared/-/shared-1.0.49.tgz#77b303467f159890e2ea892c4b7fd5cde8d4e361"
-  integrity sha512-a1xfFPPPv8TIiuPtDRT+vGdhnduUPuc3yoFuJThJ9a2Bsinfbr+pTvZNaJtich1K6Vg3Z+qEgKKG4RuxVnPdDA==
+"@tuskui/shared@^1.0.59":
+  version "1.0.59"
+  resolved "https://registry.yarnpkg.com/@tuskui/shared/-/shared-1.0.59.tgz#5016481bf50de7e202785a45926f8bf92d562b37"
+  integrity sha512-5GC2R/9rmMpCXpEMQH6daVLXWB7arfkY+9bAsFq8k9vXPlzCly6kEnkZaLHf20W5gll76Dmu7CAfUUDWErXf9A==
   dependencies:
     cookie-session "^1.4.0"
     express "^4.17.1"

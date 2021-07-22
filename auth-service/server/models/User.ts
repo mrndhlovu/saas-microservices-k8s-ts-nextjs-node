@@ -156,6 +156,7 @@ export interface IUserAttributes {
   tokens: IJwtAccessTokens
   username: string
   viewedRecent?: string[]
+  permissionFlag: Number
 }
 
 export interface IUserDocument extends IUserAttributes, Document {

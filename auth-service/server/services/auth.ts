@@ -3,7 +3,7 @@ import isEmail from "validator/lib/isEmail"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-import { authUtils } from "@tuskui/shared"
+import { authUtils, IJwtAuthToken } from "@tuskui/shared"
 
 import { IJwtAccessTokens } from "../types"
 import { IUserDocument, User } from "../models/User"
@@ -30,6 +30,14 @@ class AuthService {
 
   findUserOnlyByUsername = async (username: string) => {
     const user = await User.findOne({ username })
+    return user
+  }
+
+  findUserByJwt = async (decodedJWT: IJwtAuthToken) => {
+    const user = await User.findOne({
+      email: decodedJWT.email,
+      _id: decodedJWT.userId,
+    })
     return user
   }
 

@@ -1,20 +1,34 @@
 import { CallbackError } from "mongoose"
 import { ObjectId } from "mongodb"
 
-import { BadRequestError } from "@tuskui/shared"
+import {
+  BadRequestError,
+  IPermissionType,
+  permissionManager,
+} from "@tuskui/shared"
 
 import Board, { BoardDocument, IBoardMember } from "../models/Board"
 
+export interface IUpdateBoardMemberOptions {
+  currentPermFlag: number
+  newRole: IPermissionType
+  isNew: boolean
+  userId: ObjectId
+}
 class BoardServices {
   updateBoardMemberRole = async (
-    role: number,
-    userId: ObjectId,
     board: BoardDocument,
-    isNew?: boolean
+    options: IUpdateBoardMemberOptions
   ) => {
-    const boardMember = { id: userId, permissionFlag: role }
+    const boardMember: IBoardMember = {
+      id: options.userId,
+      permissionFlag: permissionManager.updatePermission(
+        options.currentPermFlag,
+        options.newRole
+      ),
+    }
 
-    if (isNew) {
+    if (options.isNew) {
       board.members.push(boardMember)
 
       return board
@@ -28,12 +42,15 @@ class BoardServices {
         }
 
         const existingBoardMember = record?.members.find(
-          (member: IBoardMember) => member.id === userId
+          (member: IBoardMember) => member.id === options.userId
         )
         if (existingBoardMember) {
           record?.members.map((member: IBoardMember) => {
             if (existingBoardMember?.id.equals(member.id)) {
-              member.permissionFlag = role
+              member.permissionFlag = permissionManager.updatePermission(
+                member.permissionFlag,
+                options.newRole
+              )
             }
           })
         } else {

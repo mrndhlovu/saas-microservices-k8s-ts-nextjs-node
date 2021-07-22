@@ -1,6 +1,12 @@
 import { Request, Response } from "express"
 
-import { authUtils, BadRequestError } from "@tuskui/shared"
+import {
+  ACCOUNT_TYPE,
+  authUtils,
+  BadRequestError,
+  permissionManager,
+  ROLES,
+} from "@tuskui/shared"
 
 import { editableUserFields } from "../utils/constants"
 import { authService } from "../services/auth"
@@ -9,7 +15,7 @@ import { IUserDocument, User } from "../models/User"
 declare global {
   namespace Express {
     interface Request {
-      user: IUserDocument
+      currentUser?: IUserDocument
     }
   }
 }
@@ -17,8 +23,13 @@ declare global {
 class AuthController {
   signUpUser = async (req: Request, res: Response) => {
     let user = new User({ ...req.body })
-    user = await authService.getAuthTokens(user)
 
+    user.permissionFlag = permissionManager.updatePermission(
+      permissionManager.permissions.TRIAL,
+      ACCOUNT_TYPE.STANDARD
+    )
+
+    user = await authService.getAuthTokens(user)
     authUtils.generateAuthCookies(req, user.tokens)
 
     res.status(201).send(user)
@@ -41,10 +52,12 @@ class AuthController {
   }
 
   logoutUser = async (req: Request, res: Response) => {
-    req.user.updateOne({ $set: { tokens: { access: "", refresh: "" } } })
+    req.currentUser!.updateOne({
+      $set: { tokens: { access: "", refresh: "" } },
+    })
     req.session = null
 
-    await req.user.save()
+    await req.currentUser!.save()
 
     res.send({})
   }
@@ -60,7 +73,7 @@ class AuthController {
     if (!hasValidFields) throw new BadRequestError("Field is not editable.")
 
     const updatedRecord = await User.findOneAndUpdate(
-      { _id: req.user._id },
+      { _id: req.currentUser!._id },
       { $set: { ...req.body } },
       { new: true }
     )
@@ -73,13 +86,13 @@ class AuthController {
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    await req.user.delete()
+    await req.currentUser!.delete()
 
     res.status(200).send({ message: "Account deleted", success: true })
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const tokens = await authService.getAuthTokens(req.user)
+    const tokens = await authService.getAuthTokens(req.currentUser!)
 
     res.status(200).send(tokens)
   }

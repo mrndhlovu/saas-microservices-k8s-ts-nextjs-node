@@ -33,7 +33,6 @@ const BoardSchema = new Schema<BoardDocument>(
     },
     owner: {
       type: Schema.Types.ObjectId,
-      default: "",
     },
     archived: {
       type: Boolean,

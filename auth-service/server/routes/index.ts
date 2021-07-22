@@ -19,6 +19,7 @@ router.get(
   "/me",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.getUserInfo)
 )
 
@@ -33,6 +34,7 @@ router.get(
   "/logout",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.logoutUser)
 )
 
@@ -40,6 +42,7 @@ router.patch(
   "/update",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.updateUser)
 )
 
@@ -47,12 +50,14 @@ router.delete(
   "/delete",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.deleteUser)
 )
 
 router.get(
   "/token/:refreshToken",
   middlewareUtils.validateRequiredAccessJwt,
+  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.getRefreshToken)
 )
 

@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { authMiddleware, errorService, PERMISSION_FLAGS } from "@tuskui/shared"
+import { authMiddleware, errorService, ROLES } from "@tuskui/shared"
 
 import { boardController } from "../controller"
 import { boardMiddleware } from "../middleware"
@@ -19,17 +19,22 @@ router
   .get(
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
-    boardController.getBoardById
+    boardMiddleware.checkActionPermission(ROLES.OBSERVER),
+    errorService.catchAsyncError(boardController.getBoardById)
   )
   .patch(
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
-    boardController.updateBoard
+    boardMiddleware.checkRequiredBodyFields,
+    boardMiddleware.validateRequestBodyFields,
+    boardMiddleware.checkActionPermission(ROLES.EDITOR),
+    boardMiddleware.checkDuplicateBoards,
+    errorService.catchAsyncError(boardController.updateBoard)
   )
   .delete(
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
-    boardMiddleware.checkActionPermission(PERMISSION_FLAGS.ADMIN),
+    boardMiddleware.checkActionPermission(ROLES.OWNER),
     errorService.catchAsyncError(boardController.deleteBoard)
   )
 
