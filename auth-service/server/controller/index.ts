@@ -1,13 +1,10 @@
 import { Request, Response } from "express"
 
-import {
-  User,
-  authService,
-  IUserDocument,
-  BadRequestError,
-} from "@tuskui/shared"
+import { authUtils, BadRequestError } from "@tuskui/shared"
 
 import { editableUserFields } from "../utils/constants"
+import { authService } from "../services/auth"
+import { IUserDocument, User } from "../models/User"
 
 declare global {
   namespace Express {
@@ -22,7 +19,7 @@ class AuthController {
     let user = new User({ ...req.body })
     user = await authService.getAuthTokens(user)
 
-    authService.generateAuthCookies(req, user.tokens)
+    authUtils.generateAuthCookies(req, user.tokens)
 
     res.status(201).send(user)
   }
@@ -38,7 +35,7 @@ class AuthController {
 
     await authService.getAuthTokens(user)
 
-    authService.generateAuthCookies(req, user.tokens)
+    authUtils.generateAuthCookies(req, user.tokens)
 
     res.send(user)
   }

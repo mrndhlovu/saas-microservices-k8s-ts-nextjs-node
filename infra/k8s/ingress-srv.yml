@@ -15,6 +15,12 @@ spec:
             backend:
               serviceName: auth-srv
               servicePort: 3000
+
+          - path: /api/boards/?(.*)
+            backend:
+              serviceName: boards-srv
+              servicePort: 3000
+
           - path: /?(.*)
             backend:
               serviceName: client-srv

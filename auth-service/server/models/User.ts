@@ -1,0 +1,165 @@
+import isEmail from "validator/lib/isEmail"
+import { ObjectId } from "mongodb"
+import { Schema, Document, model } from "mongoose"
+
+import { authService } from "../services/auth"
+import { IJwtAccessTokens } from "../types"
+
+const UserSchema: Schema<IUserDocument> = new Schema(
+  {
+    username: {
+      type: String,
+      lowercase: true,
+      trim: true,
+      minlength: 4,
+      unique: true,
+    },
+    firstname: {
+      type: String,
+      trim: true,
+      minlength: 4,
+    },
+    lastname: {
+      type: String,
+      trim: true,
+      minlength: 4,
+    },
+    email: {
+      type: String,
+      lowercase: true,
+      unique: true,
+      trim: true,
+      validate(value: string) {
+        if (!isEmail(value)) throw new Error("Email is invalid")
+      },
+    },
+    password: {
+      type: String,
+      trim: true,
+      minlength: 7,
+      validate(value: string) {
+        if (value.toLowerCase().includes("password"))
+          throw new Error(`Password should not include 'password'`)
+      },
+    },
+    permissionFlag: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    initials: {
+      type: String,
+    },
+    starred: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Board" }],
+      required: true,
+      default: [],
+    },
+    viewedRecent: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Board" }],
+      required: true,
+      default: [],
+    },
+    loginTypes: {
+      type: Array,
+      default: [],
+      required: true,
+    },
+    avatar: {
+      type: Array,
+      required: true,
+      default: [],
+    },
+    bio: {
+      type: String,
+      trim: true,
+      minlength: 4,
+    },
+
+    tokens: {
+      type: Object,
+      default: {
+        access: String,
+        refresh: String,
+      },
+    },
+    resetPassword: {
+      type: Object,
+      default: {
+        token: String,
+        expiresAt: Date,
+      },
+    },
+  },
+  {
+    timestamps: true,
+  }
+)
+
+UserSchema.methods.toJSON = function () {
+  const userObject = this.toObject({
+    transform: function (_doc, ret, _options) {
+      ret.id = ret._id
+      delete ret._id
+      delete ret.__v
+      delete ret.tokens
+      delete ret.password
+      return ret
+    },
+  })
+
+  return userObject
+}
+
+UserSchema.pre("save", function (next) {
+  const saltRounds = 12
+
+  if (
+    this.isModified("firstname") ||
+    this.isModified("lastname") ||
+    this.isModified("username")
+  ) {
+    if (this.isModified("firstname") || this.isModified("lastname")) {
+      const firstNameInitial = this.firstname?.substring(0, 1)
+      const lastNameInitial = this.lastname?.substring(0, 1)
+
+      this.initials = `${firstNameInitial}${lastNameInitial}`.toUpperCase()
+    } else {
+      this.initials = this.username?.substring(0, 2).toUpperCase()
+    }
+  }
+
+  if (!this.isModified("password")) return next()
+
+  authService.encryptUserPassword(this, this.password, saltRounds, next)
+})
+
+interface IUseBoardRoles {
+  [key: string]: ObjectId[]
+}
+
+type ILoginTypes = "email" | "username"
+
+export interface IUserAttributes {
+  avatar?: string
+  bio?: string
+  email: string
+  firstname?: string
+  initials?: string
+  lastname?: string
+  loginTypes: ILoginTypes[]
+  password: string
+  resetPasswordExpires?: string
+  resetPasswordToken?: string
+  roles: IUseBoardRoles[]
+  starred?: string[]
+  tokens: IJwtAccessTokens
+  username: string
+  viewedRecent?: string[]
+}
+
+export interface IUserDocument extends IUserAttributes, Document {
+  _id: ObjectId
+}
+
+export const User = model<IUserDocument>("User", UserSchema)

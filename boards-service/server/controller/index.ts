@@ -1,7 +1,7 @@
 import { ObjectID } from "mongodb"
 import { Request, Response } from "express"
 
-import { PERMISSION_FLAGS } from "@tuskui/shared"
+import { authUtils, IJwtAuthToken, PERMISSION_FLAGS } from "@tuskui/shared"
 
 import { allowedBoardUpdateFields } from "../utils/constants"
 import { boardService } from "../services/board"
@@ -30,18 +30,23 @@ class BoardController {
   }
 
   createBoard = async (req: Request, res: Response) => {
-    const userId = req.body.userId
+    console.log(
+      "🚀 ~ file: index.ts ~ line 34 ~ BoardController ~ createBoard= ~ boardId",
+      req.user.userId
+    )
+
+    const boardId = new ObjectID(req.user.userId)
 
     let board = new Board({
       ...req.body,
-      owner: userId,
-      members: [userId],
+      owner: boardId,
     })
 
     board = await boardService.updateBoardMemberRole(
       PERMISSION_FLAGS.ADMIN,
-      userId,
-      board
+      boardId,
+      board,
+      true
     )
 
     board.save()

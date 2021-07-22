@@ -31,8 +31,8 @@ const BoardSchema = new Schema<BoardDocument>(
       required: true,
       default: { private: true, public: false, team: false, workspace: false },
     },
-    admin: {
-      type: String,
+    owner: {
+      type: Schema.Types.ObjectId,
       default: "",
     },
     archived: {
@@ -47,12 +47,7 @@ const BoardSchema = new Schema<BoardDocument>(
     },
     members: {
       type: Array,
-      default: [
-        {
-          id: { type: Schema.Types.ObjectId, ref: "User" },
-          permissionFlag: 1,
-        },
-      ],
+      default: [],
     },
     description: {
       type: String,
@@ -82,7 +77,6 @@ export interface IBoard {
     workspace: boolean
   }
   owner: ObjectId
-  admin: string
   archived: boolean
   comments: string[]
   activities: string[]

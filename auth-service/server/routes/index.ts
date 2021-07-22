@@ -1,57 +1,58 @@
 import { Router } from "express"
 
-import { authMiddleware, errorService } from "@tuskui/shared"
+import { errorService, authMiddleware as middlewareUtils } from "@tuskui/shared"
 
 import { authController } from "../controller"
+import { authMiddleware } from "../middleware/auth"
 
 const router = Router()
 
 router.post(
   "/signup",
   authMiddleware.checkRequiredSignUpFields,
-  authMiddleware.handleValidationResults,
+  middlewareUtils.validateRequestBodyFields,
   authMiddleware.checkDuplicateEmail,
   errorService.catchAsyncError(authController.signUpUser)
 )
 
 router.get(
   "/me",
-  authMiddleware.validateRequiredAccessJwt,
-  authMiddleware.checkIsAuthenticated,
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
   errorService.catchAsyncError(authController.getUserInfo)
 )
 
 router.post(
   "/login",
   authMiddleware.checkRequiredLoginFields,
-  authMiddleware.handleValidationResults,
+  middlewareUtils.validateRequestBodyFields,
   errorService.catchAsyncError(authController.loginUser)
 )
 
 router.get(
   "/logout",
-  authMiddleware.validateRequiredAccessJwt,
-  authMiddleware.checkIsAuthenticated,
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
   errorService.catchAsyncError(authController.logoutUser)
 )
 
 router.patch(
   "/update",
-  authMiddleware.validateRequiredAccessJwt,
-  authMiddleware.checkIsAuthenticated,
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
   errorService.catchAsyncError(authController.updateUser)
 )
 
 router.delete(
   "/delete",
-  authMiddleware.validateRequiredAccessJwt,
-  authMiddleware.checkIsAuthenticated,
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
   errorService.catchAsyncError(authController.deleteUser)
 )
 
 router.get(
   "/token/:refreshToken",
-  authMiddleware.validateRequiredRefreshJwt,
+  middlewareUtils.validateRequiredAccessJwt,
   errorService.catchAsyncError(authController.getRefreshToken)
 )
 

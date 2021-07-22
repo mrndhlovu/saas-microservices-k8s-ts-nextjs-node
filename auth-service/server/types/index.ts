@@ -1,6 +1,6 @@
 import { Application } from "express"
 
-import { IUserDocument } from "@tuskui/shared"
+import { IUserDocument } from "../models/User"
 
 export interface IUserJwtPayload {
   user?: IUserDocument
@@ -37,4 +37,16 @@ export interface IJwtRefreshTokens {
 export interface IBoardRoleJwtToken {
   admin: string
   flag: number
+}
+
+export interface IJwtAccessTokens {
+  access: string
+  refresh: string
+}
+
+export type JWTSignKeyOption = "refresh" | "role" | "access"
+
+export interface IJwtAuthToken {
+  userId: string
+  email: string
 }

@@ -5,7 +5,7 @@ import express from "express"
 
 import { errorService } from "@tuskui/shared"
 
-import { boardRoutes } from "./routes"
+import boardRoutes from "./routes"
 
 const app = express()
 
@@ -16,7 +16,7 @@ app.use(express.json())
 app.use(cookieSession({ signed: false, secure: true }))
 app.use(express.urlencoded({ extended: false }))
 
-app.use("/api/board", boardRoutes)
+app.use("/api/boards", boardRoutes)
 
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)

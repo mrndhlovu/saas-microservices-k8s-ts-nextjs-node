@@ -544,17 +544,15 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@tuskui/shared@^1.0.47":
-  version "1.0.47"
-  resolved "https://registry.yarnpkg.com/@tuskui/shared/-/shared-1.0.47.tgz#9e3b7adf3a14536090dd5a85283c0d0e1780ff7e"
-  integrity sha512-NrxnXoEcoF1Q3caPV97E9em7t7rPZG2oG3V+6mkYa/o0PFJe6T6zvWDGvo9nDytPhMneY2BdZVBJrgagLFz9IA==
+"@tuskui/shared@^1.0.49":
+  version "1.0.49"
+  resolved "https://registry.yarnpkg.com/@tuskui/shared/-/shared-1.0.49.tgz#77b303467f159890e2ea892c4b7fd5cde8d4e361"
+  integrity sha512-a1xfFPPPv8TIiuPtDRT+vGdhnduUPuc3yoFuJThJ9a2Bsinfbr+pTvZNaJtich1K6Vg3Z+qEgKKG4RuxVnPdDA==
   dependencies:
-    bcrypt "^5.0.1"
+    cookie-session "^1.4.0"
     express "^4.17.1"
     express-validator "^6.12.0"
     jsonwebtoken "^8.5.1"
-    mongodb "^3.6.9"
-    mongoose "^5.13.2"
     validator "^13.6.0"
 
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.14":
@@ -589,6 +587,13 @@
   integrity sha512-K2waXdXBi2302XUdcHcR1jCeU0LL4TD9HRs/gk0N2Xvrht+G/BfJa4QObBQZfhMdxiCpV3COl5Nfq4uKTeTnJA==
   dependencies:
     "@babel/types" "^7.3.0"
+
+"@types/bcrypt@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/bcrypt/-/bcrypt-5.0.0.tgz#a835afa2882d165aff5690893db314eaa98b9f20"
+  integrity sha512-agtcFKaruL8TmcvqbndlqHPSJgsolhf/qPWchFlgnW1gECTN/nKbFcoFnvKAQRFfKbh+BO6A3SWdJu9t+xF3Lw==
+  dependencies:
+    "@types/node" "*"
 
 "@types/body-parser@*":
   version "1.19.1"
@@ -690,6 +695,13 @@
     jest-diff "^26.0.0"
     pretty-format "^26.0.0"
 
+"@types/jsonwebtoken@^8.5.4":
+  version "8.5.4"
+  resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-8.5.4.tgz#50ccaf0aa6f5d7b9956e70fe323b76e582991913"
+  integrity sha512-4L8msWK31oXwdtC81RmRBAULd0ShnAHjBuKT9MRQpjP0piNrZdXyTRcKY9/UIfhGeKIT4PvF5amOOUbbT/9Wpg==
+  dependencies:
+    "@types/node" "*"
+
 "@types/keygrip@*":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@types/keygrip/-/keygrip-1.0.2.tgz#513abfd256d7ad0bf1ee1873606317b33b1b2a72"
@@ -775,6 +787,11 @@
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@types/tmp/-/tmp-0.2.1.tgz#83ecf4ec22a8c218c71db25f316619fe5b986011"
   integrity sha512-7cTXwKP/HLOPVgjg+YhBdQ7bMiobGMuoBmrGmqwIWJv8elC6t1DfVc/mn4fD9UE1IjhwmhaQ5pGVXkmXbH0rhg==
+
+"@types/validator@^13.6.3":
+  version "13.6.3"
+  resolved "https://registry.yarnpkg.com/@types/validator/-/validator-13.6.3.tgz#31ca2e997bf13a0fffca30a25747d5b9f7dbb7de"
+  integrity sha512-fWG42pMJOL4jKsDDZZREnXLjc3UE0R8LOJfARWYg6U966rxDT7TYejYzLnUF5cvSObGg34nd0+H2wHHU5Omdfw==
 
 "@types/yargs-parser@*":
   version "20.2.1"

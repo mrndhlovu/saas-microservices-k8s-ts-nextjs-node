@@ -6,43 +6,41 @@ import { boardController } from "../controller"
 import { boardMiddleware } from "../middleware"
 
 const router = Router()
-const boardRoutes = () => {
-  router.get(
-    "",
+
+router.get(
+  "",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.getBoardList)
+)
+
+router
+  .route("/:boardId")
+  .get(
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
-    errorService.catchAsyncError(boardController.getBoardList)
+    boardController.getBoardById
   )
-
-  router
-    .route("/:boardId")
-    .get(
-      authMiddleware.validateRequiredAccessJwt,
-      authMiddleware.checkIsAuthenticated,
-      boardController.getBoardById
-    )
-    .patch(
-      authMiddleware.validateRequiredAccessJwt,
-      authMiddleware.checkIsAuthenticated,
-      boardController.updateBoard
-    )
-    .delete(
-      authMiddleware.validateRequiredAccessJwt,
-      authMiddleware.checkIsAuthenticated,
-      boardMiddleware.checkActionPermission(PERMISSION_FLAGS.ADMIN),
-      errorService.catchAsyncError(boardController.deleteBoard)
-    )
-
-  router.post(
-    "/create",
-    boardMiddleware.checkRequiredBodyFields,
-    boardMiddleware.validateRequestBodyFields,
+  .patch(
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
-    errorService.catchAsyncError(boardController.createBoard)
+    boardController.updateBoard
+  )
+  .delete(
+    authMiddleware.validateRequiredAccessJwt,
+    authMiddleware.checkIsAuthenticated,
+    boardMiddleware.checkActionPermission(PERMISSION_FLAGS.ADMIN),
+    errorService.catchAsyncError(boardController.deleteBoard)
   )
 
-  return router
-}
+router.post(
+  "/create",
+  boardMiddleware.checkRequiredBodyFields,
+  boardMiddleware.validateRequestBodyFields,
+  boardMiddleware.checkDuplicateBoards,
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.createBoard)
+)
 
-export { boardRoutes }
+export default router
