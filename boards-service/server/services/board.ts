@@ -71,6 +71,8 @@ class BoardServices {
     return board
   }
 
+  findInvitedBoards(userId: ObjectId, invitedBoardList: ObjectId[]) {}
+
   findBoardOnlyByTitle = async (title: string) => {
     const board = await Board.findOne({ title })
     return board

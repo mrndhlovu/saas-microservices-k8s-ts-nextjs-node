@@ -24,9 +24,9 @@ declare global {
 }
 
 class BoardMiddleware {
-  checkActionPermission(requirePermissionFlag: IPermissionType) {
+  verifyAccessPermission(requirePermissionFlag: IPermissionType) {
     return catchAsyncError(
-      async (req: Request, res: Response, next: NextFunction) => {
+      async (req: Request, _res: Response, next: NextFunction) => {
         const _id = req.params.boardId
 
         const userId = new ObjectID(req.user.userId)
@@ -69,10 +69,6 @@ class BoardMiddleware {
     async (req: Request, _res: Response, next: NextFunction) => {
       const existingBoard = await boardService.findBoardOnlyByTitle(
         req.body.title.trim()
-      )
-      console.log(
-        "🚀 ~ file: index.ts ~ line 77 ~ BoardMiddleware ~ existingBoard",
-        existingBoard
       )
 
       if (existingBoard) {

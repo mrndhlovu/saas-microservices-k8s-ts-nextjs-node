@@ -27,7 +27,6 @@ class AuthService {
     const user = await User.findOne({ email })
     return user
   }
-
   findUserOnlyByUsername = async (username: string) => {
     const user = await User.findOne({ username })
     return user

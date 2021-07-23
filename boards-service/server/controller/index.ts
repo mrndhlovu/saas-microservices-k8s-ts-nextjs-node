@@ -17,7 +17,7 @@ declare global {
 
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {
-    let boards = await Board.find({ owner: req.body.userId })
+    let boards = await Board.find({ owner: req.user.userId })
     res.send(boards)
   }
 

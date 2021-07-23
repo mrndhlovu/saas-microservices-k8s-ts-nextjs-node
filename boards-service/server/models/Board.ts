@@ -87,6 +87,7 @@ export interface IBoard {
 export interface IBoardMember {
   id: ObjectId
   permissionFlag: number
+  teamId?: ObjectId
 }
 
 export interface BoardDocument
