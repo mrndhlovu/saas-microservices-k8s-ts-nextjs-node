@@ -36,7 +36,7 @@ class AuthController {
   }
 
   getUserInfo = async (req: Request, res: Response) => {
-    res.status(200).send(req.user)
+    res.status(200).send(req.currentUser)
   }
 
   loginUser = async (req: Request, res: Response) => {

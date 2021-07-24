@@ -1,5 +1,7 @@
-import nats, { Message } from "node-nats-streaming"
+import nats from "node-nats-streaming"
 import { randomBytes } from "crypto"
+import { BoardCreatedListener } from "./events/board-created-listener"
+import { BoardUpdatedListener } from "./events/board-updated-listener"
 
 console.clear()
 
@@ -15,27 +17,8 @@ stan.on("connect", () => {
     process.exit()
   })
 
-  const options = stan
-    .subscriptionOptions()
-    .setManualAckMode(true)
-    .setDeliverAllAvailable()
-    .setDurableName("board-service")
-
-  const subscription = stan.subscribe(
-    "board:created",
-    // "listener:created:board",
-    options
-  )
-
-  subscription.on("message", (msg: Message) => {
-    const data = msg.getData()
-
-    if (typeof data === "string") {
-      console.log(`Received event ${msg.getSequence()}, with data: ${data}`)
-    }
-
-    msg.ack()
-  })
+  new BoardCreatedListener(stan).listen()
+  new BoardUpdatedListener(stan).listen()
 })
 
 process.on("SIGINT", () => stan.close())

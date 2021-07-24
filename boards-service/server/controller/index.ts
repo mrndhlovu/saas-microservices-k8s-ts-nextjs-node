@@ -4,7 +4,12 @@ import { Request, Response } from "express"
 import { permissionManager, ROLES } from "@tuskui/shared"
 
 import { allowedBoardUpdateFields } from "../utils/constants"
+import { BoardByIdPublisher } from "../events/publishers/board-get"
+import { BoardCreatedPublisher } from "../events/publishers/board-created"
+import { BoardDeletedPublisher } from "../events/publishers/board-deleted"
 import { boardService } from "../services/board"
+import { BoardUpdatedPublisher } from "../events/publishers/board-updated"
+import { natsService } from "../services/nats"
 import Board, { BoardDocument } from "../models/Board"
 
 declare global {
@@ -18,6 +23,15 @@ declare global {
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {
     let boards = await Board.find({ owner: req.user.userId })
+
+    const data = boards.map((board: BoardDocument) => ({
+      id: board._id,
+      title: board.title,
+      ownerId: board.owner,
+    }))
+
+    new BoardByIdPublisher(natsService.client).publish(data)
+
     res.send(boards)
   }
 
@@ -25,6 +39,12 @@ class BoardController {
     const board = await boardService.populatedBoard(req.params.boardId)
 
     if (!board) throw new Error("Board with that id was not found")
+
+    new BoardByIdPublisher(natsService.client).publish({
+      id: board._id,
+      title: board.title,
+      ownerId: board.owner,
+    })
 
     res.send(board)
   }
@@ -44,13 +64,20 @@ class BoardController {
       userId,
     })
 
-    board.save()
+    await board.save()
+
+    await new BoardCreatedPublisher(natsService.client).publish({
+      id: board._id,
+      title: board.title,
+      ownerId: board.owner,
+    })
 
     res.status(201).send(board)
   }
 
   updateBoard = async (req: Request, res: Response) => {
     const updates = Object.keys(req.body)
+    let board = req.board!
 
     const hasValidFields = boardService.validateEditableFields(
       allowedBoardUpdateFields,
@@ -59,17 +86,31 @@ class BoardController {
 
     if (!hasValidFields) throw new Error("Invalid update field")
 
-    updates.forEach(async (update: string) => {
-      await req.board!.updateOne({ $set: { [update]: req.body[update] } })
+    const updatedBoard = await Board.findOneAndUpdate(
+      { _id: board._id },
+      { $set: { ...req.body } },
+      { new: true }
+    )
+
+    await updatedBoard.save()
+
+    new BoardUpdatedPublisher(natsService.client).publish({
+      id: updatedBoard._id.toHexString(),
+      title: updatedBoard.title,
+      ownerId: updatedBoard.owner.toHexString(),
     })
 
-    req.board!.save()
-
-    res.status(200).send(req.board)
+    res.status(200).send(updatedBoard)
   }
 
   deleteBoard = async (req: Request, res: Response) => {
+    const boardId = req.board!._id
     req.board!.delete()
+
+    new BoardDeletedPublisher(natsService.client).publish({
+      id: boardId.toHexString(),
+    })
+
     res.status(200).send({ message: "Board deleted" })
   }
 }
