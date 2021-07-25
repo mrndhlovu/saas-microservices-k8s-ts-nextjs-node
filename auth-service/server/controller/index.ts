@@ -63,10 +63,10 @@ class AuthController {
   }
 
   updateUser = async (req: Request, res: Response) => {
-    const targetFields = Object.keys(req.body)
+    const updateFields = Object.keys(req.body)
 
     const hasValidFields = authService.validatedUpdateFields(
-      targetFields,
+      updateFields,
       editableUserFields
     )
 
@@ -81,6 +81,10 @@ class AuthController {
     if (!updatedRecord) throw new BadRequestError("Failed to updated record.")
 
     await updatedRecord.save()
+
+    if (updateFields.includes("username")) {
+      req.session = null
+    }
 
     res.send(updatedRecord)
   }

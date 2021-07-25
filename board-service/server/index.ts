@@ -2,11 +2,10 @@ import { BadRequestError } from "@tuskui/shared"
 
 import { app } from "./app"
 import { database } from "./services/db"
-import { ListCreatedListener } from "./events/listeners"
 import { natsService } from "./services/nats"
 
 class Server {
-  private validateEnvVariables() {
+  private loadEnvVariables() {
     const {
       PORT,
       JWT_TOKEN_SIGNATURE,
@@ -31,7 +30,7 @@ class Server {
   }
 
   async start() {
-    this.validateEnvVariables()
+    this.loadEnvVariables()
 
     const { NODE_ENV, PORT, NATS_CLUSTER_ID, NATS_CLIENT_ID, NATS_URL } =
       process.env
@@ -40,8 +39,6 @@ class Server {
 
     await natsService.connect(NATS_CLUSTER_ID!, NATS_CLIENT_ID!, NATS_URL!)
     natsService.handleOnclose()
-
-    new ListCreatedListener(natsService.client).listen()
 
     await database.connect()
     app.listen(port, () => {

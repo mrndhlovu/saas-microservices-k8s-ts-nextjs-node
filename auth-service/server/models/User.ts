@@ -119,24 +119,22 @@ UserSchema.methods.toJSON = function () {
 UserSchema.pre("save", function (next) {
   const saltRounds = 12
 
-  if (
-    this.isModified("firstname") ||
-    this.isModified("lastname") ||
-    this.isModified("username")
-  ) {
-    if (this.isModified("firstname") || this.isModified("lastname")) {
-      const firstNameInitial = this.firstname?.substring(0, 1)
-      const lastNameInitial = this.lastname?.substring(0, 1)
-
-      this.initials = `${firstNameInitial}${lastNameInitial}`.toUpperCase()
-    } else {
-      this.initials = this.username?.substring(0, 2).toUpperCase()
-    }
-  }
-
   if (!this.isModified("password")) return next()
 
   authService.encryptUserPassword(this, this.password, saltRounds, next)
+})
+
+UserSchema.pre("save", function (next) {
+  if (this.firstname && this.lastname) {
+    const fNameInitial = this.firstname?.substring(0, 1)
+    const lNameInitial = this.lastname?.substring(0, 1)
+
+    this.initials = `${fNameInitial}${lNameInitial}`.toUpperCase()
+  } else {
+    this.initials = this.username?.substring(0, 2).toUpperCase()
+  }
+
+  next()
 })
 
 interface IUseBoardRoles {
