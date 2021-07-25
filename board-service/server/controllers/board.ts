@@ -5,8 +5,6 @@ import { BadRequestError, permissionManager, ROLES } from "@tuskui/shared"
 import { allowedBoardUpdateFields } from "../utils/constants"
 import { boardService } from "../services/board"
 import {
-  BoardUpdatedPublisher,
-  BoardListPublisher,
   BoardDeletedPublisher,
   BoardCreatedPublisher,
 } from "../events/publishers"
@@ -84,11 +82,6 @@ class BoardController {
     if (!updatedBoard) throw new BadRequestError("Fail to update board")
 
     await updatedBoard.save()
-
-    new BoardUpdatedPublisher(natsService.client).publish({
-      id: updatedBoard._id.toHexString(),
-      ownerId: updatedBoard.owner,
-    })
 
     res.status(200).send(updatedBoard)
   }

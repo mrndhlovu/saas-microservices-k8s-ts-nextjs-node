@@ -152,7 +152,7 @@ export interface IUserAttributes {
   lastname?: string
   loginTypes: ILoginTypes[]
   password: string
-  boardIds: ObjectId[]
+  boardIds: string[]
   resetPasswordExpires?: string
   resetPasswordToken?: string
   roles: IUseBoardRoles[]

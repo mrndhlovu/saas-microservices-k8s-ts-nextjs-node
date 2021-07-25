@@ -55,9 +55,8 @@ router.delete(
 )
 
 router.get(
-  "/token/:refreshToken",
-  middlewareUtils.validateRequiredAccessJwt,
-  authMiddleware.findCurrentUser,
+  "/refresh-token",
+  middlewareUtils.validateRequiredRefreshJwt,
   errorService.catchAsyncError(authController.getRefreshToken)
 )
 

@@ -1,6 +1,7 @@
 import { BadRequestError } from "@tuskui/shared"
 
 import { app } from "./app"
+import { UserDeletedListener } from "./events/listeners"
 import { database } from "./services/db"
 import { natsService } from "./services/nats"
 
@@ -29,16 +30,22 @@ class Server {
     }
   }
 
+  private async connectEventBus() {
+    const { NATS_CLUSTER_ID, NATS_CLIENT_ID, NATS_URL } = process.env
+    await natsService.connect(NATS_CLUSTER_ID!, NATS_CLIENT_ID!, NATS_URL!)
+    natsService.handleOnclose()
+
+    new UserDeletedListener(natsService.client).listen()
+  }
+
   async start() {
     this.loadEnvVariables()
 
-    const { NODE_ENV, PORT, NATS_CLUSTER_ID, NATS_CLIENT_ID, NATS_URL } =
-      process.env
+    const { NODE_ENV, PORT } = process.env
 
     const port = parseInt(PORT!, 10)
 
-    await natsService.connect(NATS_CLUSTER_ID!, NATS_CLIENT_ID!, NATS_URL!)
-    natsService.handleOnclose()
+    await this.connectEventBus()
 
     await database.connect()
     app.listen(port, () => {

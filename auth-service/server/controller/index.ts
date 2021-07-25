@@ -5,12 +5,13 @@ import {
   authUtils,
   BadRequestError,
   permissionManager,
-  ROLES,
 } from "@tuskui/shared"
 
 import { editableUserFields } from "../utils/constants"
 import { authService } from "../services/auth"
 import { IUserDocument, User } from "../models/User"
+import { UserDeletedPublisher } from "../events/publishers"
+import { natsService } from "../services/nats"
 
 declare global {
   namespace Express {
@@ -90,18 +91,33 @@ class AuthController {
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    await req.currentUser!.delete()
+    const user = req.currentUser!
 
-    res.status(200).send({ message: "Account deleted", success: true })
+    const userId = user._id.toHexString()
+    const boardIds = user.boardIds
+
+    await user.delete()
+
+    new UserDeletedPublisher(natsService.client).publish({
+      id: userId,
+      boardIds,
+    })
+
+    res.status(200).send({})
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const tokens = await authService.getAuthTokens(req.currentUser!)
+    const user = await authService.findUserByJwt(req.user)
 
-    res.status(200).send(tokens)
+    if (!user)
+      throw new BadRequestError("Authentication credentials may have expired.")
+
+    await authService.getAuthTokens(user)
+
+    authUtils.generateAuthCookies(req, user.tokens)
+
+    res.status(200).send({})
   }
 }
 
-const authController = new AuthController()
-
-export { authController }
+export const authController = new AuthController()

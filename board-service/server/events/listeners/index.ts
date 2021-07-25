@@ -1,6 +1,1 @@
-export * from "./board-created"
-export * from "./board-deleted"
-export * from "./board-request"
-export * from "./board-request-list"
-export * from "./board-updated"
-export * from "./list-created"
+export * from "./user-deleted"
