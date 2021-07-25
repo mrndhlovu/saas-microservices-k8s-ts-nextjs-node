@@ -18,7 +18,17 @@ spec:
 
           - path: /api/boards/?(.*)
             backend:
-              serviceName: boards-srv
+              serviceName: board-srv
+              servicePort: 3000
+
+          - path: /api/lists/?(.*)
+            backend:
+              serviceName: board-srv
+              servicePort: 3000
+
+          - path: /api/cards/?(.*)
+            backend:
+              serviceName: board-srv
               servicePort: 3000
 
           - path: /?(.*)

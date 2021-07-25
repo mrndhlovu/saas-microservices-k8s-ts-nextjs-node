@@ -27,10 +27,19 @@ build:
             dest: .
 
     - image: ndhlovu/boards
-      context: boards-service
+      context: board-service
       docker:
         dockerfile: Dockerfile
       sync:
         manual:
           - src: "server/**/*.ts"
             dest: .
+
+    # - image: ndhlovu/upgrade
+    #   context: upgrade-service
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     manual:
+    #       - src: "server/**/*.ts"
+    #         dest: .

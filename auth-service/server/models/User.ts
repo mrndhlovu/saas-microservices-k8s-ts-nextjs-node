@@ -42,6 +42,11 @@ const UserSchema: Schema<IUserDocument> = new Schema(
           throw new Error(`Password should not include 'password'`)
       },
     },
+    boardIds: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Board" }],
+      required: true,
+      default: [],
+    },
     permissionFlag: {
       type: Number,
       required: true,
@@ -149,6 +154,7 @@ export interface IUserAttributes {
   lastname?: string
   loginTypes: ILoginTypes[]
   password: string
+  boardIds: ObjectId[]
   resetPasswordExpires?: string
   resetPasswordToken?: string
   roles: IUseBoardRoles[]
