@@ -10,10 +10,17 @@
     "docker:dev": "NODE_PATH=./build NODE_ENV=development  node build/index.js",
     "docker:prod": "NODE_PATH=./build NODE_ENV=production  node build/index.js",
     "build": "tsc -p ./tsconfig.json || true",
-    "test": "jest --coverage --watchAll --no-cache"
+    "test": "jest --watchAll --no-cache"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "./server/test/setup.ts"
+    ]
   },
   "dependencies": {
-    "@tuskui/shared": "^1.0.74",
+    "@tuskui/shared": "^1.0.86",
     "@types/cookie-session": "^2.0.43",
     "bcrypt": "^5.0.1",
     "cookie-parser": "^1.4.5",

@@ -1,9 +1,8 @@
-import { ObjectId } from "mongodb"
 import isEmail from "validator/lib/isEmail"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-import { authUtils, IJwtAuthToken } from "@tuskui/shared"
+import { IJwtAuthToken } from "@tuskui/shared"
 
 import { IJwtAccessTokens } from "../types"
 import { IUserDocument, User } from "../models/User"
@@ -69,23 +68,19 @@ class AuthService {
     })
   }
 
-  private generateTokens = (userId: ObjectId, email: string) => {
+  getAuthTokens = async (tokenToSign: IJwtAuthToken) => {
+    const { JWT_TOKEN_SIGNATURE, JWT_REFRESH_TOKEN_SIGNATURE } = process.env
+
     const accessTokenExpiresIn: string = "15m"
     const refreshTokenExpiresIn: string = "12h"
 
-    const tokenToSign = { userId: userId.toString(), email }
-
-    const accessToken = jwt.sign(tokenToSign, authUtils.getSigningKey(), {
+    const accessToken = jwt.sign(tokenToSign, JWT_TOKEN_SIGNATURE!, {
       expiresIn: accessTokenExpiresIn,
     })
 
-    const refreshToken = jwt.sign(
-      tokenToSign,
-      authUtils.getSigningKey("refresh"),
-      {
-        expiresIn: refreshTokenExpiresIn,
-      }
-    )
+    const refreshToken = jwt.sign(tokenToSign, JWT_REFRESH_TOKEN_SIGNATURE!, {
+      expiresIn: refreshTokenExpiresIn,
+    })
 
     const tokens: IJwtAccessTokens = {
       access: accessToken,
@@ -93,14 +88,6 @@ class AuthService {
     }
 
     return tokens
-  }
-
-  getAuthTokens = async (user: IUserDocument) => {
-    user.tokens = this.generateTokens(user._id, user.email)
-
-    await user.save()
-
-    return user
   }
 }
 

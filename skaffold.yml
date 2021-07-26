@@ -35,11 +35,11 @@ build:
           - src: "server/**/*.ts"
             dest: .
 
-    # - image: ndhlovu/upgrade
-    #   context: upgrade-service
-    #   docker:
-    #     dockerfile: Dockerfile
-    #   sync:
-    #     manual:
-    #       - src: "server/**/*.ts"
-    #         dest: .
+    - image: ndhlovu/upgrades
+      context: upgrades-service
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "server/**/*.ts"
+            dest: .

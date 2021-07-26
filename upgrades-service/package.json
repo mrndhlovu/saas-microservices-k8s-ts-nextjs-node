@@ -1,5 +1,5 @@
 {
-  "name": "tuskui-board-micro-service",
+  "name": "tuskui-upgrade-micro-service",
   "version": "1.0.0",
   "main": "server/index.ts",
   "author": "Mduduzi Ndhlovu",

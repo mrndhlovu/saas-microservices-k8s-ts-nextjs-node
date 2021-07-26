@@ -5,22 +5,22 @@ import express from "express"
 
 import { errorService } from "@tuskui/shared"
 
-import authRoutes from "./routes"
-
-const inTestMode = process.env.NODE_ENV === "test"
+import { upgradeRoutes } from "./routes"
 
 const app = express()
-const baseUrl = "/api/auth"
 
 app.set("trust proxy", true)
 
 app.use(cookieParser())
 app.use(express.json())
-app.use(cookieSession({ signed: false, secure: !inTestMode }))
+app.use(
+  cookieSession({ signed: false, secure: process.env.NODE_ENV !== "test" })
+)
 app.use(express.urlencoded({ extended: false }))
 
-app.use(baseUrl, authRoutes)
+app.use("/api/upgrade", upgradeRoutes)
+
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)
 
-export default app
+export { app }

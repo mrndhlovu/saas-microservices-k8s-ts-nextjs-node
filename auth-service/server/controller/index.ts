@@ -4,6 +4,7 @@ import {
   ACCOUNT_TYPE,
   authUtils,
   BadRequestError,
+  IJwtAuthToken,
   permissionManager,
 } from "@tuskui/shared"
 
@@ -30,36 +31,58 @@ class AuthController {
       ACCOUNT_TYPE.STANDARD
     )
 
-    user = await authService.getAuthTokens(user)
+    const tokenToSign = { userId: user._id.toHexString(), email: user.email }
+
+    user.tokens = await authService.getAuthTokens(tokenToSign)
     authUtils.generateAuthCookies(req, user.tokens)
+
+    await user.save()
 
     res.status(201).send(user)
   }
 
   getUserInfo = async (req: Request, res: Response) => {
-    res.status(200).send(req.currentUser)
+    if (!req.session || !req.session.jwt) {
+      return res.status(200).send()
+    }
+
+    const userJwt = authUtils.decodeJwtToken(
+      req.session!.jwt.access
+    ) as IJwtAuthToken
+
+    const currentUser = await authService.findUserByJwt(userJwt)
+
+    if (!currentUser) {
+      return res.status(200).send(null)
+    }
+
+    res.status(200).send(currentUser)
   }
 
   loginUser = async (req: Request, res: Response) => {
     const { identifier, password } = req.body
 
     const user = await authService.findUserByCredentials(identifier, password)
+    const tokenToSign = { userId: user._id.toHexString(), email: user.email }
 
-    await authService.getAuthTokens(user)
+    user.tokens = await authService.getAuthTokens(tokenToSign)
+    authUtils.generateAuthCookies(req, user.tokens)
+
+    await user.save()
 
     authUtils.generateAuthCookies(req, user.tokens)
 
-    res.send(user)
+    res.status(200).send(user)
   }
 
   logoutUser = async (req: Request, res: Response) => {
     req.currentUser!.updateOne({
       $set: { tokens: { access: "", refresh: "" } },
     })
-    req.session = null
 
     await req.currentUser!.save()
 
+    req.session = null
     res.send({})
   }
 
@@ -112,9 +135,12 @@ class AuthController {
     if (!user)
       throw new BadRequestError("Authentication credentials may have expired.")
 
-    await authService.getAuthTokens(user)
+    const tokenToSign = { userId: user._id.toHexString(), email: user.email }
 
+    user.tokens = await authService.getAuthTokens(tokenToSign)
     authUtils.generateAuthCookies(req, user.tokens)
+
+    await user.save()
 
     res.status(200).send({})
   }

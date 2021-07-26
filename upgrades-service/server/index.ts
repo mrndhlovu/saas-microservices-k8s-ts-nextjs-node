@@ -1,17 +1,17 @@
 import { BadRequestError } from "@tuskui/shared"
 
-import services from "./services"
-import app from "./app"
+import { app } from "./app"
+import { UserDeletedListener } from "./events/listeners"
+import { database } from "./services/db"
 import { natsService } from "./services/nats"
-import { BoardCreatedListener, BoardDeletedListener } from "./events/listeners"
 
 class Server {
-  private validateEnvVariables() {
+  private loadEnvVariables() {
     const {
       PORT,
       JWT_TOKEN_SIGNATURE,
       JWT_REFRESH_TOKEN_SIGNATURE,
-      AUTH_MONGO_URI,
+      UPGRADES_MONGO_URI,
       NATS_URL,
       NATS_CLIENT_ID,
       NATS_CLUSTER_ID,
@@ -21,7 +21,7 @@ class Server {
       !PORT ||
       !JWT_TOKEN_SIGNATURE ||
       !JWT_REFRESH_TOKEN_SIGNATURE ||
-      !AUTH_MONGO_URI ||
+      !UPGRADES_MONGO_URI ||
       !NATS_CLUSTER_ID ||
       !NATS_CLIENT_ID ||
       !NATS_URL
@@ -30,28 +30,28 @@ class Server {
     }
   }
 
+  private async connectEventBus() {
+    const { NATS_CLUSTER_ID, NATS_CLIENT_ID, NATS_URL } = process.env
+    await natsService.connect(NATS_CLUSTER_ID!, NATS_CLIENT_ID!, NATS_URL!)
+    natsService.handleOnclose()
+
+    new UserDeletedListener(natsService.client).listen()
+  }
+
   async start() {
-    this.validateEnvVariables()
+    this.loadEnvVariables()
 
     const { NODE_ENV, PORT } = process.env
 
     const port = parseInt(PORT!, 10)
 
-    await natsService.connect(
-      process.env.NATS_CLUSTER_ID!,
-      process.env.NATS_CLIENT_ID!,
-      process.env.NATS_URL!
-    )
-    natsService.handleOnclose()
+    await this.connectEventBus()
 
-    new BoardCreatedListener(natsService.client).listen()
-    new BoardDeletedListener(natsService.client).listen()
-
-    await services.database.connect()
+    await database.connect()
     app.listen(port, () => {
       const serverStatus = [
         {
-          "Server Status": "Online",
+          "[BLS] Server Status": "Online",
           Environment: NODE_ENV!,
           Port: port,
         },
