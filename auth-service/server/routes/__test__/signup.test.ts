@@ -1,15 +1,26 @@
 import request from "supertest"
 
 import app from "../../app"
+import { TestUser } from "../../test/setup"
+
+let user: TestUser
 
 describe("Auth Signup", () => {
+  beforeEach(async () => {
+    user = {
+      email: "test@test.com",
+      username: "bazinga",
+      password: "bazinga",
+    }
+  })
+
   it("returns a 201 on successful sign up", async () => {
     return request(app)
       .post("/api/auth/signup")
       .send({
-        email: "testing@test.com",
-        password: "passwo123",
-        username: "username",
+        email: user.email,
+        password: user.password,
+        username: user.username,
       })
       .expect(201)
   })
@@ -19,8 +30,8 @@ describe("Auth Signup", () => {
       .post("/api/auth/signup")
       .send({
         email: "testingtest.com",
-        password: "passwo123",
-        username: "username",
+        password: user.password,
+        username: user.username,
       })
       .expect(400)
   })
@@ -29,9 +40,9 @@ describe("Auth Signup", () => {
     return request(app)
       .post("/api/auth/signup")
       .send({
-        email: "testing@test.com",
+        email: user.email,
         password: "password",
-        username: "username",
+        username: user.username,
       })
       .expect(400)
   })
@@ -39,41 +50,32 @@ describe("Auth Signup", () => {
   it("returns a 400 with missing email and password", async () => {
     await request(app)
       .post("/api/auth/signup")
-      .send({ email: "testing@test.com" })
+      .send({ email: user.email })
       .expect(400)
 
     await request(app)
       .post("/api/auth/signup")
-      .send({ password: "password" })
+      .send({ password: user.password, username: user.username })
       .expect(400)
   })
 
   it("it rejects duplicate emails", async () => {
-    await request(app)
-      .post("/api/auth/signup")
-      .send({
-        email: "testing@test.com",
-        password: "passwo123",
-        username: "username",
-      })
-      .expect(201)
+    const existing = await global.signup()
 
     await request(app)
       .post("/api/auth/signup")
       .send({
-        email: "testing@test.com",
-        password: "passwo123",
-        username: "username",
+        email: existing.testUser.email,
+        password: existing.testUser.password,
+        username: existing.testUser.username,
       })
       .expect(400)
   })
 
   it("it sets a cookie after success signup", async () => {
-    const response = await request(app).post("/api/auth/signup").send({
-      email: "testing@test.com",
-      password: "passwo123",
-      username: "username",
-    })
+    const response = await request(app)
+      .post("/api/auth/signup")
+      .send({ ...user })
 
     expect(response.get("Set-Cookie")).toBeDefined()
   })

@@ -36,6 +36,7 @@ class AuthService {
       email: decodedJWT.email,
       _id: decodedJWT.userId,
     })
+
     return user
   }
 

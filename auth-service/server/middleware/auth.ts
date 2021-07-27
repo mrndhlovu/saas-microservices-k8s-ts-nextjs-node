@@ -1,7 +1,13 @@
 import { Response, NextFunction, Request } from "express"
 import { body, oneOf, check } from "express-validator"
+import jwt from "jsonwebtoken"
 
-import { BadRequestError } from "@tuskui/shared"
+import {
+  BadRequestError,
+  errorService,
+  IJwtAccessTokens,
+  IJwtAuthToken,
+} from "@tuskui/shared"
 
 import { authService } from "../services/auth"
 import { IUserDocument } from "../models/User"
@@ -9,7 +15,13 @@ import { IUserDocument } from "../models/User"
 declare global {
   namespace Express {
     interface Request {
-      currentUser?: IUserDocument
+      currentUser: IUserDocument | null | undefined
+      session:
+        | {
+            jwt: IJwtAccessTokens
+          }
+        | null
+        | undefined
     }
   }
 }
@@ -62,20 +74,38 @@ class AuthMiddleWare {
     next()
   }
 
-  findCurrentUser = async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ) => {
-    const currentUser = await authService.findUserByJwt(req.user)
+  verifyCurrentUser = errorService.catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const currentUser = await authService.findUserByJwt(req.currentUserJwt)
 
-    if (!currentUser) {
-      throw new BadRequestError(`Authentication failed`)
+      if (!currentUser) {
+        next()
+      }
+
+      req.currentUser = currentUser
+
+      next()
     }
+  )
 
-    req.currentUser = currentUser
+  findCurrentUser = errorService.catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const currentUser = await authService.findUserByJwt(req.currentUserJwt)
 
-    next()
+      if (!currentUser) {
+        throw new BadRequestError(`Authentication failed`)
+      }
+
+      req.currentUser = currentUser
+
+      next()
+    }
+  )
+
+  generateAuthCookies = (req: Request, tokens: IJwtAccessTokens) => {
+    return (req.session = {
+      jwt: tokens,
+    })
   }
 }
 

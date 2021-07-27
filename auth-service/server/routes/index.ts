@@ -17,7 +17,8 @@ router.post(
 
 router.get(
   "/me",
-
+  middlewareUtils.checkIsAuthenticated,
+  authMiddleware.verifyCurrentUser,
   errorService.catchAsyncError(authController.getUserInfo)
 )
 

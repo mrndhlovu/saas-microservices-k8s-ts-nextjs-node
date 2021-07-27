@@ -2,25 +2,16 @@ import { Request, Response } from "express"
 
 import {
   ACCOUNT_TYPE,
-  authUtils,
   BadRequestError,
-  IJwtAuthToken,
   permissionManager,
 } from "@tuskui/shared"
 
-import { editableUserFields } from "../utils/constants"
+import { authMiddleware } from "../middleware/auth"
 import { authService } from "../services/auth"
-import { IUserDocument, User } from "../models/User"
-import { UserDeletedPublisher } from "../events/publishers"
+import { editableUserFields } from "../utils/constants"
 import { natsService } from "../services/nats"
-
-declare global {
-  namespace Express {
-    interface Request {
-      currentUser?: IUserDocument
-    }
-  }
-}
+import { User } from "../models/User"
+import { UserDeletedPublisher } from "../events/publishers"
 
 class AuthController {
   signUpUser = async (req: Request, res: Response) => {
@@ -34,7 +25,7 @@ class AuthController {
     const tokenToSign = { userId: user._id.toHexString(), email: user.email }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
-    authUtils.generateAuthCookies(req, user.tokens)
+    authMiddleware.generateAuthCookies(req, user.tokens)
 
     await user.save()
 
@@ -42,21 +33,7 @@ class AuthController {
   }
 
   getUserInfo = async (req: Request, res: Response) => {
-    if (!req.session || !req.session.jwt) {
-      return res.status(200).send()
-    }
-
-    const userJwt = authUtils.decodeJwtToken(
-      req.session!.jwt.access
-    ) as IJwtAuthToken
-
-    const currentUser = await authService.findUserByJwt(userJwt)
-
-    if (!currentUser) {
-      return res.status(200).send(null)
-    }
-
-    res.status(200).send(currentUser)
+    res.status(200).send(req.currentUser)
   }
 
   loginUser = async (req: Request, res: Response) => {
@@ -66,11 +43,11 @@ class AuthController {
     const tokenToSign = { userId: user._id.toHexString(), email: user.email }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
-    authUtils.generateAuthCookies(req, user.tokens)
+    authMiddleware.generateAuthCookies(req, user.tokens)
 
     await user.save()
 
-    authUtils.generateAuthCookies(req, user.tokens)
+    authMiddleware.generateAuthCookies(req, user.tokens)
 
     res.status(200).send(user)
   }
@@ -130,7 +107,7 @@ class AuthController {
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const user = await authService.findUserByJwt(req.user)
+    const user = await authService.findUserByJwt(req.currentUserJwt)
 
     if (!user)
       throw new BadRequestError("Authentication credentials may have expired.")
@@ -138,7 +115,7 @@ class AuthController {
     const tokenToSign = { userId: user._id.toHexString(), email: user.email }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
-    authUtils.generateAuthCookies(req, user.tokens)
+    authMiddleware.generateAuthCookies(req, user.tokens)
 
     await user.save()
 

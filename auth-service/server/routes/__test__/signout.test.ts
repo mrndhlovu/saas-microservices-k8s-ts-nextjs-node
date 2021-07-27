@@ -4,11 +4,11 @@ import app from "../../app"
 
 describe("Auth Logout", () => {
   it("it clears the cookie after logout", async () => {
-    const cookie = await global.getCookie()
+    const { testCookie } = await global.signup()
 
     const response = await request(app)
       .get("/api/auth/logout")
-      .set("Cookie", cookie)
+      .set("Cookie", testCookie)
       .send()
       .expect(200)
 

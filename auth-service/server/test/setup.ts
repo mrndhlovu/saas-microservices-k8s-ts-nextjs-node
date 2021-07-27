@@ -5,7 +5,13 @@ import request from "supertest"
 import app from "../app"
 
 declare global {
-  var getCookie: () => Promise<string[]>
+  var signup: () => Promise<{ testCookie: string[]; testUser: TestUser }>
+}
+
+export interface TestUser {
+  email: string
+  username: string
+  password: string
 }
 
 let mongo: any
@@ -25,6 +31,7 @@ beforeAll(async () => {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
+    useFindAndModify: false,
   })
 })
 
@@ -41,17 +48,23 @@ afterAll(async () => {
   await mongoose.connection.close()
 })
 
-global.getCookie = async () => {
-  const email = "test@test.com"
-  const username = "bazinga"
-  const password = "bazinga"
+global.signup = async () => {
+  const testUser: TestUser = {
+    email: "test@test.com",
+    username: "bazinga",
+    password: "bazinga",
+  }
 
   const response = await request(app)
     .post("/api/auth/signup")
-    .send({ email, username, password })
+    .send({
+      email: testUser.email,
+      username: testUser.username,
+      password: testUser.password,
+    })
     .expect(201)
 
   const cookie = response.get("Set-Cookie")
 
-  return cookie
+  return { testCookie: cookie, testUser }
 }
