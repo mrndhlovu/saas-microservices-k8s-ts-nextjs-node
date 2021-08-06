@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb"
 
-import { IPermissionType } from "@tuskui/shared"
+import { IPermissionType } from "@tusksui/shared"
 
 import List from "../models/List"
 

@@ -4,7 +4,7 @@ import {
   BadRequestError,
   IPermissionType,
   permissionManager,
-} from "@tuskui/shared"
+} from "@tusksui/shared"
 
 import Board, { BoardDocument, IBoardMember } from "../models/Board"
 import { idToObjectId } from "../helpers"

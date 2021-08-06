@@ -1,17 +1,17 @@
 import mongoose from "mongoose"
 import { Request, Response } from "express"
 
-import { BadRequestError } from "@tuskui/shared"
+import { BadRequestError } from "@tusksui/shared"
 
 import { allowedListUpdateFields } from "../utils/constants"
 import { listService } from "../services/list"
 import Board from "../models/Board"
-import List, { ListDocument } from "../models/List"
+import List, { IListDocument } from "../models/List"
 
 declare global {
   namespace Express {
     interface Request {
-      list: ListDocument | null | undefined
+      list: IListDocument | null | undefined
     }
   }
 }
@@ -62,6 +62,8 @@ class ListController {
     const updates = Object.keys(req.body)
     const list = await listService.findListById(req.params.listId)
 
+    if (!list) throw new BadRequestError("List with that id was not found")
+
     const hasValidFields = listService.validateEditableFields(
       allowedListUpdateFields,
       updates
@@ -75,6 +77,9 @@ class ListController {
       { new: true }
     )
 
+    if (!updatedList)
+      throw new BadRequestError("List with that id was not found")
+
     await updatedList.save()
 
     res.status(200).send(updatedList)
@@ -86,13 +91,17 @@ class ListController {
 
     if (shouldDeleteAll) {
       const lists = await List.find({ boardId: req.params.boardId })
-      const listIds = lists.map((list: ListDocument) => list._id.toHexString())
 
+      if (lists?.length < 1)
+        throw new BadRequestError("Lists owned by current user where now found")
+
+      const listIds = lists.map((list: IListDocument) => list._id)
       await List.deleteMany({ _id: listIds })
 
       return res.status(200).send({})
     }
     const list = await listService.findListById(req.params.listId)
+    if (!list) throw new BadRequestError("List with that id was not found")
 
     await list.delete()
 

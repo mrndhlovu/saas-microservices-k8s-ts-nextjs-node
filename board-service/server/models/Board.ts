@@ -63,7 +63,7 @@ const BoardSchema = new Schema<BoardDocument>(
 
 BoardSchema.pre("save", async function (next) {
   if (this.updatedAt) {
-    this.updatedAt = Date.now()
+    // this.updatedAt = Date.now()
   }
   next()
 })

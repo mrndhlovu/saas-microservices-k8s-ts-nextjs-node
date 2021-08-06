@@ -3,7 +3,7 @@ import cookieParser from "cookie-parser"
 import cookieSession from "cookie-session"
 import express from "express"
 
-import { errorService } from "@tuskui/shared"
+import { errorService } from "@tusksui/shared"
 
 import authRoutes from "./routes"
 

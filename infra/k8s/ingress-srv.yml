@@ -31,9 +31,9 @@ spec:
               serviceName: board-srv
               servicePort: 3000
 
-          - path: /api/upgrade/?(.*)
+          - path: /api/accounts/?(.*)
             backend:
-              serviceName: upgrades-srv
+              serviceName: accounts-srv
               servicePort: 3000
 
           - path: /?(.*)

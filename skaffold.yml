@@ -35,8 +35,8 @@ build:
           - src: "server/**/*.ts"
             dest: .
 
-    - image: ndhlovu/upgrades
-      context: upgrades-service
+    - image: ndhlovu/accounts
+      context: accounts-service
       docker:
         dockerfile: Dockerfile
       sync:

@@ -1,4 +1,4 @@
-import { BadRequestError } from "@tuskui/shared"
+import { BadRequestError } from "@tusksui/shared"
 import { Request, Response } from "express"
 
 import Board from "../models/Board"

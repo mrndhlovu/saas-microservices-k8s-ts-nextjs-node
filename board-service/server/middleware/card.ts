@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { check, oneOf, validationResult } from "express-validator"
 
-import { CustomRequestError, errorService } from "@tuskui/shared"
+import { CustomRequestError, errorService } from "@tusksui/shared"
 import { allowedCardUpdateFields } from "../utils/constants"
 import { CardDocument } from "../models/Card"
 

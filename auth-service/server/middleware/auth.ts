@@ -7,7 +7,7 @@ import {
   errorService,
   IJwtAccessTokens,
   IJwtAuthToken,
-} from "@tuskui/shared"
+} from "@tusksui/shared"
 
 import { authService } from "../services/auth"
 import { IUserDocument } from "../models/User"

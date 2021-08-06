@@ -4,14 +4,17 @@ import {
   ACCOUNT_TYPE,
   BadRequestError,
   permissionManager,
-} from "@tuskui/shared"
+} from "@tusksui/shared"
 
 import { authMiddleware } from "../middleware/auth"
 import { authService } from "../services/auth"
 import { editableUserFields } from "../utils/constants"
 import { natsService } from "../services/nats"
 import { User } from "../models/User"
-import { UserDeletedPublisher } from "../events/publishers"
+import {
+  UserDeletedPublisher,
+  UserCreatedPublisher,
+} from "../events/publishers"
 
 class AuthController {
   signUpUser = async (req: Request, res: Response) => {
@@ -29,10 +32,17 @@ class AuthController {
 
     await user.save()
 
+    new UserCreatedPublisher(natsService.client).publish({
+      id: user._id.toHexString(),
+      username: user.username!,
+      firstname: user.firstname!,
+      lastname: user.lastname!,
+    })
+
     res.status(201).send(user)
   }
 
-  getUserInfo = async (req: Request, res: Response) => {
+  getCurrentUser = async (req: Request, res: Response) => {
     res.status(200).send(req.currentUser)
   }
 

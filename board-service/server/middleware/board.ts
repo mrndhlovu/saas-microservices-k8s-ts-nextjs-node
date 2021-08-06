@@ -9,7 +9,7 @@ import {
   errorService,
   permissionManager,
   IPermissionType,
-} from "@tuskui/shared"
+} from "@tusksui/shared"
 import { boardService } from "../services/board"
 import { allowedBoardUpdateFields } from "../utils/constants"
 
@@ -29,7 +29,7 @@ class BoardMiddleware {
       async (req: Request, _res: Response, next: NextFunction) => {
         const _id = req.params.boardId
 
-        const userId = req.user.userId
+        const userId = req.currentUserJwt.userId
 
         const board = await boardService.findBoardOnlyById(_id)
 

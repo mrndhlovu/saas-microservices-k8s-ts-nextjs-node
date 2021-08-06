@@ -1,4 +1,4 @@
-import { BadRequestError } from "@tuskui/shared"
+import { BadRequestError } from "@tusksui/shared"
 
 import { app } from "./app"
 import { UserDeletedListener } from "./events/listeners"

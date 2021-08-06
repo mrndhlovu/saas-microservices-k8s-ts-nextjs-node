@@ -1,8 +1,7 @@
 import { Request, Response } from "express"
 
-import { BadRequestError, permissionManager, ROLES } from "@tuskui/shared"
+import { BadRequestError, permissionManager, ROLES } from "@tusksui/shared"
 
-import { allowedBoardUpdateFields } from "../utils/constants"
 import { boardService } from "../services/board"
 import {
   BoardDeletedPublisher,
@@ -25,7 +24,7 @@ class BoardController {
     const isTrue = archived === "true"
 
     let boards = await Board.find({
-      owner: req.user.userId,
+      owner: req.currentUserJwt.userId,
       archived: isTrue,
     })
 
@@ -39,7 +38,7 @@ class BoardController {
   }
 
   createBoard = async (req: Request, res: Response) => {
-    const userId = req.user.userId
+    const userId = req.currentUserJwt.userId
 
     let board = new Board({ ...req.body, owner: userId })
 
@@ -63,19 +62,11 @@ class BoardController {
   }
 
   updateBoard = async (req: Request, res: Response) => {
-    const updates = Object.keys(req.body)
     let board = req.board!
-
-    const hasValidFields = boardService.validateEditableFields(
-      allowedBoardUpdateFields,
-      updates
-    )
-
-    if (!hasValidFields) throw new Error("Invalid update field")
 
     const updatedBoard = await Board.findOneAndUpdate(
       { _id: board._id },
-      { $set: { ...req.body } },
+      { $set: req.body },
       { new: true }
     ).populate([{ path: "lists" }, { path: "cards" }])
 
@@ -104,7 +95,7 @@ class BoardController {
 
     new BoardDeletedPublisher(natsService.client).publish({
       id: boardId.toHexString(),
-      ownerId: req.user.userId,
+      ownerId: req.currentUserJwt.userId,
     })
 
     res.status(200).send({})

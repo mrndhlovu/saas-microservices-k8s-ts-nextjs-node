@@ -1,6 +1,6 @@
 import { Message } from "node-nats-streaming"
 
-import { IBoardUpdatedEvent, Listener, Subjects } from "@tuskui/shared"
+import { IBoardUpdatedEvent, Listener, Subjects } from "@tusksui/shared"
 
 export class BoardUpdatedListener extends Listener<IBoardUpdatedEvent> {
   readonly subject: Subjects.BoardUpdated = Subjects.BoardUpdated

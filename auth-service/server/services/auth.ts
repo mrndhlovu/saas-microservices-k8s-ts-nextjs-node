@@ -2,7 +2,7 @@ import isEmail from "validator/lib/isEmail"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-import { IJwtAuthToken } from "@tuskui/shared"
+import { IJwtAuthToken } from "@tusksui/shared"
 
 import { IJwtAccessTokens } from "../types"
 import { IUserDocument, User } from "../models/User"
@@ -72,8 +72,8 @@ class AuthService {
   getAuthTokens = async (tokenToSign: IJwtAuthToken) => {
     const { JWT_TOKEN_SIGNATURE, JWT_REFRESH_TOKEN_SIGNATURE } = process.env
 
-    const accessTokenExpiresIn: string = "15m"
-    const refreshTokenExpiresIn: string = "12h"
+    const accessTokenExpiresIn: string = "1h"
+    const refreshTokenExpiresIn: string = "1h"
 
     const accessToken = jwt.sign(tokenToSign, JWT_TOKEN_SIGNATURE!, {
       expiresIn: accessTokenExpiresIn,

@@ -5,7 +5,7 @@ import {
   Listener,
   queueGroupNames,
   Subjects,
-} from "@tuskui/shared"
+} from "@tusksui/shared"
 import { User } from "../../models/User"
 
 export class BoardDeletedListener extends Listener<IBoardDeletedEvent> {

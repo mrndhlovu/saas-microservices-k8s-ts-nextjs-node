@@ -47,6 +47,9 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       required: true,
       default: [],
     },
+    accountId: {
+      type: String,
+    },
     permissionFlag: {
       type: Number,
       required: true,
@@ -56,12 +59,12 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       type: String,
     },
     starred: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Board" }],
+      type: [{ type: String }],
       required: true,
       default: [],
     },
     viewedRecent: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Board" }],
+      type: [{ type: String }],
       required: true,
       default: [],
     },

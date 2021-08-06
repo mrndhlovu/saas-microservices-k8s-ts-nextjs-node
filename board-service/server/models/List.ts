@@ -3,7 +3,7 @@ import { Schema, Document, model } from "mongoose"
 import Board from "./Board"
 import Card, { CardDocument } from "./Card"
 
-const ListSchema = new Schema<ListDocument>(
+const ListSchema = new Schema<IListDocument>(
   {
     title: {
       type: String,
@@ -77,17 +77,11 @@ export interface IList {
   boardId: ObjectId
 }
 
-export interface ListDocument
-  extends IListWithSchemaTimestampsConfig,
-    Document {
-  _id: ObjectId
-}
-
-interface IListWithSchemaTimestampsConfig extends IList {
+export interface IListDocument extends Document, IList {
   createdAt: boolean | string | number
   updatedAt: boolean | string | number
 }
 
-const List = model("List", ListSchema)
+const List = model<IListDocument>("List", ListSchema)
 
 export default List

@@ -1,6 +1,9 @@
 import { Router } from "express"
 
-import { errorService, authMiddleware as middlewareUtils } from "@tuskui/shared"
+import {
+  errorService,
+  authMiddleware as middlewareUtils,
+} from "@tusksui/shared"
 
 import { authController } from "../controller"
 import { authMiddleware } from "../middleware/auth"
@@ -19,7 +22,7 @@ router.get(
   "/me",
   middlewareUtils.checkIsAuthenticated,
   authMiddleware.verifyCurrentUser,
-  errorService.catchAsyncError(authController.getUserInfo)
+  errorService.catchAsyncError(authController.getCurrentUser)
 )
 
 router.post(

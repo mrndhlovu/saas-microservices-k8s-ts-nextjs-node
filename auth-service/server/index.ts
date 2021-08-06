@@ -1,4 +1,4 @@
-import { BadRequestError } from "@tuskui/shared"
+import { BadRequestError } from "@tusksui/shared"
 
 import services from "./services"
 import app from "./app"

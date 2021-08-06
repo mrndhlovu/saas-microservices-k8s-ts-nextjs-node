@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { authMiddleware, errorService, ROLES } from "@tuskui/shared"
+import { authMiddleware, errorService, ROLES } from "@tusksui/shared"
 
 import { boardController } from "../controllers"
 import { boardMiddleware } from "../middleware"
