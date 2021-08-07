@@ -1,6 +1,8 @@
 import request from "supertest"
 
 import app from "../../app"
+import { natsService } from "../../services/nats"
+
 import { TestUser } from "../../test/setup"
 
 let user: TestUser
@@ -15,7 +17,7 @@ describe("Auth Signup", () => {
   })
 
   it("returns a 201 on successful sign up", async () => {
-    return request(app)
+    await request(app)
       .post("/api/auth/signup")
       .send({
         email: user.email,
@@ -23,6 +25,8 @@ describe("Auth Signup", () => {
         username: user.username,
       })
       .expect(201)
+
+    expect(natsService.client.publish).toHaveBeenCalled()
   })
 
   it("returns a 400 with an invalid email", async () => {

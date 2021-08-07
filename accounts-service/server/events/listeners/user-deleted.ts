@@ -19,7 +19,7 @@ export class UserDeletedListener extends Listener<IUserDeletedEvent> {
 
     try {
       const account = await Account.findOne({
-        userId: data.id,
+        ownerId: data.id,
       })
 
       if (!account)

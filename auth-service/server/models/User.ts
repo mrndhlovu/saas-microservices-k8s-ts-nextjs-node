@@ -4,6 +4,7 @@ import { Schema, Document, model } from "mongoose"
 
 import { authService } from "../services/auth"
 import { IJwtAccessTokens } from "../types"
+import { IAccountCreatedEvent } from "@tusksui/shared"
 
 const UserSchema: Schema<IUserDocument> = new Schema(
   {
@@ -91,6 +92,9 @@ const UserSchema: Schema<IUserDocument> = new Schema(
         refresh: String,
       },
     },
+    account: {
+      type: Object,
+    },
     resetPassword: {
       type: Object,
       default: {
@@ -155,6 +159,7 @@ export interface IUserAttributes {
   lastname?: string
   loginTypes: ILoginTypes[]
   password: string
+  account: IAccountCreatedEvent["data"]
   boardIds: string[]
   resetPasswordExpires?: string
   resetPasswordToken?: string

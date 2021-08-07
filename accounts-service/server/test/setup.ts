@@ -1,31 +1,26 @@
 import { MongoMemoryServer } from "mongodb-memory-server"
 import mongoose from "mongoose"
 import request from "supertest"
+import jwt from "jsonwebtoken"
 
 import app from "../app"
-import { natsService } from "../services/nats"
+import { IJwtAccessTokens, IJwtAuthToken } from "@tusksui/shared"
+import { natsService } from "../services"
 
 declare global {
-  var signup: () => Promise<{ testCookie: string[]; testUser: TestUser }>
+  var signup: () => Promise<string[]>
 }
 
-export interface TestUser {
-  email: string
-  username: string
-  password: string
-}
-
-jest.mock("../services/nats")
+jest.mock("../services/nats.ts")
 
 let mongo: any
 beforeAll(async () => {
   process.env.PORT = "8000"
-  process.env.JWT_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
-  process.env.JWT_REFRESH_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
-  process.env.AUTH_MONGO_URI = "JEST_TEST_KEYQWERTYUIO"
+  process.env.ACCOUNTS_MONGO_URI = "JEST_TEST_KEYQWERTYUIO"
   process.env.NATS_URL = "JEST_TEST_KEYQWERTYUIO"
   process.env.NATS_CLIENT_ID = "JEST_TEST_KEYQWERTYUIO"
   process.env.NATS_CLUSTER_ID = "JEST_TEST_KEYQWERTYUIO"
+  process.env.JWT_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
 
   mongo = await MongoMemoryServer.create()
   const mongoUri = mongo.getUri()
@@ -53,24 +48,26 @@ afterAll(async () => {
 })
 
 global.signup = async () => {
-  const testUser: TestUser = {
-    email: "test@test.com",
-    username: "bazinga",
-    password: "bazinga",
-  }
-
   const response = await request(app)
-    .post("/api/auth/signup")
-    .send({
-      email: testUser.email,
-      username: testUser.username,
-      password: testUser.password,
-    })
+    .get("/api/accounts/create")
+    .send({})
     .expect(201)
 
   expect(natsService.client.publish).toHaveBeenCalled()
 
-  const cookie = response.get("Set-Cookie")
+  const payload: IJwtAuthToken = {
+    userId: new mongoose.Types.ObjectId().toHexString(),
+    email: "test@test.com",
+    accountId: response.body.id,
+  }
 
-  return { testCookie: cookie, testUser }
+  const token: string = jwt.sign(payload, process.env.JWT_TOKEN_SIGNATURE!)
+  const tokens: IJwtAccessTokens = { access: token, refresh: token }
+
+  const session = { jwt: tokens }
+
+  const sessionJSON = JSON.stringify(session)
+  const base64 = Buffer.from(sessionJSON).toString("base64")
+
+  return [`express:sess=${base64}`]
 }

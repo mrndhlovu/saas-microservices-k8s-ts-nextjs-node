@@ -1,6 +1,6 @@
 import { BadRequestError } from "@tusksui/shared"
 
-import { app } from "./app"
+import app from "./app"
 import { database } from "./services/db"
 import { natsService } from "./services/nats"
 import { UserDeletedListener, UserCreatedListener } from "./events/listeners"
@@ -9,8 +9,6 @@ class Server {
   private loadEnvVariables() {
     const {
       PORT,
-      JWT_TOKEN_SIGNATURE,
-      JWT_REFRESH_TOKEN_SIGNATURE,
       ACCOUNTS_MONGO_URI,
       NATS_URL,
       NATS_CLIENT_ID,
@@ -19,8 +17,6 @@ class Server {
 
     if (
       !PORT ||
-      !JWT_TOKEN_SIGNATURE ||
-      !JWT_REFRESH_TOKEN_SIGNATURE ||
       !ACCOUNTS_MONGO_URI ||
       !NATS_CLUSTER_ID ||
       !NATS_CLIENT_ID ||

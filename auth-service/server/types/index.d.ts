@@ -1,5 +1,5 @@
 import { Application } from "express"
-import { IUserDocument } from "@tusksui/shared"
+import { IUserDocument } from "../models/User"
 export interface IUserJwtPayload {
   user?: IUserDocument
   token: string
@@ -35,6 +35,7 @@ export interface IJwtAccessTokens {
 }
 export declare type JWTSignKeyOption = "refresh" | "role" | "access"
 export interface IJwtAuthToken {
-  userId: string
+  accountId: string
   email: string
+  userId?: string
 }

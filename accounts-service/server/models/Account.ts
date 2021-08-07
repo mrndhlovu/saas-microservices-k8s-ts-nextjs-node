@@ -10,9 +10,8 @@ const AccountSchema = new Schema<IAccountDocument>(
       enum: Object.values(AccountOptions),
       default: AccountOptions.Free,
     },
-    userId: {
+    ownerId: {
       type: String,
-      required: true,
     },
     expiresAt: {
       type: mongoose.Schema.Types.Date,
@@ -29,6 +28,11 @@ const AccountSchema = new Schema<IAccountDocument>(
       default: AccountStatus.Created,
     },
     isTrial: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    isVerified: {
       type: Boolean,
       required: true,
       default: false,
@@ -57,12 +61,14 @@ AccountSchema.pre("remove", async function (next) {
 })
 
 export interface IAccount {
-  userId: string
-  status: AccountStatus
-  plan: AccountOptions
-  expiresAt: Date
   expired: boolean
+  expiresAt: Date
   isTrial: boolean
+  ownerId: string
+  plan: AccountOptions
+  status: AccountStatus
+  userId: string
+  isVerified: boolean
 }
 
 export interface IAccountDocument extends Document, IAccount {

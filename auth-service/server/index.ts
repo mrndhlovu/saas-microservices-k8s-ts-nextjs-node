@@ -3,7 +3,12 @@ import { BadRequestError } from "@tusksui/shared"
 import services from "./services"
 import app from "./app"
 import { natsService } from "./services/nats"
-import { BoardCreatedListener, BoardDeletedListener } from "./events/listeners"
+import {
+  BoardCreatedListener,
+  BoardDeletedListener,
+  AccountCreatedListener,
+  AccountUpdatedListener,
+} from "./events/listeners"
 
 class Server {
   private validateEnvVariables() {
@@ -46,6 +51,8 @@ class Server {
 
     new BoardCreatedListener(natsService.client).listen()
     new BoardDeletedListener(natsService.client).listen()
+    new AccountCreatedListener(natsService.client).listen()
+    new AccountUpdatedListener(natsService.client).listen()
 
     await services.database.connect()
     app.listen(port, () => {

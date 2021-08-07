@@ -25,8 +25,8 @@ class AccountServices {
     return account
   }
 
-  findAccountOnlyByType = async (type: AccountOptions) => {
-    const account = await Account.findOne({ option: type })
+  findAccountByPlan = async (type: AccountOptions, accountId: string) => {
+    const account = await Account.findOne({ plan: type, _id: accountId })
     return account
   }
 
@@ -47,6 +47,23 @@ class AccountServices {
       account.expired = true
       account.plan = AccountOptions.Free
     }
+
+    return account
+  }
+
+  getEventData(account: any) {
+    const filterFields = ["_v"]
+
+    Object.keys(account).map(key => {
+      if (filterFields.includes(key)) {
+        delete account.__v
+      }
+
+      if (key === "_id") {
+        account.id = account._id
+        delete account._id
+      }
+    })
 
     return account
   }

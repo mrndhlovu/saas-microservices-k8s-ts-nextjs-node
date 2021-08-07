@@ -44,8 +44,8 @@ class AccountMiddleware {
 
   checkAccountPlan = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const account = await accountService.findAccountOnlyByUseId(
-        req.currentUserJwt.userId
+      const account = await accountService.findAccountById(
+        req.currentUserJwt.accountId!
       )
 
       if (!account)

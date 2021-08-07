@@ -3,6 +3,7 @@ import { Request, Response } from "express"
 import {
   ACCOUNT_TYPE,
   BadRequestError,
+  IJwtAuthToken,
   permissionManager,
 } from "@tusksui/shared"
 
@@ -25,7 +26,10 @@ class AuthController {
       ACCOUNT_TYPE.STANDARD
     )
 
-    const tokenToSign = { userId: user._id.toHexString(), email: user.email }
+    const tokenToSign: IJwtAuthToken = {
+      userId: user._id.toHexString(),
+      email: user.email,
+    }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
     authMiddleware.generateAuthCookies(req, user.tokens)
@@ -47,10 +51,15 @@ class AuthController {
   }
 
   loginUser = async (req: Request, res: Response) => {
-    const { identifier, password } = req.body
+    const { identifier, password, accountId } = req.body
 
     const user = await authService.findUserByCredentials(identifier, password)
-    const tokenToSign = { userId: user._id.toHexString(), email: user.email }
+
+    const tokenToSign: IJwtAuthToken = {
+      userId: user._id.toHexString(),
+      email: user.email,
+      accountId: user.account!.id,
+    }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
     authMiddleware.generateAuthCookies(req, user.tokens)
@@ -122,9 +131,13 @@ class AuthController {
     if (!user)
       throw new BadRequestError("Authentication credentials may have expired.")
 
-    const tokenToSign = { userId: user._id.toHexString(), email: user.email }
-
+    const tokenToSign: IJwtAuthToken = {
+      userId: user._id.toHexString(),
+      email: user.email,
+      accountId: user.account!.id!,
+    }
     user.tokens = await authService.getAuthTokens(tokenToSign)
+
     authMiddleware.generateAuthCookies(req, user.tokens)
 
     await user.save()

@@ -23,4 +23,4 @@ app.use("/api/accounts", accountRoutes)
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)
 
-export { app }
+export default app
