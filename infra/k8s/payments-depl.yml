@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments
+  template:
+    metadata:
+      labels:
+        app: payments
+    spec:
+      containers:
+        - name: payments
+          image: ndhlovu/payments
+          env:
+            - name: JWT_TOKEN_SIGNATURE
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_TOKEN_SIGNATURE
+
+            - name: JWT_REFRESH_TOKEN_SIGNATURE
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_REFRESH_TOKEN_SIGNATURE
+
+            - name: PAYMENTS_MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-uri
+                  key: PAYMENTS_MONGO_URI
+
+            - name: STRIPE_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-keys
+                  key: STRIPE_PUBLISHABLE_KEY
+
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-keys
+                  key: STRIPE_SECRET_KEY
+
+            - name: PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-port
+                  key: PORT
+
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            - name: NATS_CLUSTER_ID
+              value: tuskui
+
+            - name: NATS_URL
+              value: "http:/nats-srv:4222/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-srv
+spec:
+  selector:
+    app: payments
+  ports:
+    - name: payments
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

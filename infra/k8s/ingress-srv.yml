@@ -36,6 +36,16 @@ spec:
               serviceName: accounts-srv
               servicePort: 3000
 
+          - path: /api/payments/?(.*)
+            backend:
+              serviceName: payments-srv
+              servicePort: 3000
+
+          - path: /api/email/?(.*)
+            backend:
+              serviceName: email-srv
+              servicePort: 3000
+
           - path: /?(.*)
             backend:
               serviceName: client-srv

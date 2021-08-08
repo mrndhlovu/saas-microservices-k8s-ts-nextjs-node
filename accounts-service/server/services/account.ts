@@ -1,17 +1,10 @@
-import { ObjectId } from "mongodb"
-
 import { AccountOptions } from "@tusksui/shared"
 
 import Account, { IAccountDocument } from "../models/Account"
 
 class AccountServices {
   findAccountOnlyByUseId = async (userId: string) => {
-    const account = await Account.findOne({ userId })
-    return account
-  }
-
-  findAccountById = async (accountId: string) => {
-    const account = await Account.findOne({ _id: accountId })
+    const account = await Account.findOne({ _id: userId })
     return account
   }
 
@@ -28,6 +21,16 @@ class AccountServices {
   findAccountByPlan = async (type: AccountOptions, accountId: string) => {
     const account = await Account.findOne({ plan: type, _id: accountId })
     return account
+  }
+
+  async findAccountByIdAndUpdate(updates: any, accountId: string) {
+    const updatedRecord = await Account.findOneAndUpdate(
+      { _id: accountId },
+      { $set: { ...updates } },
+      { new: true }
+    )
+
+    return updatedRecord
   }
 
   validateEditableFields = <T>(allowedFields: T[], updates: T[]) => {
@@ -52,10 +55,10 @@ class AccountServices {
   }
 
   getEventData(account: any) {
-    const filterFields = ["_v"]
+    const filterFields = ["__v"]
 
     Object.keys(account).map(key => {
-      if (filterFields.includes(key)) {
+      if (key === "__v") {
         delete account.__v
       }
 

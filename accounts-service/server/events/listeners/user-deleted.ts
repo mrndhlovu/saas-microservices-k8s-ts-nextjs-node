@@ -9,6 +9,8 @@ import {
 } from "@tusksui/shared"
 
 import Account from "../../models/Account"
+import { AccountDeletedPublisher } from "../publishers"
+import { natsService } from "../../services"
 
 export class UserDeletedListener extends Listener<IUserDeletedEvent> {
   readonly subject: Subjects.UserDeleted = Subjects.UserDeleted
@@ -18,14 +20,16 @@ export class UserDeletedListener extends Listener<IUserDeletedEvent> {
     console.log("Event data ", data)
 
     try {
-      const account = await Account.findOne({
-        ownerId: data.id,
-      })
+      const account = await Account.findOne({ _id: data.id })
 
       if (!account)
         throw new BadRequestError("Account with that user name was not found")
 
+      const eventData = { email: data.email, userId: account._id }
+
       await account.delete()
+
+      new AccountDeletedPublisher(natsService.client).publish(eventData)
 
       msg.ack()
     } catch (error) {

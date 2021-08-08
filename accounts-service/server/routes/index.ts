@@ -19,6 +19,12 @@ router.get(
   errorService.catchAsyncError(accountController.createAccount)
 )
 
+router.get(
+  "/verify/:token",
+  accountMiddleware.validateVerificationJwt,
+  errorService.catchAsyncError(accountController.verifyAccount)
+)
+
 router
   .route("/")
   .get(
@@ -34,11 +40,6 @@ router
     authMiddleware.checkIsAuthenticated,
     accountMiddleware.checkAccountPlan,
     errorService.catchAsyncError(accountController.updateAccount)
-  )
-  .delete(
-    authMiddleware.validateRequiredAccessJwt,
-    authMiddleware.checkIsAuthenticated,
-    errorService.catchAsyncError(accountController.deleteAccount)
   )
 
 export { router as accountRoutes }

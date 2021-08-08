@@ -16,7 +16,7 @@ export class AccountUpdatedListener extends Listener<IAccountUpdatedEvent> {
     console.log("Event data ", data)
 
     const user = await User.findOneAndUpdate(
-      { _id: data.ownerId },
+      { _id: data.id },
       {
         $set: {
           account: { ...data },

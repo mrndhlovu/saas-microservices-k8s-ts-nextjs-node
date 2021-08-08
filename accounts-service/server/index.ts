@@ -4,6 +4,7 @@ import app from "./app"
 import { database } from "./services/db"
 import { natsService } from "./services/nats"
 import { UserDeletedListener, UserCreatedListener } from "./events/listeners"
+import { CustomerCreatedListener } from "./events/listeners/customer-created"
 
 class Server {
   private loadEnvVariables() {
@@ -33,6 +34,7 @@ class Server {
 
     new UserDeletedListener(natsService.client).listen()
     new UserCreatedListener(natsService.client).listen()
+    new CustomerCreatedListener(natsService.client).listen()
   }
 
   async start() {

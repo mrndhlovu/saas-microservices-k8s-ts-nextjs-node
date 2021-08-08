@@ -1,0 +1,11 @@
+dist
+node_modules
+build
+
+Dockerfile
+docker-compose*
+.dockerignore
+.git 
+.gitignore
+.prettierrc
+.prettierignore

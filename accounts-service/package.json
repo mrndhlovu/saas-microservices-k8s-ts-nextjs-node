@@ -1,5 +1,5 @@
 {
-  "name": "tuskui-upgrade-micro-service",
+  "name": "tuskui-accounts-micro-service",
   "version": "1.0.0",
   "main": "server/index.ts",
   "author": "Mduduzi Ndhlovu",
@@ -20,7 +20,7 @@
     ]
   },
   "dependencies": {
-    "@tusksui/shared": "^0.0.18",
+    "@tusksui/shared": "^0.0.28",
     "@types/cookie-session": "^2.0.43",
     "cookie-parser": "^1.4.5",
     "cookie-session": "^1.4.0",

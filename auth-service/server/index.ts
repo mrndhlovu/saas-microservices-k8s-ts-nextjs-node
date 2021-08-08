@@ -6,7 +6,6 @@ import { natsService } from "./services/nats"
 import {
   BoardCreatedListener,
   BoardDeletedListener,
-  AccountCreatedListener,
   AccountUpdatedListener,
 } from "./events/listeners"
 
@@ -51,7 +50,6 @@ class Server {
 
     new BoardCreatedListener(natsService.client).listen()
     new BoardDeletedListener(natsService.client).listen()
-    new AccountCreatedListener(natsService.client).listen()
     new AccountUpdatedListener(natsService.client).listen()
 
     await services.database.connect()

@@ -1,6 +1,11 @@
 import { Request, Response } from "express"
 
-import { AccountOptions, AccountStatus, BadRequestError } from "@tusksui/shared"
+import {
+  AccountOptions,
+  AccountStatus,
+  BadRequestError,
+  IJwtAuthToken,
+} from "@tusksui/shared"
 
 import { allowedAccountUpdateFields } from "../utils/constants"
 import { accountService } from "../services/account"
@@ -13,6 +18,7 @@ declare global {
   namespace Express {
     interface Request {
       account: IAccountDocument | null | undefined
+      currentUserJwt: IJwtAuthToken
     }
   }
 }
@@ -41,6 +47,29 @@ class AccountController {
     new AccountCreatedPublisher(natsService.client).publish(eventData)
 
     res.status(201).send(account)
+  }
+
+  verifyAccount = async (req: Request, res: Response) => {
+    const isVerified =
+      req.account!._id !== undefined || req.account!._id !== null
+
+    const updatedRecord = await Account.findOneAndUpdate(
+      { _id: req.account!._id },
+      { $set: { isVerified } },
+      { new: true }
+    )
+
+    if (updatedRecord) {
+      await updatedRecord.save()
+
+      const eventData = accountService.getEventData(updatedRecord)
+      eventData.email = req.currentUserJwt.email
+
+      new AccountUpdatedPublisher(natsService.client).publish(eventData)
+      return res.status(201).send({ isVerified })
+    }
+
+    res.status(201).send({ isVerified })
   }
 
   updateAccount = async (req: Request, res: Response) => {
@@ -72,14 +101,6 @@ class AccountController {
     new AccountUpdatedPublisher(natsService.client).publish(eventData)
 
     res.status(200).send(updatedRecord)
-  }
-
-  deleteAccount = async (req: Request, res: Response) => {
-    const account = await accountService.findAccountById(req.params.accountId)
-
-    await account!.delete()
-
-    res.status(200).send({})
   }
 }
 

@@ -41,6 +41,7 @@ class AuthController {
       username: user.username!,
       firstname: user.firstname!,
       lastname: user.lastname!,
+      email: user.email!,
     })
 
     res.status(201).send(user)
@@ -51,14 +52,13 @@ class AuthController {
   }
 
   loginUser = async (req: Request, res: Response) => {
-    const { identifier, password, accountId } = req.body
+    const { identifier, password } = req.body
 
     const user = await authService.findUserByCredentials(identifier, password)
 
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
       email: user.email,
-      accountId: user.account!.id,
     }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
@@ -113,6 +113,7 @@ class AuthController {
     const user = req.currentUser!
 
     const userId = user._id.toHexString()
+    const email = user.email
     const boardIds = user.boardIds
 
     await user.delete()
@@ -120,6 +121,7 @@ class AuthController {
     new UserDeletedPublisher(natsService.client).publish({
       id: userId,
       boardIds,
+      email,
     })
 
     res.status(200).send({})
@@ -134,7 +136,6 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
       email: user.email,
-      accountId: user.account!.id!,
     }
     user.tokens = await authService.getAuthTokens(tokenToSign)
 

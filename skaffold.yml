@@ -43,3 +43,21 @@ build:
         manual:
           - src: "server/**/*.ts"
             dest: .
+
+    - image: ndhlovu/payments
+      context: payments-service
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "server/**/*.ts"
+            dest: .
+
+    - image: ndhlovu/email
+      context: email-service
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "server/**/*.ts"
+            dest: .

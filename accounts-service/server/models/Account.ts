@@ -10,9 +10,6 @@ const AccountSchema = new Schema<IAccountDocument>(
       enum: Object.values(AccountOptions),
       default: AccountOptions.Free,
     },
-    ownerId: {
-      type: String,
-    },
     expiresAt: {
       type: mongoose.Schema.Types.Date,
     },
@@ -37,6 +34,12 @@ const AccountSchema = new Schema<IAccountDocument>(
       required: true,
       default: false,
     },
+    customerId: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -44,7 +47,7 @@ const AccountSchema = new Schema<IAccountDocument>(
 )
 
 AccountSchema.methods.toJSON = function () {
-  const list = this.toObject({
+  const account = this.toObject({
     transform: function (_doc, ret, _options) {
       ret.id = ret._id
       delete ret._id
@@ -53,7 +56,7 @@ AccountSchema.methods.toJSON = function () {
     },
   })
 
-  return list
+  return account
 }
 
 AccountSchema.pre("remove", async function (next) {
@@ -64,11 +67,11 @@ export interface IAccount {
   expired: boolean
   expiresAt: Date
   isTrial: boolean
-  ownerId: string
   plan: AccountOptions
   status: AccountStatus
-  userId: string
   isVerified: boolean
+  customerId: string
+  email: string
 }
 
 export interface IAccountDocument extends Document, IAccount {
