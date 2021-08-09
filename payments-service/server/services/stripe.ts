@@ -2,7 +2,7 @@ import Stripe from "stripe"
 
 import { IAccountUpdatedEvent } from "@tusksui/shared"
 
-import { CURRENCY_OPTIONS, IOrderDetails } from "../types"
+import { CURRENCY_OPTIONS, INewSubscription, IOrderDetails } from "../types"
 import Order from "../models/Order"
 import Payment from "../models/Payment"
 import { response } from "express"
@@ -30,9 +30,6 @@ class StripeService {
       isPaid: true,
       ownerId: user.id,
       customerId: customer.id,
-      amount: "0",
-      source: "",
-      currency: CURRENCY_OPTIONS.EURO,
     })
 
     await order.save()
@@ -46,23 +43,65 @@ class StripeService {
     return response
   }
 
-  async find(email: string) {
-    const response = await this.stripe.customers.list({ email, limit: 405 })
-    return response.data
-  }
-
-  async charge(order: IOrderDetails) {
-    const charge = await this.stripe.charges.create({
-      currency: "eur",
-      amount: +order.amount * 100,
-      source: order.source,
+  async updateStripeCustomer(
+    customerId: string,
+    updates: { [key: string]: any }
+  ) {
+    const customer = await this.stripe.customers.update(customerId, {
+      ...updates,
     })
 
-    const payment = new Payment({ orderId: order.ownerId, stripeId: charge.id })
+    return customer
+  }
 
-    await payment.save()
+  async updateStripeCustomerPaymentMethod(pmId: string, customerId: string) {
+    const pm = await this.stripe.paymentMethods.attach(pmId, {
+      customer: customerId,
+    })
 
-    return { success: true }
+    await this.updateStripeCustomer(customerId, {
+      invoice_settings: {
+        default_payment_method: pm.id,
+      },
+    })
+
+    return pm
+  }
+
+  async getPriceList() {
+    const products = await this.stripe.prices.list({
+      limit: 10,
+      active: true,
+    })
+
+    return products
+  }
+
+  async createSubscription(data: IOrderDetails) {
+    await this.updateStripeCustomerPaymentMethod(
+      data.paymentMethodId!,
+      data.customerId!
+    )
+
+    const subscription = await this.stripe.subscriptions.create({
+      customer: data.customerId!,
+      items: [{ plan: data.priceId }],
+      expand: ["latest_invoice.payment_intent"],
+      metadata: {
+        plan: data.plan!,
+      },
+    })
+
+    return {
+      status: subscription.status,
+      productId: subscription.id,
+      startAt: subscription.current_period_start,
+      expiresAt: subscription.current_period_end,
+      isTrial:
+        subscription.trial_start !== null ||
+        subscription.trial_start !== undefined,
+      plan: subscription.metadata?.plan,
+    } as INewSubscription
   }
 }
 

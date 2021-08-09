@@ -26,6 +26,16 @@ class PaymentService {
     return updates.every((update: T) => allowedFields.includes(update))
   }
 
+  async findOrderByIdAndUpdate(updates: any, orderId: string) {
+    const updatedRecord = await Order.findOneAndUpdate(
+      { _id: orderId },
+      { $set: { ...updates } },
+      { new: true }
+    )
+
+    return updatedRecord
+  }
+
   getEventData(payment: any) {
     const filterFields = ["_v"]
 

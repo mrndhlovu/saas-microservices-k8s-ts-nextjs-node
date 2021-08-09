@@ -55,7 +55,7 @@ class AccountController {
 
     const updatedRecord = await Account.findOneAndUpdate(
       { _id: req.account!._id },
-      { $set: { isVerified } },
+      { $set: { isVerified, status: AccountStatus.Active } },
       { new: true }
     )
 

@@ -8,34 +8,50 @@ import { paymentMiddleware } from "../middleware"
 const router = Router()
 
 router.get(
+  "/order/:orderId",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  paymentMiddleware.checkOrderExists,
+  errorService.catchAsyncError(paymentController.getOrderById)
+)
+
+router.get(
   "/",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(paymentController.getPayments)
 )
 
+router.get(
+  "/products",
+  errorService.catchAsyncError(paymentController.getStripeProductsPriceList)
+)
+
 router.post(
-  "/charge",
-  paymentMiddleware.checkRequiredBodyFields,
+  "/create",
+  paymentMiddleware.checkRequiredOrderFields,
   paymentMiddleware.validateRequestBodyFields,
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
-  paymentMiddleware.validateOrderExists,
-  errorService.catchAsyncError(paymentController.createCharge)
+  errorService.catchAsyncError(paymentController.createOrder)
 )
 
-router
-  .route("/")
-  .get(
-    authMiddleware.validateRequiredAccessJwt,
-    authMiddleware.checkIsAuthenticated,
-    errorService.catchAsyncError(paymentController.getPaymentById)
-  )
+router.post(
+  "/subscription",
+  paymentMiddleware.checkRequiredOrderFields,
+  paymentMiddleware.validateRequestBodyFields,
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(paymentController.createSubscription)
+)
 
-  .delete(
-    authMiddleware.validateRequiredAccessJwt,
-    authMiddleware.checkIsAuthenticated,
-    errorService.catchAsyncError(paymentController.deletePayment)
-  )
+router.delete(
+  "/delete/:orderId",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  paymentMiddleware.checkOrderExists,
+  paymentMiddleware.checkOrderIsNotPaid,
+  errorService.catchAsyncError(paymentController.deleteOrder)
+)
 
 export { router as paymentRoutes }

@@ -8,7 +8,7 @@ import {
 } from "@tusksui/shared"
 
 import { IPaymentDocument } from "../models/Payment"
-import { requiredPaymentFields } from "../utils/constants"
+import { requiredChargeFields, requiredOrderFields } from "../utils/constants"
 import { paymentService } from "../services/payment"
 import { IOrderDetails } from "../types"
 import { IOrderDocument } from "../models/Order"
@@ -25,9 +25,21 @@ declare global {
 }
 
 class PaymentMiddleware {
-  checkRequiredBodyFields = [
+  checkRequiredChargeFields = [
     oneOf(
-      requiredPaymentFields.map((field: string) =>
+      requiredChargeFields.map((field: string) =>
+        check(field)
+          .exists()
+          .not()
+          .isEmpty()
+          .withMessage(`${field} is required.`)
+      )
+    ),
+  ]
+
+  checkRequiredOrderFields = [
+    oneOf(
+      requiredOrderFields.map((field: string) =>
         check(field)
           .exists()
           .not()
@@ -49,13 +61,25 @@ class PaymentMiddleware {
     }
   )
 
-  validateOrderExists = catchAsyncError(
+  checkOrderExists = catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const order = await paymentService.findOrderById(req.body.orderId)
+      const { orderId } = req.params
 
-      if (!order) throw new BadRequestError("Order not found")
+      if (!orderId) throw new BadRequestError("Order id is required")
+      const order = await paymentService.findOrderById(orderId)
+
+      if (!order) throw new BadRequestError("Order not found.")
 
       req.order = order
+
+      next()
+    }
+  )
+
+  checkOrderIsNotPaid = catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      if (req.order!.isPaid)
+        throw new BadRequestError("You cannot delete a paid order.")
 
       next()
     }

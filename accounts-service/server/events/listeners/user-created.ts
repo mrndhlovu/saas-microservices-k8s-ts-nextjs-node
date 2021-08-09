@@ -28,7 +28,7 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
     await account.save()
     const eventData = accountService.getEventData(account)
 
-    const BASE_URL = "https://tusks.dev"
+    const BASE_URL = "https://tusks.dev/auth/verify"
     const token: string = jwt.sign(
       { userId: data.id, email: data.email },
       process.env.JWT_TOKEN_SIGNATURE!
@@ -38,15 +38,12 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
       email: data.email,
       body: `
       Please click the link below to verify your account:
-      ${BASE_URL}?token=${token}
-      `,
+      ${BASE_URL}?token=${token}`,
       subject: "Verify email to activate your account.",
     }
 
     new AccountUpdatedPublisher(natsService.client).publish(eventData)
     new SendEmailPublisher(natsService.client).publish(email)
-
-    console.log("🚀 ~ file ~ token", token)
 
     msg.ack()
   }

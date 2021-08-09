@@ -3,9 +3,7 @@ import sendgrid from "sendgrid"
 import { IEmailEvent } from "@tusksui/shared"
 
 class EmailService {
-  private sg = sendgrid(
-    "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"
-  ) //process.env.SEND_GRID_SECRET_KEY!)
+  private sg = sendgrid(process.env.SEND_GRID_SECRET_KEY!)
 
   async send(data: IEmailEvent["data"]) {
     const request = this.sg.emptyRequest({

@@ -39,7 +39,7 @@ class Server {
   async start() {
     this.loadEnvVariables()
 
-    const { NODE_ENV, PORT, SEND_GRID_SECRET_KEY } = process.env
+    const { NODE_ENV, PORT } = process.env
 
     const port = parseInt(PORT!, 10)
 

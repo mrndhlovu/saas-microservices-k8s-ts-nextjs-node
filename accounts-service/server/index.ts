@@ -5,6 +5,7 @@ import { database } from "./services/db"
 import { natsService } from "./services/nats"
 import { UserDeletedListener, UserCreatedListener } from "./events/listeners"
 import { CustomerCreatedListener } from "./events/listeners/customer-created"
+import { PaymentCreatedListener } from "./events/listeners/payment-created"
 
 class Server {
   private loadEnvVariables() {
@@ -35,6 +36,7 @@ class Server {
     new UserDeletedListener(natsService.client).listen()
     new UserCreatedListener(natsService.client).listen()
     new CustomerCreatedListener(natsService.client).listen()
+    new PaymentCreatedListener(natsService.client).listen()
   }
 
   async start() {

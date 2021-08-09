@@ -1,2 +1,1 @@
-export * from "./payment-created"
-export * from "./payment-updated"
+export * from "./customer-created"

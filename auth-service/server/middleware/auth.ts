@@ -79,7 +79,7 @@ class AuthMiddleWare {
       const currentUser = await authService.findUserByJwt(req.currentUserJwt)
 
       if (!currentUser) {
-        next()
+        return next()
       }
 
       req.currentUser = currentUser

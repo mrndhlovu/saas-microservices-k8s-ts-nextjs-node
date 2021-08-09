@@ -5,9 +5,11 @@ const OrderSchema = new Schema<IOrderDocument>(
   {
     amount: {
       type: String,
-      required: true,
     },
     source: {
+      type: String,
+    },
+    productId: {
       type: String,
     },
     ownerId: {
@@ -20,11 +22,13 @@ const OrderSchema = new Schema<IOrderDocument>(
     },
     currency: {
       type: String,
-      required: true,
       enum: Object.values(CURRENCY_OPTIONS),
       default: CURRENCY_OPTIONS.EURO,
     },
     expiresAt: {
+      type: mongoose.Schema.Types.Date,
+    },
+    startAt: {
       type: mongoose.Schema.Types.Date,
     },
     isPaid: {
@@ -55,13 +59,12 @@ OrderSchema.pre("remove", async function (next) {
 })
 
 export interface IAccount {
-  expiresAt: Date
+  expiresAt?: Date
+  startAt?: Date
   isPaid: boolean
   ownerId: string
   customerId: string
-  amount: string
-  source?: string
-  currency: string
+  productId: string
 }
 
 export interface IOrderDocument extends Document, IAccount {
