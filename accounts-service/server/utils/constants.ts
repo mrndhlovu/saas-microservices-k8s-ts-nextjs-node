@@ -5,3 +5,5 @@ export const allowedAccountUpdateFields = [
   "plan",
   "isTrial",
 ]
+
+export const DEFAULT_EMAIL = "kandhlovuie@gmail.com"

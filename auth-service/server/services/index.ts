@@ -1,5 +1,2 @@
-import database from "./db"
-
-export default {
-  database,
-}
+export * from "./db"
+export * from "./mfa"

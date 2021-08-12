@@ -16,6 +16,7 @@ import {
   UserDeletedPublisher,
   UserCreatedPublisher,
 } from "../events/publishers"
+import { mfaService } from "../services"
 
 class AuthController {
   signUpUser = async (req: Request, res: Response) => {
@@ -125,6 +126,46 @@ class AuthController {
     })
 
     res.status(200).send({})
+  }
+
+  enableMfa = async (req: Request, res: Response) => {
+    const token = mfaService.generateToken()
+
+    const updatedUser = await User.findByIdAndUpdate(req.currentUser!._id, {
+      $set: { multiFactorAuth: true, tokens: { access: "", refresh: "" } },
+    })
+
+    if (!updatedUser) throw new BadRequestError("User not found")
+
+    await updatedUser.save()
+    req.session = null
+
+    res.status(200).send({})
+  }
+
+  verifyMfa = async (req: Request, res: Response) => {
+    const response = mfaService.validatedToken(req.body.token)
+
+    if (!response.success) throw new BadRequestError("Failed to validate code.")
+
+    const user = await authService.findUserByCredentials(
+      req.body.identifier,
+      req.body.password
+    )
+
+    if (!user) throw new BadRequestError("User not found")
+
+    const tokenToSign: IJwtAuthToken = {
+      userId: user._id.toHexString(),
+      email: user.email,
+    }
+
+    user.tokens = await authService.getAuthTokens(tokenToSign)
+    authMiddleware.generateAuthCookies(req, user.tokens)
+
+    await user.save()
+
+    res.status(200).send(user)
   }
 
   getRefreshToken = async (req: Request, res: Response) => {

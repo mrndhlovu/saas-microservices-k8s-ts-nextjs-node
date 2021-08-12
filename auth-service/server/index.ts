@@ -1,6 +1,6 @@
 import { BadRequestError } from "@tusksui/shared"
 
-import services from "./services"
+import { database } from "./services"
 import app from "./app"
 import { natsService } from "./services/nats"
 import {
@@ -19,6 +19,7 @@ class Server {
       NATS_URL,
       NATS_CLIENT_ID,
       NATS_CLUSTER_ID,
+      TOTP_AUTHENTICATOR_SECRET,
     } = process.env
 
     if (
@@ -28,7 +29,8 @@ class Server {
       !AUTH_MONGO_URI ||
       !NATS_CLUSTER_ID ||
       !NATS_CLIENT_ID ||
-      !NATS_URL
+      !NATS_URL ||
+      !TOTP_AUTHENTICATOR_SECRET
     ) {
       throw new BadRequestError("Some Env variables are missing!")
     }
@@ -52,7 +54,7 @@ class Server {
     new BoardDeletedListener(natsService.client).listen()
     new AccountUpdatedListener(natsService.client).listen()
 
-    await services.database.connect()
+    await database.connect()
     app.listen(port, () => {
       const serverStatus = [
         {

@@ -19,37 +19,31 @@ spec:
             - name: JWT_TOKEN_SIGNATURE
               valueFrom:
                 secretKeyRef:
-                  name: jwt-secret
+                  name: env-config
                   key: JWT_TOKEN_SIGNATURE
 
             - name: JWT_REFRESH_TOKEN_SIGNATURE
               valueFrom:
                 secretKeyRef:
-                  name: jwt-secret
+                  name: env-config
                   key: JWT_REFRESH_TOKEN_SIGNATURE
 
             - name: PAYMENTS_MONGO_URI
               valueFrom:
                 secretKeyRef:
-                  name: mongo-uri
+                  name: env-config
                   key: PAYMENTS_MONGO_URI
-
-            - name: STRIPE_PUBLISHABLE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: stripe-keys
-                  key: STRIPE_PUBLISHABLE_KEY
 
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: stripe-keys
+                  name: env-config
                   key: STRIPE_SECRET_KEY
 
             - name: PORT
               valueFrom:
                 secretKeyRef:
-                  name: mongo-port
+                  name: env-config
                   key: PORT
 
             - name: NATS_CLIENT_ID

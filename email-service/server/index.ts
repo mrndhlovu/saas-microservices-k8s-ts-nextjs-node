@@ -1,7 +1,6 @@
 import { BadRequestError } from "@tusksui/shared"
 
 import app from "./app"
-import { database } from "./services/db"
 import { natsService } from "./services/nats"
 import { SendEmailListener } from "./events/listeners"
 
@@ -44,8 +43,6 @@ class Server {
     const port = parseInt(PORT!, 10)
 
     await this.connectEventBus()
-
-    // await database.connect()
 
     app.listen(port, () => {
       const serverStatus = [

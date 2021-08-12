@@ -1,43 +1,30 @@
-import sendgrid from "sendgrid"
+import sgMail from "@sendgrid/mail"
 
 import { IEmailEvent } from "@tusksui/shared"
 
+sgMail.setApiKey(process.env.SEND_GRID_SECRET_KEY!)
+
 class EmailService {
-  private sg = sendgrid(process.env.SEND_GRID_SECRET_KEY!)
-
   async send(data: IEmailEvent["data"]) {
-    const request = this.sg.emptyRequest({
-      method: "POST",
-      path: "/v3/mail/send",
-      body: {
-        personalizations: [
-          {
-            to: [
-              {
-                email: data.email,
-              },
-            ],
-            subject: data.subject,
-          },
-        ],
-        from: {
-          email: "test@example.com",
-        },
-        content: [
-          {
-            type: "text/plain",
-            value: data.body,
-          },
-        ],
-      },
-    })
+    const msg = {
+      cc: data.cc!,
+      from: data.from,
+      html: data.html!,
+      subject: data.subject,
+      text: data.body,
+      to: data.email,
+    }
 
-    const emailResponse = await this.sg
-      .API(request)
-      .then(response => response.statusCode)
-      .catch(error => error.response.statusCode)
+    try {
+      await sgMail.send(msg)
+      return 200
+    } catch (error) {
+      if (error.response) {
+        console.error(error.response.body)
+      }
 
-    return emailResponse
+      return 400
+    }
   }
 }
 

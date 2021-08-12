@@ -29,6 +29,7 @@ router.post(
   "/login",
   authMiddleware.checkRequiredLoginFields,
   middlewareUtils.validateRequestBodyFields,
+  authMiddleware.checkMultiFactorAuth,
   errorService.catchAsyncError(authController.loginUser)
 )
 
@@ -54,6 +55,19 @@ router.delete(
   middlewareUtils.checkIsAuthenticated,
   authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.deleteUser)
+)
+
+router.get(
+  "/mfa/enable",
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
+  errorService.catchAsyncError(authController.enableMfa)
+)
+
+router.post(
+  "/mfa/validate",
+  errorService.catchAsyncError(authController.verifyMfa)
 )
 
 router.get(

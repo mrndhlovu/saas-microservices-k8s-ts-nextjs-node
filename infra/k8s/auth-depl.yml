@@ -19,25 +19,25 @@ spec:
             - name: JWT_TOKEN_SIGNATURE
               valueFrom:
                 secretKeyRef:
-                  name: jwt-secret
+                  name: env-config
                   key: JWT_TOKEN_SIGNATURE
 
             - name: JWT_REFRESH_TOKEN_SIGNATURE
               valueFrom:
                 secretKeyRef:
-                  name: jwt-secret
+                  name: env-config
                   key: JWT_REFRESH_TOKEN_SIGNATURE
 
             - name: AUTH_MONGO_URI
               valueFrom:
                 secretKeyRef:
-                  name: mongo-uri
+                  name: env-config
                   key: AUTH_MONGO_URI
 
             - name: PORT
               valueFrom:
                 secretKeyRef:
-                  name: mongo-port
+                  name: env-config
                   key: PORT
 
             - name: NATS_CLIENT_ID

@@ -8,9 +8,10 @@ import {
   queueGroupNames,
   Subjects,
 } from "@tusksui/shared"
-import Account from "../../models/Account"
 import { accountService, natsService } from "../../services"
 import { AccountUpdatedPublisher, SendEmailPublisher } from "../publishers"
+import { DEFAULT_EMAIL } from "../../utils/constants"
+import Account from "../../models/Account"
 
 export class UserCreatedListener extends Listener<IUserCreatedEvent> {
   readonly subject: Subjects.UserCreated = Subjects.UserCreated
@@ -40,6 +41,7 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
       Please click the link below to verify your account:
       ${BASE_URL}?token=${token}`,
       subject: "Verify email to activate your account.",
+      from: DEFAULT_EMAIL,
     }
 
     new AccountUpdatedPublisher(natsService.client).publish(eventData)

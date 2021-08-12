@@ -2,18 +2,11 @@ import Stripe from "stripe"
 
 import { IAccountUpdatedEvent } from "@tusksui/shared"
 
-import { CURRENCY_OPTIONS, INewSubscription, IOrderDetails } from "../types"
+import { INewSubscription, IOrderDetails } from "../types"
 import Order from "../models/Order"
-import Payment from "../models/Payment"
-import { response } from "express"
 
 class StripeService {
-  private apiKey = process.env.STRIPE_SECRET_KEY!.slice(
-    1,
-    process.env.STRIPE_SECRET_KEY!.length - 1
-  ) // remove single quotes from api key
-
-  private stripe = new Stripe(this.apiKey, {
+  private stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2020-08-27",
   })
 

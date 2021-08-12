@@ -19,19 +19,19 @@ spec:
             - name: EMAIL_MONGO_URI
               valueFrom:
                 secretKeyRef:
-                  name: mongo-uri
+                  name: env-config
                   key: EMAIL_MONGO_URI
 
             - name: SEND_GRID_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: email-key
+                  name: env-config
                   key: SEND_GRID_SECRET_KEY
 
             - name: PORT
               valueFrom:
                 secretKeyRef:
-                  name: mongo-port
+                  name: env-config
                   key: PORT
 
             - name: NATS_CLIENT_ID

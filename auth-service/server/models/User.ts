@@ -37,10 +37,10 @@ const UserSchema: Schema<IUserDocument> = new Schema(
     password: {
       type: String,
       trim: true,
-      minlength: 7,
+      minlength: 8,
       validate(value: string) {
         if (value.toLowerCase().includes("password"))
-          throw new Error(`Password should not include 'password'`)
+          throw new Error(`Password should not include the word 'password'`)
       },
     },
     boardIds: {
@@ -73,6 +73,10 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       type: Array,
       default: [],
       required: true,
+    },
+    multiFactorAuth: {
+      type: Boolean,
+      default: false,
     },
     avatar: {
       type: Array,
@@ -168,6 +172,7 @@ export interface IUserAttributes {
   tokens: IJwtAccessTokens
   username: string
   viewedRecent?: string[]
+  multiFactorAuth: boolean
   permissionFlag: Number
 }
 
