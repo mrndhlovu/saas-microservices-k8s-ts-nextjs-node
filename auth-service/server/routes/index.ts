@@ -33,6 +33,13 @@ router.post(
   errorService.catchAsyncError(authController.loginUser)
 )
 
+router.post(
+  "/login-verify",
+  authMiddleware.checkRequiredLoginFields,
+  middlewareUtils.validateRequestBodyFields,
+  errorService.catchAsyncError(authController.verifyCredentials)
+)
+
 router.get(
   "/logout",
   middlewareUtils.validateRequiredAccessJwt,
@@ -57,7 +64,7 @@ router.delete(
   errorService.catchAsyncError(authController.deleteUser)
 )
 
-router.get(
+router.post(
   "/mfa/enable",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
@@ -65,9 +72,28 @@ router.get(
   errorService.catchAsyncError(authController.enableMfa)
 )
 
+router.get(
+  "/mfa/qr-code",
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
+  errorService.catchAsyncError(authController.getQrCode)
+)
+
 router.post(
   "/mfa/validate",
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findPendingMfaUser,
   errorService.catchAsyncError(authController.verifyMfa)
+)
+
+router.post(
+  "/mfa/connect",
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
+  authMiddleware.findCurrentUser,
+  errorService.catchAsyncError(authController.connectMfa)
 )
 
 router.get(

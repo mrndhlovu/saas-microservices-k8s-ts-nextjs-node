@@ -9,6 +9,7 @@ export const editableUserFields = [
   "bio",
   "viewedRecent",
   "notifications",
+  "multiFactorAuth",
 ]
 
 export const BOARDS_QUEUE_GROUP_NAME = "boards-service"

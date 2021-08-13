@@ -78,6 +78,7 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       type: Boolean,
       default: false,
     },
+
     avatar: {
       type: Array,
       required: true,
@@ -94,10 +95,18 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       default: {
         access: String,
         refresh: String,
+        mfa: String,
       },
     },
     account: {
       type: Object,
+    },
+    twoStepRecovery: {
+      type: Object,
+      default: {
+        token: String,
+        setupDate: Date,
+      },
     },
     resetPassword: {
       type: Object,
@@ -154,6 +163,11 @@ interface IUseBoardRoles {
 
 type ILoginTypes = "email" | "username"
 
+type IRecoveryToken = {
+  token: string
+  setupDate: string
+}
+
 export interface IUserAttributes {
   avatar?: string
   bio?: string
@@ -174,6 +188,7 @@ export interface IUserAttributes {
   viewedRecent?: string[]
   multiFactorAuth: boolean
   permissionFlag: Number
+  twoStepRecovery: IRecoveryToken
 }
 
 export interface IUserDocument extends IUserAttributes, Document {

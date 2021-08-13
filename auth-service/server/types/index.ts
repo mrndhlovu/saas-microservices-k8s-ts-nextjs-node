@@ -42,6 +42,12 @@ export interface IBoardRoleJwtToken {
 export interface IJwtAccessTokens {
   access: string
   refresh: string
+  mfa?: string
+}
+
+export interface IJwtTokensExpiryTimes {
+  accessExpiresAt: string
+  refreshExpiresAt: string
 }
 
 export type JWTSignKeyOption = "refresh" | "role" | "access"
@@ -49,4 +55,9 @@ export type JWTSignKeyOption = "refresh" | "role" | "access"
 export interface IJwtAuthToken {
   userId: string
   email: string
+}
+
+export interface IPendingMfaCredentials {
+  identifier: string
+  password: string
 }

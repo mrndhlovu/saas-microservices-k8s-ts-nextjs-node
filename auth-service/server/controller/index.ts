@@ -3,21 +3,34 @@ import { Request, Response } from "express"
 import {
   ACCOUNT_TYPE,
   BadRequestError,
+  IJwtAccessTokens,
   IJwtAuthToken,
   permissionManager,
 } from "@tusksui/shared"
 
-import { authMiddleware } from "../middleware/auth"
 import { authService } from "../services/auth"
 import { editableUserFields } from "../utils/constants"
 import { natsService } from "../services/nats"
-import { User } from "../models/User"
+import { IUserDocument, User } from "../models/User"
 import {
   UserDeletedPublisher,
   UserCreatedPublisher,
 } from "../events/publishers"
 import { mfaService } from "../services"
 
+declare global {
+  namespace Express {
+    interface Request {
+      currentUser: IUserDocument | null | undefined
+      session:
+        | {
+            jwt: IJwtAccessTokens
+          }
+        | null
+        | undefined
+    }
+  }
+}
 class AuthController {
   signUpUser = async (req: Request, res: Response) => {
     let user = new User({ ...req.body })
@@ -33,7 +46,7 @@ class AuthController {
     }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
-    authMiddleware.generateAuthCookies(req, user.tokens)
+    authService.generateAuthCookies(req, user.tokens)
 
     await user.save()
 
@@ -63,13 +76,29 @@ class AuthController {
     }
 
     user.tokens = await authService.getAuthTokens(tokenToSign)
-    authMiddleware.generateAuthCookies(req, user.tokens)
+    authService.generateAuthCookies(req, user.tokens)
 
     await user.save()
 
-    authMiddleware.generateAuthCookies(req, user.tokens)
+    authService.generateAuthCookies(req, user.tokens)
 
     res.status(200).send(user)
+  }
+
+  verifyCredentials = async (req: Request, res: Response) => {
+    const { identifier, password } = req.body
+
+    const user = await authService.findUserByCredentials(identifier, password)
+
+    if (!user) throw new BadRequestError("User not found.")
+
+    res.status(200).send({ success: true })
+  }
+
+  getQrCode = async (req: Request, res: Response) => {
+    const qrCodeImage = await mfaService.generateQrCode(req.currentUser!.email!)
+
+    res.status(200).send({ qrCodeImage })
   }
 
   logoutUser = async (req: Request, res: Response) => {
@@ -129,43 +158,51 @@ class AuthController {
   }
 
   enableMfa = async (req: Request, res: Response) => {
-    const token = mfaService.generateToken()
-
-    const updatedUser = await User.findByIdAndUpdate(req.currentUser!._id, {
-      $set: { multiFactorAuth: true, tokens: { access: "", refresh: "" } },
-    })
-
-    if (!updatedUser) throw new BadRequestError("User not found")
-
-    await updatedUser.save()
-    req.session = null
-
-    res.status(200).send({})
+    res.status(200).send(req.currentUser)
   }
 
   verifyMfa = async (req: Request, res: Response) => {
-    const response = mfaService.validatedToken(req.body.token)
-
-    if (!response.success) throw new BadRequestError("Failed to validate code.")
-
-    const user = await authService.findUserByCredentials(
-      req.body.identifier,
-      req.body.password
-    )
-
-    if (!user) throw new BadRequestError("User not found")
-
     const tokenToSign: IJwtAuthToken = {
-      userId: user._id.toHexString(),
-      email: user.email,
+      userId: req.currentUser!._id.toHexString(),
+      email: req.currentUser!.email,
+      mfa: {
+        validated: true,
+        enabled: req.currentUser!.multiFactorAuth,
+      },
     }
 
-    user.tokens = await authService.getAuthTokens(tokenToSign)
-    authMiddleware.generateAuthCookies(req, user.tokens)
+    req.currentUser!.tokens = await authService.getAuthTokens(tokenToSign)
+    req.currentUser!.multiFactorAuth = true
+    authService.generateAuthCookies(req, req.currentUser!.tokens)
 
-    await user.save()
+    await req.currentUser!.save()
 
-    res.status(200).send(user)
+    res.status(200).send(req.currentUser)
+  }
+
+  connectMfa = async (req: Request, res: Response) => {
+    const isConnected = mfaService.validatedToken(req.body.code)
+
+    if (!isConnected) throw new BadRequestError("Validation failed")
+
+    const tokenToSign: IJwtAuthToken = {
+      userId: req.currentUser!._id.toHexString(),
+      email: req.currentUser!.email,
+      mfa: {
+        validated: true,
+        enabled: isConnected,
+      },
+    }
+
+    req.currentUser!.tokens = await authService.getAuthTokens(tokenToSign)
+
+    authService.generateAuthCookies(req, req.currentUser!.tokens)
+
+    mfaService.generate2StepRecoveryPassword(req.currentUser!)
+
+    await req.currentUser!.save()
+
+    res.status(200).send(req.currentUser)
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
@@ -180,7 +217,7 @@ class AuthController {
     }
     user.tokens = await authService.getAuthTokens(tokenToSign)
 
-    authMiddleware.generateAuthCookies(req, user.tokens)
+    authService.generateAuthCookies(req, user.tokens)
 
     await user.save()
 

@@ -107,33 +107,68 @@ class AuthMiddleWare {
     }
   )
 
-  generateAuthCookies = (req: Request, tokens: IJwtAccessTokens) => {
-    return (req.session = {
-      jwt: tokens,
-    })
-  }
+  findPendingMfaUser = errorService.catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const { isValid, user } = await authService.verifyMfaToken(
+        req.body?.code,
+        req.currentUserJwt
+      )
+
+      if (!isValid) {
+        throw new BadRequestError(`Token validation failed`)
+      }
+
+      req.currentUser = user
+
+      next()
+    }
+  )
 
   checkMultiFactorAuth = errorService.catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
-      const currentUser = await authService.findUserByCredentials(
+      const existingUser = await authService.findUserByCredentials(
         req.body.identifier,
         req.body.password
       )
 
-      if (!currentUser) {
+      if (!existingUser) {
         throw new BadRequestError(`Authentication failed`)
       }
 
-      if (currentUser.multiFactorAuth) {
-        const authToken = mfaService.generateToken()
+      if (existingUser.multiFactorAuth) {
+        // console.log(
+        //   "🚀 ~ file: auth.ts ~ line 144 ~ AuthMiddleWare ~ authToken",
+        //   authToken
+        // )
 
-        new SendEmailPublisher(natsService.client).publish({
-          html: `Your six digit verification code is:
-          <div>Code: <h3>${authToken}</h3></div>`,
-          email: currentUser.email,
-          subject: "Six digit verification code.",
-          from: "kandhlovuie@gmail.com",
-        })
+        // const hashedToken = mfaService.encryptMfaToken(authToken, 10)
+
+        const tokenToSign: IJwtAuthToken = {
+          userId: existingUser._id.toHexString(),
+          email: existingUser.email,
+          mfa: {
+            enabled: existingUser.multiFactorAuth,
+            validated: false,
+          },
+        }
+
+        existingUser.tokens = {
+          ...(await authService.getAuthTokens(tokenToSign, {
+            accessExpiresAt: "3m",
+            refreshExpiresAt: "3m",
+          })),
+        }
+
+        authService.generateAuthCookies(req, existingUser.tokens)
+
+        await existingUser.save()
+
+        // new SendEmailPublisher(natsService.client).publish({
+        //   html: `Your six digit verification code is:<div>Code: <h3>${authToken}</h3></div>`,
+        //   email: updatedUser.email,
+        //   subject: "Six digit verification code.",
+        //   from: "kandhlovuie@gmail.com",
+        // })
 
         return res.send({ multiFactorAuth: true })
       }

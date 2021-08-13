@@ -28,6 +28,12 @@ spec:
                   name: env-config
                   key: JWT_REFRESH_TOKEN_SIGNATURE
 
+            - name: TOTP_AUTHENTICATOR_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: TOTP_AUTHENTICATOR_SECRET
+
             - name: AUTH_MONGO_URI
               valueFrom:
                 secretKeyRef:

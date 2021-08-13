@@ -1,11 +1,13 @@
+import { Request } from "express"
 import isEmail from "validator/lib/isEmail"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-import { IJwtAuthToken } from "@tusksui/shared"
+import { BadRequestError, IJwtAuthToken } from "@tusksui/shared"
 
-import { IJwtAccessTokens } from "../types"
+import { IJwtAccessTokens, IJwtTokensExpiryTimes } from "../types"
 import { IUserDocument, User } from "../models/User"
+import { mfaService } from "./mfa"
 
 class AuthService {
   findUserByCredentials = async (identifier: string, password: string) => {
@@ -31,6 +33,21 @@ class AuthService {
     return user
   }
 
+  verifyMfaToken = async <T extends string, Y extends IJwtAuthToken>(
+    mfaToken: T,
+    authJwt: Y
+  ): Promise<{ isValid: boolean; user: IUserDocument }> => {
+    const user = await this.findUserByJwt(authJwt)
+
+    if (!user) throw new BadRequestError("User not found")
+    // if (!user.tokens.mfa)
+    //   throw new BadRequestError("User validation token not found")
+
+    const isValid = mfaService.validatedToken(mfaToken)
+
+    return { isValid, user }
+  }
+
   findUserByJwt = async (decodedJWT: IJwtAuthToken) => {
     const user = await User.findOne({
       email: decodedJWT.email,
@@ -42,6 +59,12 @@ class AuthService {
 
   validatedUpdateFields(targetFields: string[], editableFields: string[]) {
     return targetFields.every((field: string) => editableFields.includes(field))
+  }
+
+  generateAuthCookies = (req: Request, tokens: IJwtAccessTokens) => {
+    return (req.session = {
+      jwt: tokens,
+    })
   }
 
   encryptUserPassword = async (
@@ -69,11 +92,17 @@ class AuthService {
     })
   }
 
-  getAuthTokens = async (tokenToSign: IJwtAuthToken) => {
+  getAuthTokens = async <
+    T extends IJwtAuthToken,
+    Y extends IJwtTokensExpiryTimes
+  >(
+    tokenToSign: T,
+    options?: Y
+  ) => {
     const { JWT_TOKEN_SIGNATURE, JWT_REFRESH_TOKEN_SIGNATURE } = process.env
 
-    const accessTokenExpiresIn: string = "1h"
-    const refreshTokenExpiresIn: string = "1h"
+    const accessTokenExpiresIn: string = options?.accessExpiresAt || "1h"
+    const refreshTokenExpiresIn: string = options?.refreshExpiresAt || "1h"
 
     const accessToken = jwt.sign(tokenToSign, JWT_TOKEN_SIGNATURE!, {
       expiresIn: accessTokenExpiresIn,
