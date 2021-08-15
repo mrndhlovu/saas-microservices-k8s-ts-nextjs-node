@@ -1,9 +1,10 @@
 import Stripe from "stripe"
+import { compareAsc, format } from "date-fns"
 
 import { IAccountUpdatedEvent } from "@tusksui/shared"
 
 import { INewSubscription, IOrderDetails } from "../types"
-import Order from "../models/Order"
+import Order, { IOrderDocument } from "../models/Order"
 
 class StripeService {
   private stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -70,6 +71,28 @@ class StripeService {
     return products
   }
 
+  async getBillingHistory(customerId: string) {
+    const invoices = await this.stripe.invoices.list({
+      limit: 10,
+      customer: customerId,
+    })
+
+    const filteredInvoiceData = invoices?.data.map(invoice => ({
+      periodEnd: format(new Date(invoice.period_end), "yyyy/MM/dd"),
+      periodStart: format(new Date(invoice.period_start), "yyyy/MM/dd"),
+      invoiceId: invoice.id,
+      description: invoice.lines.data[0].description,
+      billingMethod: invoice.lines.data[0].plan?.interval,
+      amountPaid: invoice.total! / 100,
+      isPaid: invoice.status === "paid",
+      invoicePdf: invoice.invoice_pdf,
+      currency: invoice.currency,
+      plan: invoice.lines.data[0].metadata?.plan,
+    }))
+
+    return filteredInvoiceData || []
+  }
+
   async createSubscription(data: IOrderDetails) {
     await this.updateStripeCustomerPaymentMethod(
       data.paymentMethodId!,
@@ -80,9 +103,7 @@ class StripeService {
       customer: data.customerId!,
       items: [{ plan: data.priceId }],
       expand: ["latest_invoice.payment_intent"],
-      metadata: {
-        plan: data.plan!,
-      },
+      metadata: { plan: data.plan! },
     })
 
     return {

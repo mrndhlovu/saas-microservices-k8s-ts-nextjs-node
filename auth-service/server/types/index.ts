@@ -46,8 +46,9 @@ export interface IJwtAccessTokens {
 }
 
 export interface IJwtTokensExpiryTimes {
-  accessExpiresAt: string
-  refreshExpiresAt: string
+  accessExpiresAt?: string
+  refreshExpiresAt?: string
+  isRefreshingToken?: boolean
 }
 
 export type JWTSignKeyOption = "refresh" | "role" | "access"

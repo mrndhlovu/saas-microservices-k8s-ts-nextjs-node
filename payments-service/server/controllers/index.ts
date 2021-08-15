@@ -3,7 +3,7 @@ import { Request, Response } from "express"
 import Payment from "../models/Payment"
 import { natsService, paymentService, stripeService } from "../services"
 import Order, { IOrderDocument } from "../models/Order"
-import { AccountStatus } from "@tusksui/shared"
+import { AccountStatus, BadRequestError } from "@tusksui/shared"
 import { IOrderDetails } from "../types"
 import { PaymentCreatedPublisher } from "../events/publishers/payment-created"
 
@@ -16,10 +16,15 @@ declare global {
 }
 
 class PaymentController {
-  getPayments = async (_req: Request, res: Response) => {
-    const payments = await Payment.find({})
+  getPayments = async (req: Request, res: Response) => {
+    const order = await paymentService.findOrderByOwnerId(
+      req.currentUserJwt.userId!
+    )
 
-    res.send(payments)
+    if (!order) throw new BadRequestError("No Orders found")
+    const orders = await stripeService.getBillingHistory(order.customerId)
+
+    res.send(orders)
   }
 
   getOrderById = async (req: Request, res: Response) => {
@@ -45,22 +50,22 @@ class PaymentController {
 
     if (subscription.status === AccountStatus.Active) {
       const order = new Order({
-        expiresAt: new Date(subscription.expiresAt).getUTCDate(),
-        startAt: new Date(subscription.startAt).getUTCDate(),
+        expiresAt: new Date(subscription.expiresAt),
+        startAt: new Date(subscription.startAt),
         isPaid: true,
         ownerId: req.currentUserJwt.userId!,
         customerId: data.customerId!,
         productId: data.productId!,
       })
 
-      new Payment({
+      const payment = new Payment({
         stripeId: subscription.productId,
         orderId: order._id,
       })
 
+      await payment.save()
+
       new PaymentCreatedPublisher(natsService.client).publish({
-        expiresAt: new Date(subscription.expiresAt).getUTCDate(),
-        startAt: new Date(subscription.startAt).getUTCDate(),
         ownerId: req.currentUserJwt.userId!,
         customerId: data.customerId!,
         productId: data.productId!,

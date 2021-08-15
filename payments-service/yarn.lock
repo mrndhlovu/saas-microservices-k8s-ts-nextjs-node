@@ -529,10 +529,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@tusksui/shared@^0.0.31":
-  version "0.0.31"
-  resolved "https://registry.yarnpkg.com/@tusksui/shared/-/shared-0.0.31.tgz#0e915853895e095055311bb0fce8511a3252077a"
-  integrity sha512-kZpmPPGHwMkZ//CbXZvIClL+4EvQR6bd8kpLLGqTPsNYExumiqSiIDHUFMW6w16AdQUdVXGnaZsc3AIPrpUbYg==
+"@tusksui/shared@^0.0.37":
+  version "0.0.37"
+  resolved "https://registry.yarnpkg.com/@tusksui/shared/-/shared-0.0.37.tgz#7191f45b9e57071c1bd3182a8e39831208b4b640"
+  integrity sha512-B00TD6pd7fQWKO91s3rzhf1SlO3Ae2t2lAhMVTqEfdrt5qIp5DtjagIYKer1zZroXpIDXx1gLPn6no4tRWzs/w==
   dependencies:
     cookie-session "^1.4.0"
     express "^4.17.1"
@@ -1433,6 +1433,11 @@ data-urls@^2.0.0:
     abab "^2.0.3"
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
+
+date-fns@^2.23.0:
+  version "2.23.0"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.23.0.tgz#4e886c941659af0cf7b30fafdd1eaa37e88788a9"
+  integrity sha512-5ycpauovVyAk0kXNZz6ZoB9AYMZB4DObse7P3BPWmyEjXNORTI8EJ6X0uaSAq4sCHzM1uajzrkr6HnsLQpxGXA==
 
 debug@2.6.9, debug@^2.2.0:
   version "2.6.9"

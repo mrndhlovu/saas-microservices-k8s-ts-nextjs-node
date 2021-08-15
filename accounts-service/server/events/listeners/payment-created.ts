@@ -20,7 +20,7 @@ export class PaymentCreatedListener extends Listener<IPaymentCreatedEvent> {
     try {
       const account = await accountService.findAccountByIdAndUpdate(
         {
-          expiresAt: data.expiresAt,
+          expiresAt: data?.expiresAt,
           isTrial: data.isTrial,
           plan: data.plan,
         },
@@ -31,7 +31,7 @@ export class PaymentCreatedListener extends Listener<IPaymentCreatedEvent> {
 
       const eventData = accountService.getEventData(account)
 
-      await account.delete()
+      await account.save()
 
       new AccountUpdatedPublisher(natsService.client).publish(eventData)
 

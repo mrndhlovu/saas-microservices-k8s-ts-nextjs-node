@@ -40,8 +40,6 @@ class AuthService {
     const user = await this.findUserByJwt(authJwt)
 
     if (!user) throw new BadRequestError("User not found")
-    // if (!user.tokens.mfa)
-    //   throw new BadRequestError("User validation token not found")
 
     const isValid = mfaService.validatedToken(mfaToken)
 
@@ -62,6 +60,8 @@ class AuthService {
   }
 
   generateAuthCookies = (req: Request, tokens: IJwtAccessTokens) => {
+    req.session = null
+
     return (req.session = {
       jwt: tokens,
     })
@@ -101,8 +101,13 @@ class AuthService {
   ) => {
     const { JWT_TOKEN_SIGNATURE, JWT_REFRESH_TOKEN_SIGNATURE } = process.env
 
-    const accessTokenExpiresIn: string = options?.accessExpiresAt || "1h"
-    const refreshTokenExpiresIn: string = options?.refreshExpiresAt || "1h"
+    if (options?.isRefreshingToken) {
+      var accessTokenExpiresIn: string = options?.accessExpiresAt || "3h"
+      var refreshTokenExpiresIn: string = options?.refreshExpiresAt || "12h"
+    } else {
+      var accessTokenExpiresIn: string = options?.accessExpiresAt || "1h"
+      var refreshTokenExpiresIn: string = options?.refreshExpiresAt || "2h"
+    }
 
     const accessToken = jwt.sign(tokenToSign, JWT_TOKEN_SIGNATURE!, {
       expiresIn: accessTokenExpiresIn,

@@ -118,6 +118,8 @@ const UserSchema: Schema<IUserDocument> = new Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 )
 
@@ -135,6 +137,11 @@ UserSchema.methods.toJSON = function () {
 
   return userObject
 }
+
+UserSchema.virtual("fullName").get(function (this: IUserAttributes) {
+  if (!this.firstname) return ""
+  return `${this.firstname} ${this.lastname || ""}`
+})
 
 UserSchema.pre("save", function (next) {
   const saltRounds = 12

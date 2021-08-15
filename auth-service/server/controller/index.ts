@@ -80,8 +80,6 @@ class AuthController {
 
     await user.save()
 
-    authService.generateAuthCookies(req, user.tokens)
-
     res.status(200).send(user)
   }
 
@@ -215,13 +213,15 @@ class AuthController {
       userId: user._id.toHexString(),
       email: user.email,
     }
-    user.tokens = await authService.getAuthTokens(tokenToSign)
+    user.tokens = await authService.getAuthTokens(tokenToSign, {
+      isRefreshingToken: true,
+    })
 
     authService.generateAuthCookies(req, user.tokens)
 
     await user.save()
 
-    res.status(200).send({})
+    res.status(200).send(user)
   }
 }
 

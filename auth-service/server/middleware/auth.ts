@@ -136,13 +136,6 @@ class AuthMiddleWare {
       }
 
       if (existingUser.multiFactorAuth) {
-        // console.log(
-        //   "🚀 ~ file: auth.ts ~ line 144 ~ AuthMiddleWare ~ authToken",
-        //   authToken
-        // )
-
-        // const hashedToken = mfaService.encryptMfaToken(authToken, 10)
-
         const tokenToSign: IJwtAuthToken = {
           userId: existingUser._id.toHexString(),
           email: existingUser.email,
