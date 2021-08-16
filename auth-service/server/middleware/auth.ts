@@ -79,26 +79,18 @@ class AuthMiddleWare {
     next()
   }
 
-  verifyCurrentUser = errorService.catchAsyncError(
-    async (req: Request, _res: Response, next: NextFunction) => {
-      const currentUser = await authService.findUserByJwt(req.currentUserJwt)
-
-      if (!currentUser) {
-        return next()
-      }
-
-      req.currentUser = currentUser
-
-      next()
-    }
-  )
-
   findCurrentUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
       const currentUser = await authService.findUserByJwt(req.currentUserJwt)
 
       if (!currentUser) {
         throw new BadRequestError(`Authentication failed`)
+      }
+
+      if (!currentUser.account.isVerified) {
+        throw new BadRequestError(
+          `Please verify account sent to: ${currentUser.email}`
+        )
       }
 
       req.currentUser = currentUser
@@ -116,6 +108,12 @@ class AuthMiddleWare {
 
       if (!isValid) {
         throw new BadRequestError(`Token validation failed`)
+      }
+
+      if (!user.account.isVerified) {
+        throw new BadRequestError(
+          `Please verify account sent to: ${user.email}`
+        )
       }
 
       req.currentUser = user

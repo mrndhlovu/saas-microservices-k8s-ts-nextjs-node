@@ -21,7 +21,7 @@ router.post(
 router.get(
   "/me",
   middlewareUtils.checkIsAuthenticated,
-  authMiddleware.verifyCurrentUser,
+  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.getCurrentUser)
 )
 
@@ -53,6 +53,7 @@ router.patch(
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
   authMiddleware.findCurrentUser,
+
   errorService.catchAsyncError(authController.updateUser)
 )
 
@@ -60,7 +61,6 @@ router.delete(
   "/delete",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
-  authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.deleteUser)
 )
 
@@ -94,6 +94,11 @@ router.post(
   middlewareUtils.checkIsAuthenticated,
   authMiddleware.findCurrentUser,
   errorService.catchAsyncError(authController.connectMfa)
+)
+
+router.post(
+  "/get-verification-link",
+  errorService.catchAsyncError(authController.getVerificationEmail)
 )
 
 router.get(

@@ -16,7 +16,7 @@ class EmailService {
     }
 
     try {
-      await sgMail.send(msg)
+      // await sgMail.send(msg)
       return 200
     } catch (error) {
       if (error.response) {

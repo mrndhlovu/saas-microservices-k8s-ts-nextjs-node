@@ -110,6 +110,17 @@ class AuthController {
     res.send({})
   }
 
+  getVerificationEmail = async (req: Request, res: Response) => {
+    const user = await authService.findUserOnlyByEmail(req.body.email)
+
+    if (!user)
+      throw new BadRequestError(
+        `Account link to email ${req.body.email} not found.`
+      )
+
+    res.send({ message: "Please check you email for your verification link" })
+  }
+
   updateUser = async (req: Request, res: Response) => {
     const updateFields = Object.keys(req.body)
 
@@ -138,7 +149,9 @@ class AuthController {
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    const user = req.currentUser!
+    const user = await authService.findUserByJwt(req.currentUserJwt)
+
+    if (!user) throw new BadRequestError("User not found.")
 
     const userId = user._id.toHexString()
     const email = user.email
@@ -151,6 +164,8 @@ class AuthController {
       boardIds,
       email,
     })
+
+    req.session = null
 
     res.status(200).send({})
   }
@@ -206,8 +221,14 @@ class AuthController {
   getRefreshToken = async (req: Request, res: Response) => {
     const user = await authService.findUserByJwt(req.currentUserJwt)
 
-    if (!user)
+    if (!user) {
+      req.session = null
       throw new BadRequestError("Authentication credentials may have expired.")
+    }
+
+    if (!user?.account.isVerified) {
+      throw new BadRequestError(`Please verify account sent to: ${user.email}`)
+    }
 
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
