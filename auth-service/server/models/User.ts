@@ -3,8 +3,7 @@ import { ObjectId } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 
 import { authService } from "../services/auth"
-import { IJwtAccessTokens } from "../types"
-import { IAccountCreatedEvent } from "@tusksui/shared"
+import { IAccountCreatedEvent, IJwtAccessTokens } from "@tusksui/shared"
 
 const UserSchema: Schema<IUserDocument> = new Schema(
   {

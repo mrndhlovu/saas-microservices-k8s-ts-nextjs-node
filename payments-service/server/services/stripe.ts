@@ -11,13 +11,37 @@ class StripeService {
     apiVersion: "2020-08-27",
   })
 
+  async getOrCreateStripeCustomer(
+    email: string,
+    options?: { [key: string]: string }
+  ) {
+    const existingCustomer = await this.stripe.customers.list({
+      email,
+      limit: 1,
+    })
+
+    if (existingCustomer?.data?.[0]) {
+      return existingCustomer.data?.[0]
+    }
+
+    const customer = await this.stripe.customers.create({
+      email,
+      metadata: { ...options },
+    })
+
+    return customer
+  }
+
   async createDefaultStripeCustomerSubscription(
     user: IAccountUpdatedEvent["data"]
   ) {
-    const customer = await this.stripe.customers.create({
-      email: user.email,
-      metadata: { authId: user.id },
+    const customer = await this.getOrCreateStripeCustomer(user.email!, {
+      authId: user.id,
     })
+    console.log(
+      "🚀 ~ file: stripe.ts ~ line 41 ~ StripeService ~ customer",
+      customer
+    )
 
     const order = new Order({
       expiresAt: new Date("2199/01/01"),
@@ -33,6 +57,10 @@ class StripeService {
 
   async deleteCustomer(customerId: string) {
     const response = await this.stripe.customers.del(customerId)
+    console.log(
+      "🚀 ~ file: stripe.ts ~ line 64 ~ StripeService ~ deleteCustomer ~ response",
+      response
+    )
 
     return response
   }

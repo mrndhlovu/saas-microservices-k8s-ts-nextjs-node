@@ -31,18 +31,12 @@ export interface IObjectAuthTokenToSign {
 
 export interface IJwtRefreshTokens {
   access: string
-  refresh: string
+  refresh?: string
 }
 
 export interface IBoardRoleJwtToken {
   admin: string
   flag: number
-}
-
-export interface IJwtAccessTokens {
-  access: string
-  refresh: string
-  mfa?: string
 }
 
 export interface IJwtTokensExpiryTimes {

@@ -3,9 +3,13 @@ import isEmail from "validator/lib/isEmail"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-import { BadRequestError, IJwtAuthToken } from "@tusksui/shared"
+import {
+  BadRequestError,
+  IJwtAuthToken,
+  IJwtAccessTokens,
+} from "@tusksui/shared"
 
-import { IJwtAccessTokens, IJwtTokensExpiryTimes } from "../types"
+import { IJwtTokensExpiryTimes } from "../types"
 import { IUserDocument, User } from "../models/User"
 import { mfaService } from "./mfa"
 
@@ -16,10 +20,12 @@ class AuthService {
       : this.findUserOnlyByUsername(identifier))
 
     let isMatch: boolean
-    if (!user) throw new Error("Login error: check your login credentials.")
+    if (!user)
+      throw new BadRequestError("Login error: check your login credentials.")
 
     isMatch = await bcrypt.compare(password, user.password)
-    if (!isMatch) throw new Error("Login error: check your login credentials.")
+    if (!isMatch)
+      throw new BadRequestError("Login error: check your login credentials.")
 
     return user
   }
@@ -74,7 +80,7 @@ class AuthService {
     next: any
   ) => {
     const handleCallback = (err?: Error, hash?: string) => {
-      if (err || !hash) throw new Error("Failed to encrypt password")
+      if (err || !hash) throw new BadRequestError("Failed to encrypt password")
       if (hash) {
         user.password = hash
         next()
@@ -103,19 +109,21 @@ class AuthService {
 
     if (options?.isRefreshingToken) {
       var accessTokenExpiresIn: string = options?.accessExpiresAt || "3h"
-      var refreshTokenExpiresIn: string = options?.refreshExpiresAt || "12h"
+      var refreshTokenExpiresIn: string = "1h"
     } else {
-      var accessTokenExpiresIn: string = options?.accessExpiresAt || "1h"
-      var refreshTokenExpiresIn: string = options?.refreshExpiresAt || "2h"
+      var accessTokenExpiresIn: string = options?.accessExpiresAt || "2h"
+      var refreshTokenExpiresIn: string = options?.refreshExpiresAt || "5h"
     }
 
     const accessToken = jwt.sign(tokenToSign, JWT_TOKEN_SIGNATURE!, {
       expiresIn: accessTokenExpiresIn,
     })
 
-    const refreshToken = jwt.sign(tokenToSign, JWT_REFRESH_TOKEN_SIGNATURE!, {
-      expiresIn: refreshTokenExpiresIn,
-    })
+    const refreshToken = options?.isRefreshingToken
+      ? undefined
+      : jwt.sign(tokenToSign, JWT_REFRESH_TOKEN_SIGNATURE!, {
+          expiresIn: refreshTokenExpiresIn,
+        })
 
     const tokens: IJwtAccessTokens = {
       access: accessToken,
