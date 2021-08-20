@@ -40,7 +40,7 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
       body: `
       Please click the link below to verify your account:
       ${BASE_URL}?token=${token}`,
-      subject: "Verify email to activate your account.",
+      subject: "Email verification to activate your account.",
       from: DEFAULT_EMAIL,
     }
 

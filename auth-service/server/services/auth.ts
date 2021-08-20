@@ -9,9 +9,10 @@ import {
   IJwtAccessTokens,
 } from "@tusksui/shared"
 
-import { IJwtTokensExpiryTimes } from "../types"
+import { IAuthTokenOptions } from "../types"
 import { IUserDocument, User } from "../models/User"
 import { mfaService } from "./mfa"
+import { RefreshToken } from "../models/RefreshToken"
 
 class AuthService {
   findUserByCredentials = async (identifier: string, password: string) => {
@@ -34,8 +35,14 @@ class AuthService {
     const user = await User.findOne({ email })
     return user
   }
+
   findUserOnlyByUsername = async (username: string) => {
     const user = await User.findOne({ username })
+    return user
+  }
+
+  findUserOnlyById = async (userId: string) => {
+    const user = await User.findById(userId)
     return user
   }
 
@@ -57,6 +64,17 @@ class AuthService {
       email: decodedJWT.email,
       _id: decodedJWT.userId,
     })
+
+    return user
+  }
+
+  findUserByRefreshJwt = async (tokenId: string) => {
+    const token = await this.findRefreshTokenOnlyById(tokenId)
+
+    if (!token) {
+      throw new BadRequestError("Token may have expired.")
+    }
+    const user = await this.findUserOnlyById(token.userId)
 
     return user
   }
@@ -98,32 +116,113 @@ class AuthService {
     })
   }
 
-  getAuthTokens = async <
-    T extends IJwtAuthToken,
-    Y extends IJwtTokensExpiryTimes
-  >(
-    tokenToSign: T,
-    options?: Y
-  ) => {
-    const { JWT_TOKEN_SIGNATURE, JWT_REFRESH_TOKEN_SIGNATURE } = process.env
+  async findRefreshTokenOnlyById(refreshTokenId: string) {
+    const token = await RefreshToken.findById(refreshTokenId)
+    return token
+  }
 
-    if (options?.isRefreshingToken) {
-      var accessTokenExpiresIn: string = options?.accessExpiresAt || "3h"
-      var refreshTokenExpiresIn: string = "1h"
-    } else {
-      var accessTokenExpiresIn: string = options?.accessExpiresAt || "2h"
-      var refreshTokenExpiresIn: string = options?.refreshExpiresAt || "5h"
+  async generateRefreshToken(
+    tokenToSign: IJwtAuthToken,
+    expiresIn: string,
+    currentRefreshTokenId?: string
+  ) {
+    let existingToken =
+      currentRefreshTokenId &&
+      (await this.findRefreshTokenOnlyById(currentRefreshTokenId!))
+
+    if (existingToken && !existingToken.used) {
+      const tokenIsValid = this.isTokenValid(
+        existingToken.token,
+        process.env.JWT_REFRESH_TOKEN_SIGNATURE!
+      )
+
+      if (tokenIsValid) {
+        existingToken.used = true
+        existingToken.save()
+        return existingToken._id
+      }
     }
 
-    const accessToken = jwt.sign(tokenToSign, JWT_TOKEN_SIGNATURE!, {
-      expiresIn: accessTokenExpiresIn,
+    if (existingToken && existingToken.used && !existingToken.invalidated) {
+      existingToken.invalidated = true
+      existingToken.save()
+      throw new BadRequestError("Refresh Token has been used.")
+    }
+
+    const token = jwt.sign(
+      tokenToSign,
+      process.env.JWT_REFRESH_TOKEN_SIGNATURE!,
+      {
+        expiresIn,
+      }
+    )
+
+    const refreshToken = new RefreshToken({
+      userId: tokenToSign.userId,
+      token,
     })
 
-    const refreshToken = options?.isRefreshingToken
-      ? undefined
-      : jwt.sign(tokenToSign, JWT_REFRESH_TOKEN_SIGNATURE!, {
-          expiresIn: refreshTokenExpiresIn,
-        })
+    await refreshToken.save()
+
+    return refreshToken?._id.toHexString()
+  }
+
+  isTokenValid(token?: string, signature?: string) {
+    try {
+      if (!token) throw new Error()
+      if (jwt.verify(token, signature!)) return true
+    } catch (error) {
+      return false
+    }
+  }
+
+  generateAccessToken(
+    tokenToSign: IJwtAuthToken,
+    expiresIn: string,
+    currentAccessToken?: string
+  ) {
+    const isValidToken = this.isTokenValid(
+      currentAccessToken,
+      process.env.JWT_TOKEN_SIGNATURE!
+    )
+
+    if (isValidToken) {
+      return currentAccessToken!
+    }
+
+    const token = jwt.sign(tokenToSign, process.env.JWT_TOKEN_SIGNATURE!, {
+      expiresIn,
+    })
+
+    return token
+  }
+
+  getAuthTokens = async (
+    tokenToSign: IJwtAuthToken,
+    options?: IAuthTokenOptions
+  ) => {
+    let accessTokenExpiresIn: string
+    let refreshTokenExpiresIn: string
+
+    if (options?.isRefreshingToken) {
+      accessTokenExpiresIn = options?.accessExpiresAt || "12h"
+      refreshTokenExpiresIn = options?.accessExpiresAt || "1d"
+    } else {
+      accessTokenExpiresIn = options?.accessExpiresAt || "2h"
+      refreshTokenExpiresIn = options?.refreshExpiresAt || "5h"
+    }
+
+    const accessToken = this.generateAccessToken(
+      tokenToSign,
+      accessTokenExpiresIn,
+      options?.accessToken
+    )
+
+    const refreshToken = await this.generateRefreshToken(
+      tokenToSign,
+      refreshTokenExpiresIn,
+      options?.refreshTokenId
+    )
 
     const tokens: IJwtAccessTokens = {
       access: accessToken,

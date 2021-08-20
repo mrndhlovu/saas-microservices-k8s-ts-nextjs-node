@@ -93,8 +93,11 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       type: Object,
       default: {
         access: String,
-        refresh: String,
         mfa: String,
+        refresh: {
+          type: Schema.Types.ObjectId,
+          ref: "RefreshToken",
+        },
       },
     },
     account: {

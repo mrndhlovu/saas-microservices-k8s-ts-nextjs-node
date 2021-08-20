@@ -75,7 +75,9 @@ class AuthController {
       email: user.email,
     }
 
-    user.tokens = await authService.getAuthTokens(tokenToSign)
+    user.tokens = await authService.getAuthTokens(tokenToSign, {
+      accessToken: req.session?.jwt.access,
+    })
     authService.generateAuthCookies(req, user.tokens)
 
     await user.save()
@@ -219,7 +221,9 @@ class AuthController {
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const user = await authService.findUserByJwt(req.currentUserJwt)
+    const user = await authService.findUserByRefreshJwt(
+      req.session!.jwt.refresh!
+    )
 
     if (!user) {
       req.session = null
@@ -236,6 +240,8 @@ class AuthController {
     }
     user.tokens = await authService.getAuthTokens(tokenToSign, {
       isRefreshingToken: true,
+      refreshTokenId: req.session?.jwt.refresh,
+      accessToken: req.session?.jwt.access,
     })
 
     authService.generateAuthCookies(req, user.tokens)
