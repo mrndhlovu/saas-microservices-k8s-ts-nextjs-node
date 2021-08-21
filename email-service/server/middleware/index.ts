@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { check, oneOf, validationResult } from "express-validator"
 
-import { CustomRequestError, errorService } from "@tusksui/shared"
+import { RequestValidationError, errorService } from "@tusksui/shared"
 
 import { requiredEmailFields } from "../utils/constants"
 
@@ -25,7 +25,7 @@ class EmailMiddleware {
       const errors = validationResult(req)
 
       if (!errors.isEmpty()) {
-        throw new CustomRequestError(errors.array())
+        throw new RequestValidationError(errors.array())
       }
 
       next()

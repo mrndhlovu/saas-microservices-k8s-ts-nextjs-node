@@ -181,10 +181,9 @@ class AuthService {
     expiresIn: string,
     currentAccessToken?: string
   ) {
-    const isValidToken = this.isTokenValid(
-      currentAccessToken,
-      process.env.JWT_TOKEN_SIGNATURE!
-    )
+    const isValidToken =
+      currentAccessToken &&
+      this.isTokenValid(currentAccessToken, process.env.JWT_TOKEN_SIGNATURE!)
 
     if (isValidToken) {
       return currentAccessToken!
@@ -205,11 +204,11 @@ class AuthService {
     let refreshTokenExpiresIn: string
 
     if (options?.isRefreshingToken) {
-      accessTokenExpiresIn = options?.accessExpiresAt || "12h"
-      refreshTokenExpiresIn = options?.accessExpiresAt || "1d"
+      accessTokenExpiresIn = options?.accessExpiresAt || "2d"
+      refreshTokenExpiresIn = options?.accessExpiresAt || "7d"
     } else {
-      accessTokenExpiresIn = options?.accessExpiresAt || "2h"
-      refreshTokenExpiresIn = options?.refreshExpiresAt || "5h"
+      accessTokenExpiresIn = options?.accessExpiresAt || "10h"
+      refreshTokenExpiresIn = options?.refreshExpiresAt || "1d"
     }
 
     const accessToken = this.generateAccessToken(

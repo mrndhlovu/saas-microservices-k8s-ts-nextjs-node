@@ -3,7 +3,7 @@ import { check, oneOf, validationResult } from "express-validator"
 
 import {
   BadRequestError,
-  CustomRequestError,
+  RequestValidationError,
   errorService,
 } from "@tusksui/shared"
 
@@ -54,7 +54,7 @@ class PaymentMiddleware {
       const errors = validationResult(req)
 
       if (!errors.isEmpty()) {
-        throw new CustomRequestError(errors.array())
+        throw new RequestValidationError(errors.array())
       }
 
       next()

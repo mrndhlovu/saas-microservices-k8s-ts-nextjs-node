@@ -13,7 +13,7 @@
     "test": "jest --coverage --watchAll --no-cache"
   },
   "dependencies": {
-    "@tusksui/shared": "^0.0.1",
+    "@tusksui/shared": "^0.0.50",
     "@types/cookie-session": "^2.0.43",
     "cookie-parser": "^1.4.5",
     "cookie-session": "^1.4.0",

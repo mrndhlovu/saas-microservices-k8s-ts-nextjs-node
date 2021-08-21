@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express"
 import { check, oneOf, validationResult } from "express-validator"
 
-import { CustomRequestError, errorService } from "@tusksui/shared"
+import { RequestValidationError, errorService } from "@tusksui/shared"
 import { allowedCardUpdateFields } from "../utils/constants"
 import { CardDocument } from "../models/Card"
 
@@ -29,7 +29,7 @@ class CardMiddleware {
       const errors = validationResult(req)
 
       if (!errors.isEmpty()) {
-        throw new CustomRequestError(errors.array())
+        throw new RequestValidationError(errors.array())
       }
 
       next()

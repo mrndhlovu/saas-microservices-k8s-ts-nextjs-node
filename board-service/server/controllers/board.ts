@@ -1,6 +1,11 @@
 import { Request, Response } from "express"
 
-import { BadRequestError, permissionManager, ROLES } from "@tusksui/shared"
+import {
+  BadRequestError,
+  HTTPStatusCode,
+  permissionManager,
+  ROLES,
+} from "@tusksui/shared"
 
 import { boardService } from "../services/board"
 import {
@@ -38,7 +43,7 @@ class BoardController {
   }
 
   createBoard = async (req: Request, res: Response) => {
-    const userId = req.currentUserJwt.userId
+    const userId = req.currentUserJwt.userId!
 
     let board = new Board({ ...req.body, owner: userId })
 
@@ -95,10 +100,10 @@ class BoardController {
 
     new BoardDeletedPublisher(natsService.client).publish({
       id: boardId.toHexString(),
-      ownerId: req.currentUserJwt.userId,
+      ownerId: req.currentUserJwt.userId!,
     })
 
-    res.status(200).send({})
+    res.status(HTTPStatusCode.NoContent).send()
   }
 }
 

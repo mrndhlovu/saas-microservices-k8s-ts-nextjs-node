@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express"
 import { check, oneOf, validationResult } from "express-validator"
 
 import { IListDocument } from "../models/List"
-import { CustomRequestError, errorService } from "@tusksui/shared"
+import { RequestValidationError, errorService } from "@tusksui/shared"
 import { allowedListUpdateFields } from "../utils/constants"
 
 const { catchAsyncError } = errorService
@@ -29,7 +29,7 @@ class ListMiddleware {
       const errors = validationResult(req)
 
       if (!errors.isEmpty()) {
-        throw new CustomRequestError(errors.array())
+        throw new RequestValidationError(errors.array())
       }
 
       next()

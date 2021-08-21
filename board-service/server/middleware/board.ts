@@ -1,17 +1,19 @@
 import { NextFunction, Request, Response } from "express"
-import { body, validationResult, oneOf, check } from "express-validator"
+import { validationResult, oneOf, check } from "express-validator"
 
 import { BoardDocument, IBoardMember } from "../models/Board"
 import {
-  BadRequestError,
-  CustomRequestError,
+  RequestValidationError,
   PermissionRequestError,
   errorService,
   permissionManager,
   IPermissionType,
+  NotFoundError,
+  BadRequestError,
 } from "@tusksui/shared"
 import { boardService } from "../services/board"
 import { allowedBoardUpdateFields } from "../utils/constants"
+import { isValidObjectId } from "mongoose"
 
 const { catchAsyncError } = errorService
 
@@ -29,12 +31,14 @@ class BoardMiddleware {
       async (req: Request, _res: Response, next: NextFunction) => {
         const _id = req.params.boardId
 
-        const userId = req.currentUserJwt.userId
+        if (!isValidObjectId(_id))
+          throw new BadRequestError("Board id is required")
+
+        const userId = req.currentUserJwt.userId!
 
         const board = await boardService.findBoardOnlyById(_id)
 
-        if (!board)
-          throw new BadRequestError("Board with that id was not found")
+        if (!board) throw new NotFoundError("Board with that id was not found")
 
         const existingBoardMember = board.members.find(
           (member: IBoardMember) => member.id === userId
@@ -50,9 +54,7 @@ class BoardMiddleware {
         )
 
         if (!isGrantedPermission) {
-          throw new BadRequestError(
-            "Permission to make this action was denied."
-          )
+          throw new PermissionRequestError()
         }
 
         req.board = board
@@ -74,7 +76,7 @@ class BoardMiddleware {
       const errors = validationResult(req)
 
       if (!errors.isEmpty()) {
-        throw new CustomRequestError(errors.array())
+        throw new RequestValidationError(errors.array())
       }
 
       next()

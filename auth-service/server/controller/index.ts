@@ -45,8 +45,8 @@ class AuthController {
       email: user.email,
     }
 
-    user.tokens = await authService.getAuthTokens(tokenToSign)
-    authService.generateAuthCookies(req, user.tokens)
+    const tokens = await authService.getAuthTokens(tokenToSign)
+    authService.generateAuthCookies(req, tokens)
 
     await user.save()
 
@@ -75,10 +75,9 @@ class AuthController {
       email: user.email,
     }
 
-    user.tokens = await authService.getAuthTokens(tokenToSign, {
-      accessToken: req.session?.jwt.access,
-    })
-    authService.generateAuthCookies(req, user.tokens)
+    const tokens = await authService.getAuthTokens(tokenToSign)
+
+    authService.generateAuthCookies(req, tokens)
 
     await user.save()
 
@@ -102,10 +101,6 @@ class AuthController {
   }
 
   logoutUser = async (req: Request, res: Response) => {
-    req.currentUser!.updateOne({
-      $set: { tokens: { access: "", refresh: "" } },
-    })
-
     await req.currentUser!.save()
 
     req.session = null
@@ -186,9 +181,9 @@ class AuthController {
       },
     }
 
-    req.currentUser!.tokens = await authService.getAuthTokens(tokenToSign)
+    const tokens = await authService.getAuthTokens(tokenToSign)
     req.currentUser!.multiFactorAuth = true
-    authService.generateAuthCookies(req, req.currentUser!.tokens)
+    authService.generateAuthCookies(req, tokens)
 
     await req.currentUser!.save()
 

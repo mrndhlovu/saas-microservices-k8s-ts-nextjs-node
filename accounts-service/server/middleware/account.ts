@@ -3,7 +3,7 @@ import { check, oneOf, validationResult } from "express-validator"
 import jwt from "jsonwebtoken"
 import {
   BadRequestError,
-  CustomRequestError,
+  RequestValidationError,
   errorService,
   IJwtAuthToken,
 } from "@tusksui/shared"
@@ -38,7 +38,7 @@ class AccountMiddleware {
       const errors = validationResult(req)
 
       if (!errors.isEmpty()) {
-        throw new CustomRequestError(errors.array())
+        throw new RequestValidationError(errors.array())
       }
 
       next()
