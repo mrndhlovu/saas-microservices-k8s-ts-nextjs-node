@@ -3,6 +3,7 @@ import { Request, Response } from "express"
 
 import Board from "../models/Board"
 import Card, { CardDocument } from "../models/Card"
+import { boardService } from "../services"
 import { cardService } from "../services/card"
 import { allowedCardUpdateFields } from "../utils/constants"
 
@@ -44,7 +45,9 @@ class CardController {
 
     await board.save()
 
-    res.status(201).send(card)
+    const updatedBoard = await boardService.getPopulatedBoard(board._id)
+
+    res.status(201).send(updatedBoard)
   }
 
   deleteCard = async (req: Request, res: Response) => {

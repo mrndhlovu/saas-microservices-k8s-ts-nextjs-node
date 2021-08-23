@@ -36,13 +36,6 @@ router
     errorService.catchAsyncError(listController.deleteList)
   )
 
-router.delete(
-  "/:boardId",
-  authMiddleware.validateRequiredAccessJwt,
-  authMiddleware.checkIsAuthenticated,
-  errorService.catchAsyncError(listController.deleteList)
-)
-
 router.post(
   "/create/:boardId",
   listMiddleware.checkRequiredBodyFields,

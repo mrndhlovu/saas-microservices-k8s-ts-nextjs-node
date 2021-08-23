@@ -26,11 +26,11 @@ declare global {
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {
     const { archived } = req.query
-    const isTrue = archived === "true"
+    const isArchived = Boolean(archived !== "false")
 
     let boards = await Board.find({
       owner: req.currentUserJwt.userId,
-      archived: isTrue,
+      archived: !isArchived,
     })
 
     res.send(boards)
@@ -84,7 +84,6 @@ class BoardController {
 
   archiveBoard = async (req: Request, res: Response) => {
     const board = req.board!
-    const boardId = req.board!._id
     board.archived = true
 
     board.save()
@@ -96,12 +95,13 @@ class BoardController {
     const board = req.board!
 
     const boardId = board._id
-    board.archived = true
 
     new BoardDeletedPublisher(natsService.client).publish({
       id: boardId.toHexString(),
       ownerId: req.currentUserJwt.userId!,
     })
+
+    board.save()
 
     res.status(HTTPStatusCode.NoContent).send()
   }

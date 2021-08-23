@@ -70,7 +70,10 @@ class BoardServices {
     const board = await Board.findOne({
       _id: idToObjectId(boardId),
       archived: false,
-    }).populate([{ path: "lists" }, { path: "cards", model: "Card" }])
+    }).populate([
+      { path: "lists", match: { archived: false } },
+      { path: "cards", model: "Card", match: { archived: false } },
+    ])
 
     return board
   }
