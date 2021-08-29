@@ -42,14 +42,12 @@ const CardSchema = new Schema(
       default: "",
     },
     listId: {
-      type: Schema.Types.ObjectId,
-      ref: "List",
+      type: String,
       default: "",
       required: true,
     },
     boardId: {
-      type: Schema.Types.ObjectId,
-      ref: "Board",
+      type: String,
       default: "",
       required: true,
     },
@@ -104,9 +102,7 @@ CardSchema.methods.toJSON = function () {
   return card
 }
 
-export interface CardDocument extends ICard, Document {
-  _id: Condition<ObjectId>
-}
+export interface CardDocument extends ICard, Document {}
 
 const Card = model<CardDocument>("Card", CardSchema)
 

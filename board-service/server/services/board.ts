@@ -66,13 +66,20 @@ class BoardServices {
     return updateBoardRecord
   }
 
-  getPopulatedBoard = async (boardId: string | string) => {
+  getPopulatedBoard = async (boardId: string) => {
     const board = await Board.findOne({
       _id: idToObjectId(boardId),
       archived: false,
     }).populate([
-      { path: "lists", match: { archived: false } },
-      { path: "cards", model: "Card", match: { archived: false } },
+      {
+        path: "lists",
+        match: { archived: false },
+      },
+      {
+        path: "cards",
+        model: "Card",
+        match: { archived: false },
+      },
     ])
 
     return board

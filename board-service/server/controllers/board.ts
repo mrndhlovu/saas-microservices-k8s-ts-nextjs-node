@@ -39,7 +39,7 @@ class BoardController {
   getBoardById = async (req: Request, res: Response) => {
     const board = await boardService.getPopulatedBoard(req.params.boardId)
 
-    res.send(board || {})
+    res.send(board)
   }
 
   createBoard = async (req: Request, res: Response) => {
@@ -68,12 +68,28 @@ class BoardController {
 
   updateBoard = async (req: Request, res: Response) => {
     let board = req.board!
+    console.log(
+      "🚀 ~ file: board.ts ~ line 70 ~ BoardController ~ updateBoard= ~ req",
+      req.body
+    )
 
     const updatedBoard = await Board.findOneAndUpdate(
       { _id: board._id },
       { $set: req.body },
       { new: true }
-    ).populate([{ path: "lists" }, { path: "cards" }])
+    ).populate([
+      {
+        path: "lists",
+        match: { archived: false },
+        options: { sort: "position" },
+      },
+      {
+        path: "cards",
+        model: "Card",
+        match: { archived: false },
+        options: { sort: "position" },
+      },
+    ])
 
     if (!updatedBoard) throw new BadRequestError("Fail to update board")
 
@@ -101,7 +117,7 @@ class BoardController {
       ownerId: req.currentUserJwt.userId!,
     })
 
-    board.save()
+    await board.delete()
 
     res.status(HTTPStatusCode.NoContent).send()
   }

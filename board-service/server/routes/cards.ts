@@ -41,4 +41,11 @@ router
     errorService.catchAsyncError(cardController.deleteCard)
   )
 
+router.patch(
+  "/move",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.moveCard)
+)
+
 export { router as cardRoutes }

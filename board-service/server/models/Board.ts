@@ -1,3 +1,4 @@
+import { ObjectID } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 import Card from "./Card"
 import List from "./List"
@@ -12,7 +13,7 @@ const BoardSchema = new Schema<BoardDocument>(
       trim: true,
     },
     lists: {
-      type: [{ type: Schema.Types.ObjectId, ref: "List" }],
+      type: [{ type: Schema.Types.ObjectId, ref: "List", pos: Number }],
       required: true,
       default: [],
     },
@@ -82,8 +83,12 @@ BoardSchema.methods.toJSON = function () {
 }
 
 BoardSchema.pre("remove", function (next) {
-  this.cards.map(async (cardId: string) => await Card.findByIdAndRemove(cardId))
-  this.lists.map(async (listId: string) => await List.findByIdAndRemove(listId))
+  this.cards.map(
+    async (cardId: ObjectID) => await Card.findByIdAndRemove(cardId)
+  )
+  this.lists.map(
+    async (listId: ObjectID) => await List.findByIdAndRemove(listId)
+  )
 
   next()
 })
@@ -99,8 +104,8 @@ export interface IBoard extends Document {
     team: boolean
     workspace: boolean
   }
-  cards: string[]
-  lists: string[]
+  cards: ObjectID[]
+  lists: ObjectID[]
   owner: string
   archived: boolean
   comments: string[]

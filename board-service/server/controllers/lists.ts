@@ -1,11 +1,12 @@
 import { Request, Response } from "express"
 
-import { BadRequestError } from "@tusksui/shared"
+import { BadRequestError, HTTPStatusCode, NotFoundError } from "@tusksui/shared"
 
 import { allowedListUpdateFields } from "../utils/constants"
 import { listService } from "../services/list"
 import Board from "../models/Board"
 import List, { IListDocument } from "../models/List"
+import { boardService } from "../services"
 
 declare global {
   namespace Express {
@@ -57,6 +58,18 @@ class ListController {
     res.status(201).send(list)
   }
 
+  moveList = async (req: Request, res: Response) => {
+    const board = await boardService.findBoardOnlyById(req.body.boardId)
+
+    if (!board) throw new NotFoundError("Board id is required")
+
+    await listService.changePosition(board, req.body)
+
+    await board.save()
+
+    res.status(HTTPStatusCode.Accepted).send()
+  }
+
   updateList = async (req: Request, res: Response) => {
     const updates = Object.keys(req.body)
     const list = await listService.findListById(req.params.listId)
@@ -80,6 +93,9 @@ class ListController {
       throw new BadRequestError("List with that id was not found")
 
     await updatedList.save()
+
+    if (updatedList.archived) {
+    }
 
     res.status(200).send(updatedList)
   }

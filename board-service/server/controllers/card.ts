@@ -1,8 +1,9 @@
-import { BadRequestError } from "@tusksui/shared"
+import { BadRequestError, HTTPStatusCode, NotFoundError } from "@tusksui/shared"
 import { Request, Response } from "express"
 
 import Board from "../models/Board"
 import Card, { CardDocument } from "../models/Card"
+import List from "../models/List"
 import { boardService } from "../services"
 import { cardService } from "../services/card"
 import { allowedCardUpdateFields } from "../utils/constants"
@@ -28,24 +29,32 @@ class CardController {
 
   createCard = async (req: Request, res: Response) => {
     const { listId, boardId } = req.params
-    const { title } = req.body
+    const { title, position } = req.body
 
-    const card = new Card({ title, listId, boardId })
+    const card = new Card({ title, position, listId, boardId })
     if (!card) throw new BadRequestError("Card failed to create card.")
 
     const board = await Board.findOneAndUpdate(
       { _id: boardId },
       { $push: { cards: card._id } }
     )
-    if (!board)
+
+    const list = await List.findOneAndUpdate(
+      { _id: listId },
+      { $push: { cards: card._id } }
+    )
+
+    if (!board || !list) {
       throw new BadRequestError(
         "Card should be linked to a valid board and list"
       )
-    await card.save()
+    }
 
+    await card.save()
+    await list.save()
     await board.save()
 
-    const updatedBoard = await boardService.getPopulatedBoard(board._id)
+    const updatedBoard = await boardService.getPopulatedBoard(boardId)
 
     res.status(201).send(updatedBoard)
   }
@@ -69,6 +78,18 @@ class CardController {
 
     await card.delete()
     res.status(200).send({})
+  }
+
+  moveCard = async (req: Request, res: Response) => {
+    const board = await boardService.findBoardOnlyById(req.body.boardId)
+
+    if (!board) throw new NotFoundError("Board id is required")
+
+    await cardService.changePosition(board, req.body)
+
+    await board.save()
+
+    res.status(HTTPStatusCode.Accepted).send()
   }
 
   updateCard = async (req: Request, res: Response) => {

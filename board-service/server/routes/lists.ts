@@ -36,6 +36,13 @@ router
     errorService.catchAsyncError(listController.deleteList)
   )
 
+router.patch(
+  "/move",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(listController.moveList)
+)
+
 router.post(
   "/create/:boardId",
   listMiddleware.checkRequiredBodyFields,

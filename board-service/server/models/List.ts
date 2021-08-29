@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb"
+import { ObjectID, ObjectId } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 import Board from "./Board"
 import Card, { CardDocument } from "./Card"
@@ -20,6 +20,11 @@ const ListSchema = new Schema<IListDocument>(
       default: false,
       required: true,
     },
+    cards: {
+      type: Array,
+      required: true,
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -37,6 +42,7 @@ ListSchema.methods.toJSON = function () {
   const list = this.toObject({
     transform: function (_doc, ret, _options) {
       ret.id = ret._id
+      delete ret.cards
       delete ret._id
       delete ret.__v
       return ret
@@ -52,13 +58,13 @@ ListSchema.pre("remove", async function (next) {
   const cardIds = cards.map(card => card._id as string)
 
   if (board) {
-    board.lists.map(async (listId: string) => {
-      if (listId === this._id.toHexString()) {
+    board.lists.map(async (listId: ObjectID) => {
+      if (listId.toString() === this._id.toHexString()) {
         board.lists.filter(id => id !== this._id.toHexString())
       }
     })
 
-    board?.cards.filter(id => cardIds.includes(id))
+    board?.cards.filter(id => cardIds.includes(id.toString()))
 
     board.save()
   }
@@ -75,6 +81,8 @@ ListSchema.pre("remove", async function (next) {
 export interface IList {
   title: string
   boardId: ObjectId
+  archived: boolean
+  cards: ObjectId[]
 }
 
 export interface IListDocument extends Document, IList {
