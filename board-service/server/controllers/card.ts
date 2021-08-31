@@ -1,7 +1,7 @@
 import { BadRequestError, HTTPStatusCode, NotFoundError } from "@tusksui/shared"
 import { Request, Response } from "express"
-
 import Board from "../models/Board"
+
 import Card, { CardDocument } from "../models/Card"
 import List from "../models/List"
 import { boardService } from "../services"
@@ -34,17 +34,17 @@ class CardController {
     const card = new Card({ title, position, listId, boardId })
     if (!card) throw new BadRequestError("Card failed to create card.")
 
-    const board = await Board.findOneAndUpdate(
-      { _id: boardId },
-      { $push: { cards: card._id } }
-    )
-
     const list = await List.findOneAndUpdate(
       { _id: listId },
       { $push: { cards: card._id } }
     )
 
-    if (!board || !list) {
+    const board = await Board.findOneAndUpdate(
+      { _id: boardId },
+      { $push: { cards: card._id } }
+    )
+
+    if (!list || !board) {
       throw new BadRequestError(
         "Card should be linked to a valid board and list"
       )
@@ -54,9 +54,7 @@ class CardController {
     await list.save()
     await board.save()
 
-    const updatedBoard = await boardService.getPopulatedBoard(boardId)
-
-    res.status(201).send(updatedBoard)
+    res.status(201).send(card)
   }
 
   deleteCard = async (req: Request, res: Response) => {

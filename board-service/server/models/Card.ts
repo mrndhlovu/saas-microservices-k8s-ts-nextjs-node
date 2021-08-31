@@ -1,23 +1,23 @@
-import { Condition, ObjectId } from "mongodb"
+import { ObjectID } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 
 export interface ICard {
-  title: string
+  activities: string[]
+  archived: boolean
+  assignees: string[]
   attachments: string[]
-  labels: string[]
-  dueDate: string
-  shortDesc: string
+  boardId: ObjectID
+  cardId: string
   checklists: string[]
   comments: string[]
-  activities: string[]
-  owners: string[]
-  description: string
   cover: string
-  assignees: string[]
-  archived: boolean
+  description: string
+  dueDate: string
+  labels: string[]
   listId: string
-  boardId: string
-  cardId: string
+  owners: string[]
+  shortDesc: string
+  title: string
 }
 
 const CardSchema = new Schema(
@@ -47,9 +47,9 @@ const CardSchema = new Schema(
       required: true,
     },
     boardId: {
-      type: String,
-      default: "",
+      type: Schema.Types.ObjectId,
       required: true,
+      ref: "Board",
     },
     comments: {
       type: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
@@ -83,6 +83,10 @@ const CardSchema = new Schema(
       type: String,
       default: "",
     },
+    position: {
+      type: Number,
+      required: true,
+    },
   },
   {
     timestamps: true,
@@ -97,6 +101,7 @@ CardSchema.methods.toJSON = function () {
       delete ret.__v
       return ret
     },
+    virtuals: true,
   })
 
   return card

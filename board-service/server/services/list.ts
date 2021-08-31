@@ -30,6 +30,16 @@ class ListServices {
     return list
   }
 
+  findListByKey = async (key: string, value: string) => {
+    const list = await List.findOne({ [key]: value })
+    return list
+  }
+
+  findListByBoardId = async (boardId: string) => {
+    const lists = await List.find({ boardId, archived: false })
+    return lists
+  }
+
   findListById = async (listId: ObjectId | string) => {
     const list = await List.findOne({ _id: listId })
     return list
@@ -44,16 +54,18 @@ class ListServices {
     const listsCopy = [...board.lists]
 
     const sourcePosition = listsCopy.findIndex(
-      id => id.toString() === options.source
+      id => id?.toHexString() === options.sourceListId
     )
 
     const targetPosition = listsCopy.findIndex(
-      id => id.toString() === options.target
+      id => id?.toHexString() === options.targetListId
     )
 
     const isMovingLeft = sourcePosition > targetPosition
 
-    const sourceId = listsCopy.find(id => id.toString() === options.source)
+    const sourceId = listsCopy.find(
+      id => id?.toHexString() === options.sourceListId
+    )
 
     listsCopy.splice(sourcePosition, 1)
 

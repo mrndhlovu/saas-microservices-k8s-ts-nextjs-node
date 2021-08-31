@@ -81,13 +81,6 @@ class BoardController {
       {
         path: "lists",
         match: { archived: false },
-        options: { sort: "position" },
-      },
-      {
-        path: "cards",
-        model: "Card",
-        match: { archived: false },
-        options: { sort: "position" },
       },
     ])
 

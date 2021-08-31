@@ -21,9 +21,9 @@ const ListSchema = new Schema<IListDocument>(
       required: true,
     },
     cards: {
-      type: Array,
-      required: true,
+      type: [{ type: Schema.Types.ObjectId, ref: "Card" }],
       default: [],
+      required: true,
     },
   },
   {
@@ -42,7 +42,6 @@ ListSchema.methods.toJSON = function () {
   const list = this.toObject({
     transform: function (_doc, ret, _options) {
       ret.id = ret._id
-      delete ret.cards
       delete ret._id
       delete ret.__v
       return ret
@@ -64,7 +63,7 @@ ListSchema.pre("remove", async function (next) {
       }
     })
 
-    board?.cards.filter(id => cardIds.includes(id.toString()))
+    // board?.cards.filter(id => cardIds.includes(id.toString()))
 
     board.save()
   }
