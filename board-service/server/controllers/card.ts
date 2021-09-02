@@ -3,6 +3,7 @@ import { Request, Response } from "express"
 import Board from "../models/Board"
 
 import Card, { CardDocument } from "../models/Card"
+import Label from "../models/Label"
 import List from "../models/List"
 import { boardService } from "../services"
 import { cardService } from "../services/card"
@@ -25,6 +26,12 @@ class CardController {
     if (!card) throw new BadRequestError("Card with that id was not found")
 
     res.send(card)
+  }
+
+  getLabelsByUserId = async (req: Request, res: Response) => {
+    const labels = await Label.find({ owner: req.currentUserJwt.userId })
+
+    res.send(labels)
   }
 
   createCard = async (req: Request, res: Response) => {
@@ -57,6 +64,17 @@ class CardController {
     res.status(201).send(card)
   }
 
+  createLabel = async (req: Request, res: Response) => {
+    const { color, name } = req.body
+
+    const label = new Label({ color, name, owner: req.currentUserJwt.userId })
+    if (!label) throw new BadRequestError("Card failed to create card.")
+
+    await label.save()
+
+    res.status(201).send(label)
+  }
+
   deleteCard = async (req: Request, res: Response) => {
     const { listId, cardId } = req.params
     const { deleteAll } = req.query
@@ -76,6 +94,19 @@ class CardController {
 
     await card.delete()
     res.status(200).send({})
+  }
+
+  deleteLabel = async (req: Request, res: Response) => {
+    const { labelId } = req.params
+
+    const label = await Label.findOne({
+      _id: labelId,
+      owner: req.currentUserJwt.userId,
+    })
+    if (!label) throw new NotFoundError("Label with that id was not found")
+
+    await label.delete()
+    res.status(HTTPStatusCode.OK).send()
   }
 
   moveCard = async (req: Request, res: Response) => {
@@ -104,14 +135,41 @@ class CardController {
 
     if (!card) throw new BadRequestError("Card not found")
 
-    const updatedCard = await Card.findOneAndUpdate(
-      { _id: card._id },
-      { $set: { ...req.body } },
-      { new: true }
-    )
+    let updatedCard: CardDocument | null
+
+    switch (true) {
+      case updates.includes("label"):
+        const { label } = req.body
+
+        if (card.labels.includes(label)) {
+          updatedCard = await Card.findByIdAndUpdate(
+            card._id,
+            { $pull: { labels: label } },
+            { new: true, upsert: true }
+          )
+        } else {
+          updatedCard = await Card.findByIdAndUpdate(
+            card._id,
+            { $push: { labels: label } },
+            { new: true, upsert: true }
+          )
+        }
+        break
+
+      default:
+        updatedCard = await Card.findByIdAndUpdate(
+          req.params.cardId,
+          { $set: { ...req.body } },
+          { new: true }
+        )
+
+        break
+    }
 
     if (!updatedCard) throw new BadRequestError("Card to update was not found.")
+    await updatedCard.save()
 
+    console.log(updatedCard.labels)
     res.status(200).send(updatedCard)
   }
 }

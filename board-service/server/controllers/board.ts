@@ -68,10 +68,6 @@ class BoardController {
 
   updateBoard = async (req: Request, res: Response) => {
     let board = req.board!
-    console.log(
-      "🚀 ~ file: board.ts ~ line 70 ~ BoardController ~ updateBoard= ~ req",
-      req.body
-    )
 
     const updatedBoard = await Board.findOneAndUpdate(
       { _id: board._id },

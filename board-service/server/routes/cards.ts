@@ -21,6 +21,27 @@ router.post(
   errorService.catchAsyncError(cardController.createCard)
 )
 
+router.post(
+  "/new-label",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.createLabel)
+)
+
+router.get(
+  "/user/labels",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.getLabelsByUserId)
+)
+
+router.delete(
+  "/label/:labelId",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.deleteLabel)
+)
+
 router
   .route("/id/:cardId/:listId")
   .get(

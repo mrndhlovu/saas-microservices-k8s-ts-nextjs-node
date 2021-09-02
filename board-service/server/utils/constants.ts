@@ -6,6 +6,11 @@ export const allowedBoardUpdateFields = [
   "prefs.color",
 ]
 export const allowedListUpdateFields = ["title", "archived"]
-export const allowedCardUpdateFields = ["title", "archived", "shortDesc"]
+export const allowedCardUpdateFields = [
+  "title",
+  "archived",
+  "shortDesc",
+  "label",
+]
 
 export const boardUnEditableFields = ["createdAt", "updatedAt", "id"]
