@@ -34,6 +34,24 @@ spec:
                   name: env-config
                   key: BOARDS_MONGO_URI
 
+            - name: CLOUDINARY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: CLOUDINARY_API_KEY
+
+            - name: CLOUDINARY_CLOUD_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: CLOUDINARY_CLOUD_NAME
+
+            - name: CLOUDINARY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: CLOUDINARY_API_SECRET
+
             - name: PORT
               valueFrom:
                 secretKeyRef:

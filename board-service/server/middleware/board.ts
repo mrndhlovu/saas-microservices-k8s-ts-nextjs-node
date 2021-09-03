@@ -14,6 +14,7 @@ import {
 import { boardService } from "../services/board"
 import { allowedBoardUpdateFields } from "../utils/constants"
 import { isValidObjectId } from "mongoose"
+import { IUploadFile } from "../types"
 
 const { catchAsyncError } = errorService
 
@@ -21,6 +22,7 @@ declare global {
   namespace Express {
     interface Request {
       board: BoardDocument | null | undefined
+      uploadFiles?: IUploadFile[]
     }
   }
 }
@@ -61,6 +63,25 @@ class BoardMiddleware {
         next()
       }
     )
+  }
+
+  serializeUpload = (req: Request, res: Response, next: NextFunction) => {
+    const { files } = req
+
+    const mappedFiles: IUploadFile[] = (
+      (files as Express.Multer.File[]) || []
+    ).map(file => ({
+      name: file.originalname,
+      type: file.mimetype,
+      content: file.buffer,
+      size: file.size,
+      path: file.path,
+      extension: `${file.originalname.split(".").pop()}`,
+    }))
+
+    req.uploadFiles = mappedFiles
+
+    return next()
   }
 
   checkRequiredBodyFields = [

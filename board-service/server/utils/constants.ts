@@ -11,6 +11,10 @@ export const allowedCardUpdateFields = [
   "archived",
   "shortDesc",
   "label",
+  "colorCover",
+  "imageCover",
 ]
 
 export const boardUnEditableFields = ["createdAt", "updatedAt", "id"]
+
+export const allowedUploadTypes = ["jpeg", "png", "pdf", "doc", "jpg"]

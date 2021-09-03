@@ -10,7 +10,8 @@ export interface ICard {
   cardId: string
   checklists: string[]
   comments: string[]
-  cover: string
+  imageCover: ObjectID
+  colorCover: string
   description: string
   dueDate: string
   labels: string[]
@@ -28,7 +29,7 @@ const CardSchema = new Schema(
       trim: true,
     },
     attachments: {
-      type: Array,
+      type: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
       required: true,
       default: [],
     },
@@ -37,7 +38,11 @@ const CardSchema = new Schema(
       default: false,
       required: true,
     },
-    cover: {
+    imageCover: {
+      type: Schema.Types.ObjectId,
+      ref: "Attachment",
+    },
+    colorCover: {
       type: String,
       default: "",
     },

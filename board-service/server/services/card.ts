@@ -7,6 +7,7 @@ import { idToObjectId } from "../helpers"
 import { listService } from "./list"
 import Card from "../models/Card"
 import { body } from "express-validator"
+import Attachment from "../models/Attachment"
 
 class CardServices {
   findCardOnlyById = async (cardId: string) => {
@@ -30,6 +31,25 @@ class CardServices {
   findCardsByBoardId = async (boardId: string) => {
     const cards = await Card.find({ boardId, archived: false }).sort("listId")
     return cards
+  }
+
+  findAttachmentByCardId = async (cardId: string) => {
+    const cards = await Attachment.findOne({ cardId })
+    return cards
+  }
+
+  findAttachmentById = async (_id: string) => {
+    const cards = await Attachment.findOne({ _id })
+    return cards
+  }
+
+  async getPopulatedCard(cardId: string) {
+    const card = await Card.findOne({ _id: cardId }).populate({
+      path: "imageCover",
+      model: "Attachment",
+    })
+
+    return card
   }
 
   validateEditableFields = <T>(allowedFields: T[], updates: T[]) => {

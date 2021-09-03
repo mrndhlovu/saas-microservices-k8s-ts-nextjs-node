@@ -1,5 +1,5 @@
-import mongoose, { CallbackError } from "mongoose"
-
+import { CallbackError } from "mongoose"
+import { v2 } from "cloudinary"
 import {
   BadRequestError,
   IPermissionType,
@@ -8,6 +8,17 @@ import {
 
 import Board, { BoardDocument, IBoardMember } from "../models/Board"
 import { idToObjectId } from "../helpers"
+import { IUploadFile } from "../types"
+import { allowedUploadTypes } from "../utils/constants"
+
+const cloudinary = v2
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+})
 
 export interface IUpdateBoardMemberOptions {
   currentPermFlag: number
@@ -15,6 +26,7 @@ export interface IUpdateBoardMemberOptions {
   isNew: boolean
   userId: string
 }
+
 class BoardServices {
   updateBoardMemberRole = async (
     board: BoardDocument,
@@ -66,6 +78,34 @@ class BoardServices {
     return updateBoardRecord
   }
 
+  validatedUpload(files: IUploadFile[]) {
+    return files.every(file => allowedUploadTypes.includes(file.extension))
+  }
+
+  async upload(files: IUploadFile[]) {
+    if (!files.length || !files) throw new BadRequestError("No files attached!")
+
+    const isValidFileType = this.validatedUpload(files)
+
+    if (!isValidFileType)
+      throw new BadRequestError(
+        `Invalid file type!. Only ${allowedUploadTypes.join("/")} are allowed.`
+      )
+
+    const uploadPromises = files.map(file =>
+      cloudinary.uploader.upload(file.path, {
+        colors: true,
+        folder: "trello-clone",
+      })
+    )
+
+    const response = await Promise.all(uploadPromises)
+
+    // if()
+
+    return response
+  }
+
   getPopulatedBoard = async (boardId: string) => {
     const board = await Board.findOne({
       _id: idToObjectId(boardId),
@@ -76,6 +116,10 @@ class BoardServices {
         path: "cards",
         model: "Card",
         match: { archived: false },
+        populate: {
+          path: "imageCover",
+          model: "Attachment",
+        },
       },
     ])
 

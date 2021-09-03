@@ -1,5 +1,7 @@
 import { BadRequestError, HTTPStatusCode, NotFoundError } from "@tusksui/shared"
 import { Request, Response } from "express"
+import { idToObjectId } from "../helpers"
+import Attachment from "../models/Attachment"
 import Board from "../models/Board"
 
 import Card, { CardDocument } from "../models/Card"
@@ -7,7 +9,16 @@ import Label from "../models/Label"
 import List from "../models/List"
 import { boardService } from "../services"
 import { cardService } from "../services/card"
+import { IUploadFile } from "../types"
 import { allowedCardUpdateFields } from "../utils/constants"
+
+declare global {
+  namespace Express {
+    interface Request {
+      uploadFiles?: IUploadFile[]
+    }
+  }
+}
 
 class CardController {
   getCards = async (req: Request, res: Response) => {
@@ -32,6 +43,13 @@ class CardController {
     const labels = await Label.find({ owner: req.currentUserJwt.userId })
 
     res.send(labels)
+  }
+
+  getAttachmentsByCardId = async (req: Request, res: Response) => {
+    const { cardId } = req.params
+    const attachments = await Attachment.find({ cardId })
+
+    res.send(attachments)
   }
 
   createCard = async (req: Request, res: Response) => {
@@ -96,6 +114,34 @@ class CardController {
     res.status(200).send({})
   }
 
+  uploadCoverImage = async (req: Request, res: Response) => {
+    const { cardId } = req.params
+    if (!cardId) throw new NotFoundError("Card id query string required")
+
+    const card = await cardService.findCardOnlyById(cardId as string)
+    if (!card) throw new NotFoundError("Card not found")
+
+    const result = await boardService.upload(req.uploadFiles!)
+    const data = result[0]
+
+    const attachment = new Attachment({
+      cardId: card._id,
+      url: data.url,
+      height: data.height,
+      width: data.width,
+      edgeColor: data?.colors[0]?.[0],
+      active: true,
+    })
+
+    await attachment.save()
+
+    card.imageCover = attachment._id
+
+    await card.save()
+
+    res.status(200).send(attachment)
+  }
+
   deleteLabel = async (req: Request, res: Response) => {
     const { labelId } = req.params
 
@@ -123,7 +169,7 @@ class CardController {
 
   updateCard = async (req: Request, res: Response) => {
     const updates = Object.keys(req.body)
-
+    const { cardId } = req.params
     const hasValidFields = cardService.validateEditableFields(
       allowedCardUpdateFields,
       updates
@@ -131,7 +177,7 @@ class CardController {
 
     if (!hasValidFields) throw new BadRequestError("Invalid update field")
 
-    const card = await cardService.findCardById(req.params.cardId)
+    const card = await cardService.findCardById(cardId)
 
     if (!card) throw new BadRequestError("Card not found")
 
@@ -156,6 +202,33 @@ class CardController {
         }
         break
 
+      case updates.includes("imageCover"):
+        const attachment = await cardService.findAttachmentById(
+          req.body.imageCover
+        )
+
+        if (!attachment) throw new BadRequestError("Attachment not found")
+        console.log(idToObjectId(req.body.imageCover).equals(attachment._id))
+
+        if (idToObjectId(req.body.imageCover).equals(attachment._id)) {
+          attachment.active = !attachment.active
+
+          await attachment.save()
+          updatedCard = card
+          break
+        }
+
+        if (!attachment.active) {
+          attachment.active = true
+        }
+
+        await attachment.save()
+        card.imageCover = attachment._id
+
+        updatedCard = card
+
+        break
+
       default:
         updatedCard = await Card.findByIdAndUpdate(
           req.params.cardId,
@@ -169,8 +242,9 @@ class CardController {
     if (!updatedCard) throw new BadRequestError("Card to update was not found.")
     await updatedCard.save()
 
-    console.log(updatedCard.labels)
-    res.status(200).send(updatedCard)
+    const cardRecord = await cardService.getPopulatedCard(cardId)
+
+    res.status(200).send(cardRecord)
   }
 }
 
