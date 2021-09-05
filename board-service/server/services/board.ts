@@ -1,5 +1,7 @@
 import { CallbackError } from "mongoose"
 import { v2 } from "cloudinary"
+import axios from "axios"
+
 import {
   BadRequestError,
   IPermissionType,
@@ -124,6 +126,14 @@ class BoardServices {
     ])
 
     return board
+  }
+
+  async getUnsplash(query: string, pageIndex: number) {
+    const IMAGES_EP = `https://api.unsplash.com/search/photos?client_id=${process.env.UNSPLASH_ACCESS_KEY}&query=${query}&per_page=20&page=${pageIndex}`
+
+    const response = await axios.get(IMAGES_EP)
+
+    return response?.data
   }
 
   findInvitedBoards(userId: string, invitedBoardList: string[]) {}

@@ -3,6 +3,7 @@ import { Request, Response } from "express"
 import {
   BadRequestError,
   HTTPStatusCode,
+  NotFoundError,
   permissionManager,
   ROLES,
 } from "@tusksui/shared"
@@ -14,11 +15,14 @@ import {
 } from "../events/publishers"
 import { natsService } from "../services/nats"
 import Board, { BoardDocument } from "../models/Board"
+import Attachment from "../models/Attachment"
+import { IUploadFile } from "../types"
 
 declare global {
   namespace Express {
     interface Request {
       board: BoardDocument | null | undefined
+      uploadFiles?: IUploadFile[]
     }
   }
 }
@@ -40,6 +44,41 @@ class BoardController {
     const board = await boardService.getPopulatedBoard(req.params.boardId)
 
     res.send(board)
+  }
+
+  getUnsplashImages = async (req: Request, res: Response) => {
+    const { pageIndex, query } = req.query
+
+    const images = await boardService.getUnsplash(query! as string, +pageIndex!)
+
+    res.send(images)
+  }
+
+  uploadBgImage = async (req: Request, res: Response) => {
+    const { boardId } = req.params
+    if (!boardId) throw new NotFoundError("Board id is required")
+    const board = await boardService.findBoardOnlyById(boardId)
+
+    if (!board) throw new NotFoundError("Board not found")
+
+    const result = await boardService.upload(req.uploadFiles!)
+    const data = result[0]
+
+    const attachment = new Attachment({
+      url: data.url,
+      height: data.height,
+      width: data.width,
+      edgeColor: data?.colors[0]?.[0],
+      active: true,
+    })
+
+    await attachment.save()
+
+    board.prefs.image = data.url
+
+    await board.save()
+
+    res.status(200).send(attachment)
   }
 
   createBoard = async (req: Request, res: Response) => {

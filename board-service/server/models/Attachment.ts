@@ -22,7 +22,10 @@ const AttachmentSchema = new Schema<IAttachmentDocument>({
   cardId: {
     type: Schema.Types.ObjectId,
     ref: "Card",
-    required: true,
+  },
+  boardId: {
+    type: Schema.Types.ObjectId,
+    ref: "Board",
   },
 })
 

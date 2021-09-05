@@ -3,6 +3,7 @@ export const allowedBoardUpdateFields = [
   "category",
   "archived",
   "prefs.starred",
+  "prefs.image",
   "prefs.color",
 ]
 export const allowedListUpdateFields = ["title", "archived"]

@@ -52,6 +52,12 @@ spec:
                   name: env-config
                   key: CLOUDINARY_API_SECRET
 
+            - name: UNSPLASH_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: UNSPLASH_ACCESS_KEY
+
             - name: PORT
               valueFrom:
                 secretKeyRef:
