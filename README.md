@@ -15,13 +15,13 @@ The project is an attempt to build a scalable event based microservices architec
 
 ## Screenshots
 
-- [Two step authentication](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885504/projects/mfa_m9wjlh.gif)
+- ![alt Two step authentication](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885504/projects/mfa_m9wjlh.gif)
 
-- [Service Upgrade Checkout](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885295/projects/checkoutsaas_fgnbfx.gif)
+- ![alt Service Upgrade Checkout](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885295/projects/checkoutsaas_fgnbfx.gif)
 
-- [Image Drag and drop](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885406/projects/Imageupload_ct0weh.gif)
+- ![alt Image Drag and drop](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885406/projects/Imageupload_ct0weh.gif)
 
-- [Infinite scrolling](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885334/projects/infinite_scroll_yykaah.gif)
+- ![alt Infinite scrolling](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885334/projects/infinite_scroll_yykaah.gif)
 
 ## Project structure
 
