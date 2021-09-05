@@ -6,13 +6,34 @@ The project is an attempt to build a scalable event based microservices architec
 
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
-- [Installation](#installation)
-- [Project structure](#project-structure)
-- [Technologies](#technologies)
-- [Testing](#testing)
-- [Usage](#usage)
-- [LICENSE](#license)
+- [Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes](#trello-clone-microservices-app-built-with-typescript-node-nextjs-docker-and-kubernetes)
+  - [Description](#description)
+  - [Table of Contents](#table-of-contents)
+  - [Project structure](#project-structure)
+    - [Client services](#client-services)
+    - [Backend Services](#backend-services)
+  - [Installation](#installation)
+
+## Project structure
+
+NB: The project depends on this shared resources repo deployed on npm.
+
+```
+@tusksui/shared
+
+```
+
+### Client services
+
+    * client
+
+### Backend Services
+
+    * accounts-service
+    * auth-service
+    * board-service
+    * email-service
+    * payments-service
 
 ## Installation
 
@@ -76,13 +97,13 @@ This installation process assumes that you are running the project locally on yo
 ---
 
     Install
-    [minikube](https://minikube.sigs.k8s.io/docs/start/)
+    (https://minikube.sigs.k8s.io/docs/start/) [minikube]
 
     Enable ingress addon:
     minikube addons enable ingress
 
     Install
-    [skaffold](https://skaffold.dev/)
+    (https://skaffold.dev/)[skaffold]
 
 ---
 
