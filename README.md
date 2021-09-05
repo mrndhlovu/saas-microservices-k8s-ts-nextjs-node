@@ -9,8 +9,19 @@ The project is an attempt to build a scalable event based microservices architec
 - [Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes](#trello-clone-microservices-app-built-with-typescript-node-nextjs-docker-and-kubernetes)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
+  - [Screenshots](#screenshots)
   - [Project structure](#project-structure)
   - [Installation](#installation)
+
+## Screenshots
+
+- [Two step authentication](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885504/projects/mfa_m9wjlh.gif)
+
+- [Service Upgrade Checkout](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885295/projects/checkoutsaas_fgnbfx.gif)
+
+- [Image Drag and drop](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885406/projects/Imageupload_ct0weh.gif)
+
+- [Infinite scrolling](https://res.cloudinary.com/drxavrtbi/image/upload/v1630885334/projects/infinite_scroll_yykaah.gif)
 
 ## Project structure
 
@@ -20,11 +31,11 @@ NB: The project depends on this shared resources repo deployed on npm.
 @tusksui/shared
 ```
 
-- Client service
+- Frontend
 
   - client
 
-- Backend services
+- Backend
 
   - accounts-service
   - auth-service
@@ -100,13 +111,13 @@ This installation process assumes that you are running the project locally on yo
 ---
 
     Install
-    (https://minikube.sigs.k8s.io/docs/start/) [minikube]
+    [minikube](https://minikube.sigs.k8s.io/docs/start/)
 
     Enable ingress addon:
     minikube addons enable ingress
 
     Install
-    (https://skaffold.dev/)[skaffold]
+    [skaffold](https://skaffold.dev/)
 
 ---
 
@@ -117,5 +128,13 @@ This installation process assumes that you are running the project locally on yo
     Tell kubernetes where to find your environment variables:
 
     kubectl create secret generic env-config --from-env-file=.env
+
+---
+
+- Step 5
+
+---
+
+    Install typescript
 
 ---
