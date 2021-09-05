@@ -10,8 +10,6 @@ The project is an attempt to build a scalable event based microservices architec
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
   - [Project structure](#project-structure)
-    - [Client services](#client-services)
-    - [Backend Services](#backend-services)
   - [Installation](#installation)
 
 ## Project structure
@@ -20,20 +18,25 @@ NB: The project depends on this shared resources repo deployed on npm.
 
 ```
 @tusksui/shared
-
 ```
 
-### Client services
+- Client service
 
-    * client
+  - client
 
-### Backend Services
+- Backend services
 
-    * accounts-service
-    * auth-service
-    * board-service
-    * email-service
-    * payments-service
+  - accounts-service
+  - auth-service
+  - board-service
+  - email-service
+  - payments-service
+
+- Config files
+  - makefile
+  - .gitignore
+  - skaffold.yml
+  - infar
 
 ## Installation
 
