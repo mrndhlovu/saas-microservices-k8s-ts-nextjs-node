@@ -1,7 +1,6 @@
 import { ObjectID } from "mongodb"
 import { Schema, Document, model } from "mongoose"
-import { listService } from "../services"
-import { cardService } from "../services/card"
+import { activeBoardBg } from "../types"
 import Card from "./Card"
 import List from "./List"
 
@@ -58,7 +57,11 @@ const BoardSchema = new Schema<BoardDocument>(
     },
     description: {
       type: String,
-      default: "",
+    },
+    activeBg: {
+      type: String,
+      enum: Object.values(activeBoardBg),
+      default: activeBoardBg.COLOR,
     },
   },
   { timestamps: true }
@@ -86,9 +89,9 @@ BoardSchema.methods.toJSON = function () {
 }
 
 BoardSchema.pre("remove", function (next) {
-  // this.cards.map(
-  //   async (cardId: ObjectID) => await Card.findByIdAndRemove(cardId)
-  // )
+  this.cards.map(
+    async (cardId: ObjectID) => await Card.findByIdAndRemove(cardId)
+  )
   this.lists.map(
     async (listId: ObjectID) => await List.findByIdAndRemove(listId)
   )

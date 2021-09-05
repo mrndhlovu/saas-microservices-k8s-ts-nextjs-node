@@ -29,3 +29,8 @@ export interface IFileUploader {
     files: File | File[]
   ) => Promise<IUploadedFile | IUploadedFile[] | undefined>
 }
+
+export enum activeBoardBg {
+  COLOR = "color",
+  IMAGE = "image",
+}

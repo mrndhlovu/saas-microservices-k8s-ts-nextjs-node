@@ -30,6 +30,13 @@ router.get(
   errorService.catchAsyncError(boardController.getBoardList)
 )
 
+router.get(
+  "/:boardId/attachments",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.getAttachmentsByBoardId)
+)
+
 router
   .route("/:boardId")
   .get(

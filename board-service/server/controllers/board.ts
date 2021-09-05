@@ -46,6 +46,13 @@ class BoardController {
     res.send(board)
   }
 
+  getAttachmentsByBoardId = async (req: Request, res: Response) => {
+    const { boardId } = req.params
+    const attachments = await Attachment.find({ boardId })
+
+    res.send(attachments)
+  }
+
   getUnsplashImages = async (req: Request, res: Response) => {
     const { pageIndex, query } = req.query
 
@@ -70,6 +77,7 @@ class BoardController {
       width: data.width,
       edgeColor: data?.colors[0]?.[0],
       active: true,
+      boardId: board._id,
     })
 
     await attachment.save()
