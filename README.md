@@ -68,3 +68,30 @@ This installation process assumes that you are running the project locally on yo
     NEXT_PUBLIC_HOST=<YOUR_NEXT_PUBLIC_BASE_URL> // eg: tusks.dev
 
 ```
+
+---
+
+- Step 3
+
+---
+
+    Install
+    [minikube](https://minikube.sigs.k8s.io/docs/start/)
+
+    Enable ingress addon:
+    minikube addons enable ingress
+
+    Install
+    [skaffold](https://skaffold.dev/)
+
+---
+
+- Step 4
+
+---
+
+    Tell kubernetes where to find your environment variables:
+
+    kubectl create secret generic env-config --from-env-file=.env
+
+---
