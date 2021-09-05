@@ -2,13 +2,16 @@
 
 ## Description
 
-The project is an attempt to build a scalable event based microservices architecture. The focus was to decouple a monolithic idea into small manageable backend services which can easily scale and if possible not break the functionality on the frontend side when a service is affected.
+The project is an attempt to build a scalable event based microservices architecture. The focus was to decouple a monolithic idea into small manageable services which can be delegated to different teams.
 
 ## Table of Contents
 
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
+- [Project structure](#project-structure)
 - [Technologies](#technologies)
 - [Testing](#testing)
 - [Usage](#usage)
 - [LICENSE](#license)
+
+## Installation
