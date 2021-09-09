@@ -10,10 +10,12 @@ export const allowedListUpdateFields = ["title", "archived"]
 export const allowedCardUpdateFields = [
   "title",
   "archived",
-  "shortDesc",
+  "description",
   "label",
   "colorCover",
   "imageCover",
+  "edgeColor",
+  "coverUrl",
 ]
 
 export const boardUnEditableFields = ["createdAt", "updatedAt", "id"]

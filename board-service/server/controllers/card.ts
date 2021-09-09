@@ -203,7 +203,7 @@ class CardController {
         break
 
       case updates.includes("imageCover"):
-        const attachment = await cardService.findAttachmentById(
+        var attachment = await cardService.findAttachmentById(
           req.body.imageCover
         )
 
@@ -214,21 +214,83 @@ class CardController {
           attachment.active = !attachment.active
 
           await attachment.save()
+          card.imageCover = attachment._id
+
           updatedCard = card
           break
         }
 
         if (!attachment.active) {
           attachment.active = true
+          await attachment.save()
         }
 
-        await attachment.save()
-        card.imageCover = attachment._id
-
-        updatedCard = card
+        updatedCard = await Card.findByIdAndUpdate(
+          req.params.cardId,
+          {
+            $set: {
+              imageCover: attachment._id,
+              coverUrl: { ...card.coverUrl, active: false },
+            },
+          },
+          { new: true }
+        )
 
         break
 
+      case updates.includes("colorCover"):
+        if (card?.imageCover) {
+          var attachment = await cardService.findAttachmentById(
+            card?.imageCover?.toHexString()
+          )
+
+          if (attachment?.active) {
+            attachment.active = false
+            await attachment.save()
+          }
+        }
+
+        updatedCard = await Card.findByIdAndUpdate(
+          req.params.cardId,
+          {
+            $set: {
+              colorCover: req.body.colorCover,
+              coverUrl: { ...card.coverUrl, active: false },
+            },
+          },
+          { new: true }
+        )
+
+        break
+
+      case updates.includes("coverUrl"):
+        if (card?.imageCover) {
+          var attachment = await cardService.findAttachmentById(
+            card?.imageCover?.toHexString()
+          )
+
+          if (attachment?.active) {
+            attachment.active = false
+            await attachment.save()
+          }
+        }
+
+        updatedCard = await Card.findByIdAndUpdate(
+          req.params.cardId,
+          {
+            $set: {
+              colorCover: "",
+              coverUrl: {
+                edgeColor: req.body.edgeColor,
+                image: req.body.coverUrl,
+                active: true,
+              },
+            },
+          },
+          { new: true }
+        )
+
+        break
       default:
         updatedCard = await Card.findByIdAndUpdate(
           req.params.cardId,

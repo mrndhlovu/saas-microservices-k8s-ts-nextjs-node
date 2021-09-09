@@ -54,9 +54,13 @@ class BoardController {
   }
 
   getUnsplashImages = async (req: Request, res: Response) => {
-    const { pageIndex, query } = req.query
+    const { pageIndex = "1", query = "nature", perPage = "20" } = req.query
 
-    const images = await boardService.getUnsplash(query! as string, +pageIndex!)
+    const images = await boardService.getUnsplash(
+      query as string,
+      +pageIndex,
+      +perPage
+    )
 
     res.send(images)
   }

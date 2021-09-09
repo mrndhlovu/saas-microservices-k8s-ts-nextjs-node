@@ -19,6 +19,11 @@ export interface ICard {
   owners: string[]
   shortDesc: string
   title: string
+  coverUrl: {
+    image: string
+    edgeColor: string
+    active: boolean
+  }
 }
 
 const CardSchema = new Schema(
@@ -45,6 +50,14 @@ const CardSchema = new Schema(
     colorCover: {
       type: String,
       default: "",
+    },
+    coverUrl: {
+      type: Object,
+      default: {
+        image: String,
+        edgeColor: String,
+        active: Boolean,
+      },
     },
     listId: {
       type: String,

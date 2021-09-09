@@ -128,8 +128,8 @@ class BoardServices {
     return board
   }
 
-  async getUnsplash(query: string, pageIndex: number) {
-    const IMAGES_EP = `https://api.unsplash.com/search/photos?client_id=${process.env.UNSPLASH_ACCESS_KEY}&query=${query}&per_page=20&page=${pageIndex}`
+  async getUnsplash(query: string, pageIndex: number, perPage: number) {
+    const IMAGES_EP = `https://api.unsplash.com/search/photos?client_id=${process.env.UNSPLASH_ACCESS_KEY}&query=${query}&per_page=${perPage}&page=${pageIndex}`
 
     const response = await axios.get(IMAGES_EP)
 
