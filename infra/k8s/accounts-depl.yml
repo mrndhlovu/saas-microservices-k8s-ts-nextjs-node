@@ -40,6 +40,24 @@ spec:
                   name: env-config
                   key: PORT
 
+            - name: SPOTIFY_REDIRECT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: SPOTIFY_REDIRECT_URI
+
+            - name: SPOTIFY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: SPOTIFY_SECRET
+
+            - name: SPOTIFY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: SPOTIFY_ID
+
             - name: NATS_CLIENT_ID
               valueFrom:
                 fieldRef:

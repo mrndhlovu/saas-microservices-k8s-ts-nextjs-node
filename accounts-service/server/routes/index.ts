@@ -20,9 +20,23 @@ router.get(
 )
 
 router.get(
+  "/power-ups",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.getPowerUp)
+)
+
+router.get(
   "/verify/:token",
   accountMiddleware.validateVerificationJwt,
   errorService.catchAsyncError(accountController.verifyAccount)
+)
+
+router.get(
+  "/spotify-connect",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.connectSpotify)
 )
 
 router

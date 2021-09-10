@@ -1,10 +1,12 @@
 import { Request, Response } from "express"
-
+import axios from "axios"
 import {
   AccountOptions,
   AccountStatus,
   BadRequestError,
+  HTTPStatusCode,
   IJwtAuthToken,
+  NotFoundError,
 } from "@tusksui/shared"
 
 import { allowedAccountUpdateFields } from "../utils/constants"
@@ -13,6 +15,8 @@ import Account, { IAccountDocument } from "../models/Account"
 import { AccountCreatedPublisher } from "../events/publishers/account-created"
 import { natsService } from "../services"
 import { AccountUpdatedPublisher } from "../events/publishers"
+import { spotifyService } from "../services/spotify"
+import PowerUp from "../models/Powerup"
 
 declare global {
   namespace Express {
@@ -32,6 +36,49 @@ class AccountController {
 
   getAccountById = async (req: Request, res: Response) => {
     res.send(req.account)
+  }
+
+  async getPowerUp(req: Request, res: Response) {
+    const powerUps = await PowerUp.find({ ownerId: req.currentUserJwt.userId })
+
+    res.send(powerUps)
+  }
+
+  connectSpotify = async (req: Request, res: Response) => {
+    console.log(req.currentUserJwt)
+
+    const account = await accountService.findAccountOnlyByUseId(
+      req.currentUserJwt.userId!
+    )
+    if (!account) throw new NotFoundError()
+
+    const response = await spotifyService.getAuthTokens(
+      req.query.code as string
+    )
+
+    const tokens = {
+      accessToken: response?.access_token,
+      refreshToken: response?.refresh_token,
+      scope: response?.scope,
+    }
+
+    const powerUp = new PowerUp({
+      ownerId: req?.currentUserJwt.userId,
+      tokens,
+      name: "spotify",
+      status: "active",
+    })
+
+    await powerUp.save()
+
+    account.powerUps.push(powerUp._id)
+
+    await account.save()
+    const eventData = accountService.getEventData(account)
+
+    new AccountUpdatedPublisher(natsService.client).publish(eventData)
+
+    res.status(HTTPStatusCode.OK).send()
   }
 
   createAccount = async (_req: Request, res: Response) => {

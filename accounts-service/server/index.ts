@@ -15,6 +15,9 @@ class Server {
       NATS_URL,
       NATS_CLIENT_ID,
       NATS_CLUSTER_ID,
+      SPOTIFY_REDIRECT_URI,
+      SPOTIFY_SECRET,
+      SPOTIFY_ID,
     } = process.env
 
     if (
@@ -22,7 +25,10 @@ class Server {
       !ACCOUNTS_MONGO_URI ||
       !NATS_CLUSTER_ID ||
       !NATS_CLIENT_ID ||
-      !NATS_URL
+      !NATS_URL ||
+      !SPOTIFY_ID ||
+      !SPOTIFY_REDIRECT_URI ||
+      !SPOTIFY_SECRET
     ) {
       throw new BadRequestError("Some Env variables are missing!")
     }

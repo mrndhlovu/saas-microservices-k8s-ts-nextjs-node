@@ -28,6 +28,12 @@ spec:
                   name: env-config
                   key: NEXT_PUBLIC_NGINX_BASE_URL
 
+            - name: NEXT_PUBLIC_SPOTIFY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: NEXT_PUBLIC_SPOTIFY_ID
+
             - name: NEXT_PUBLIC_HOST
               valueFrom:
                 secretKeyRef:

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, model } from "mongoose"
+import mongoose, { Schema, Document, model, ObjectId } from "mongoose"
 
 import { AccountOptions, AccountStatus } from "@tusksui/shared"
 
@@ -40,6 +40,10 @@ const AccountSchema = new Schema<IAccountDocument>(
     email: {
       type: String,
     },
+    powerUps: {
+      type: [{ type: Schema.Types.ObjectId, ref: "PowerUp" }],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -72,6 +76,7 @@ export interface IAccount {
   isVerified: boolean
   customerId: string
   email: string
+  powerUps: ObjectId[]
 }
 
 export interface IAccountDocument extends Document, IAccount {
