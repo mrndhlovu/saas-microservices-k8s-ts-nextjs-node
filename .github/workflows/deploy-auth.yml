@@ -5,7 +5,11 @@ on:
     branches:
       - main
     paths:
+<<<<<<< HEAD
       - "auth-service/**"
+=======
+      - "auth/**"
+>>>>>>> 5b668748d3633e13453be5d6736915a6a88e6a55
 
 jobs:
   build:
@@ -13,7 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+<<<<<<< HEAD
           token: ${{ secrets.WORKFLOWS_TOKEN }}
+=======
+          token: ${{secrets.WORKFLOWS_TOKEN}}
+>>>>>>> 5b668748d3633e13453be5d6736915a6a88e6a55
       - run: cd auth-service && docker buiLd -t ndhlovu/auth .
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
         env:
