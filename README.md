@@ -1,4 +1,4 @@
-# Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes
+# Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes.
 
 ## Description
 
