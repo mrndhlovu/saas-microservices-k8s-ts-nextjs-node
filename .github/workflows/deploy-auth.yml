@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'auth/**'
+      - "auth/**"
+
 jobs:
   build:
     runs-on: ubuntu-latest
