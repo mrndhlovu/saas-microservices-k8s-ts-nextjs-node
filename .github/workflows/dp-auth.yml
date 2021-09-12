@@ -2,6 +2,8 @@ name: deploy-auth
 
 on:
   push:
+    branches:
+      - main
     paths:
       - "auth-service/**"
 
@@ -11,9 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-        with:
-          # persist-credentials: false
-          token: ${{ secrets.PAT }}
+        # with:
+        #   # persist-credentials: false
+        #   token: ${{ secrets.PATH }}
 
       - run: cd auth-service && docker buiLd -t ndhlovu/auth .
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
