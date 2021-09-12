@@ -15,6 +15,7 @@ jobs:
 
         with:
           persist-credentials: false
+
           token: ${{ secrets.PAT }}
 
       - run: cd auth-service && docker buiLd -t ndhlovu/auth .
