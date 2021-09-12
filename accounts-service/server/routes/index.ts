@@ -32,13 +32,6 @@ router.get(
   errorService.catchAsyncError(accountController.verifyAccount)
 )
 
-router.get(
-  "/spotify-connect",
-  authMiddleware.validateRequiredAccessJwt,
-  authMiddleware.checkIsAuthenticated,
-  errorService.catchAsyncError(accountController.connectSpotify)
-)
-
 router
   .route("/")
   .get(

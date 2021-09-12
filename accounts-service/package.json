@@ -22,6 +22,7 @@
   "dependencies": {
     "@tusksui/shared": "^0.0.49",
     "@types/cookie-session": "^2.0.43",
+    "@types/spotify-web-api-node": "^5.0.3",
     "axios": "^0.21.4",
     "cookie-parser": "^1.4.5",
     "cookie-session": "^1.4.0",
@@ -30,7 +31,8 @@
     "express-validator": "^6.12.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.9",
-    "mongoose": "^5.13.2"
+    "mongoose": "^5.13.2",
+    "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
     "@types/config": "^0.0.39",

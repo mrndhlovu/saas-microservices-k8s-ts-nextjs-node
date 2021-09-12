@@ -6,6 +6,7 @@ import express from "express"
 import { errorService } from "@tusksui/shared"
 
 import { accountRoutes } from "./routes"
+import { spotifyRoutes } from "./routes/spotify"
 
 const app = express()
 
@@ -19,6 +20,7 @@ app.use(
 app.use(express.urlencoded({ extended: false }))
 
 app.use("/api/accounts", accountRoutes)
+app.use("/api/accounts/powerups/spotify", spotifyRoutes)
 
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)

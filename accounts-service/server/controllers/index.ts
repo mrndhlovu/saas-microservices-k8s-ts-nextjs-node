@@ -9,20 +9,21 @@ import {
   NotFoundError,
 } from "@tusksui/shared"
 
-import { allowedAccountUpdateFields } from "../utils/constants"
-import { accountService } from "../services/account"
-import Account, { IAccountDocument } from "../models/Account"
 import { AccountCreatedPublisher } from "../events/publishers/account-created"
-import { natsService } from "../services"
+import { accountService } from "../services/account"
 import { AccountUpdatedPublisher } from "../events/publishers"
+import { allowedAccountUpdateFields } from "../utils/constants"
+import { natsService } from "../services"
 import { spotifyService } from "../services/spotify"
-import PowerUp from "../models/Powerup"
+import Account, { IAccountDocument } from "../models/Account"
+import PowerUp, { IPowerUpDocument } from "../models/Powerup"
 
 declare global {
   namespace Express {
     interface Request {
       account: IAccountDocument | null | undefined
       currentUserJwt: IJwtAuthToken
+      powerUp: IPowerUpDocument
     }
   }
 }
@@ -44,41 +45,151 @@ class AccountController {
     res.send(powerUps)
   }
 
-  connectSpotify = async (req: Request, res: Response) => {
-    console.log(req.currentUserJwt)
+  // async getCurrentlyPlaying(req: Request, res: Response) {
+  //   const track = await spotifyService.getCurrentlyPlaying({accessToken:req.powerUpAccessToken})
+  //   res.send(track)
+  // }
 
+  // async startOrResumePlayback(req: Request, res: Response) {
+  //   const track = await spotifyService.startOrResumePlayback({accessToken:req.powerUpAccessToken})
+  //   res.send(track)
+  // }
+
+  async getRedirectUrl(req: Request, res: Response) {
+    const { state, scopes } = req.query
+    const url = spotifyService.getAuthUrl(
+      (scopes as string).split("|"),
+      state as string
+    )
+    res.send({ url })
+  }
+
+  async getSpotifyDevices(req: Request, res: Response) {
+    const devices = await spotifyService.getUserDevices({
+      ...req.spotifyApiOptions,
+    })
+
+    res.send(devices)
+  }
+
+  async getCurrentlyPlaying(req: Request, res: Response) {
+    const track = await spotifyService.getCurrentlyPlaying({
+      ...req.spotifyApiOptions,
+    })
+
+    res.send(track)
+  }
+
+  async modifyPlayback(req: Request, res: Response) {
+    const devices = await spotifyService.modifyPlayback({
+      ...req.spotifyApiOptions,
+      ...req.body,
+    })
+
+    res.send(devices)
+  }
+
+  async selectPlayer(req: Request, res: Response) {
+    await spotifyService.selectPlayer({
+      ...req.spotifyApiOptions,
+      ...req.body,
+    })
+
+    res.send()
+  }
+
+  connectSpotify = async (req: Request, res: Response) => {
     const account = await accountService.findAccountOnlyByUseId(
       req.currentUserJwt.userId!
     )
     if (!account) throw new NotFoundError()
 
-    const response = await spotifyService.getAuthTokens(
+    const response = await spotifyService.getAccessTokens(
       req.query.code as string
     )
 
     const tokens = {
       accessToken: response?.access_token,
       refreshToken: response?.refresh_token,
-      scope: response?.scope,
     }
 
-    const powerUp = new PowerUp({
-      ownerId: req?.currentUserJwt.userId,
-      tokens,
-      name: "spotify",
-      status: "active",
-    })
+    let powerUp: IPowerUpDocument
+
+    const existingPowerUp = await accountService.findPowerUpByUseIdAndName(
+      req.currentUserJwt.userId!,
+      "spotify"
+    )
+
+    if (existingPowerUp) {
+      powerUp = existingPowerUp
+
+      const updatedPowerUp = await PowerUp.findOneAndUpdate(
+        { _id: existingPowerUp._id },
+        {
+          $set: {
+            tokens: {
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+            },
+            status: AccountStatus.Active,
+          },
+        },
+        { new: true }
+      )
+
+      powerUp = updatedPowerUp!
+    } else {
+      powerUp = new PowerUp({
+        ownerId: req?.currentUserJwt.userId,
+        tokens,
+        name: "spotify",
+        status: "active",
+      })
+      account.powerUps.push(powerUp._id)
+      await account.save()
+    }
 
     await powerUp.save()
 
-    account.powerUps.push(powerUp._id)
+    const populatedAccount =
+      await accountService.findAccountOnlyByUseIdPopulated(
+        req.currentUserJwt.userId!
+      )
 
-    await account.save()
-    const eventData = accountService.getEventData(account)
+    const eventData = accountService.getEventData(populatedAccount)
 
     new AccountUpdatedPublisher(natsService.client).publish(eventData)
 
     res.status(HTTPStatusCode.OK).send()
+  }
+
+  async revokeSpotifyAccess(req: Request, res: Response) {
+    const account = await accountService.findAccountOnlyByUseId(
+      req.currentUserJwt.userId!
+    )
+    if (!account) throw new NotFoundError()
+
+    const powerUp = await accountService.findPowerUpOnlyById(
+      req.params?.powerUpId!
+    )
+    if (!powerUp) throw new NotFoundError()
+
+    powerUp.status = AccountStatus.Cancelled
+    powerUp.tokens = { accessToken: "", refreshToken: "" }
+    await powerUp.save()
+
+    await account.save()
+
+    const populatedAccount =
+      await accountService.findAccountOnlyByUseIdPopulated(
+        req.currentUserJwt.userId!
+      )
+
+    const eventData = accountService.getEventData(populatedAccount)
+
+    new AccountUpdatedPublisher(natsService.client).publish(eventData)
+
+    res.send(powerUp)
   }
 
   createAccount = async (_req: Request, res: Response) => {

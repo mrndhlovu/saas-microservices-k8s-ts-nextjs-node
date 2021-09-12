@@ -6,12 +6,15 @@ import {
   RequestValidationError,
   errorService,
   IJwtAuthToken,
+  AccountStatus,
 } from "@tusksui/shared"
 
 import { IAccountDocument } from "../models/Account"
 import { allowedAccountUpdateFields } from "../utils/constants"
 import { accountService } from "../services/account"
 import { IVerificationJwt } from "../types"
+import { IPowerUpDocument } from "../models/Powerup"
+import { ISpotifyRequestOptions } from "../services/spotify"
 
 const { catchAsyncError } = errorService
 
@@ -20,6 +23,8 @@ declare global {
     interface Request {
       account: IAccountDocument | null | undefined
       currentUserJwt: IJwtAuthToken
+      powerUp: IPowerUpDocument
+      spotifyApiOptions: ISpotifyRequestOptions
     }
   }
 }
@@ -65,6 +70,27 @@ class AccountMiddleware {
 
       req.account = account
       req.currentUserJwt = verificationJwt
+
+      next()
+    }
+  )
+
+  checkValidSpotifyPowerUp = catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const powerUp = await accountService.findPowerUpByUseIdAndName(
+        req.currentUserJwt.userId!,
+        "spotify"
+      )
+
+      if (!powerUp || powerUp.status !== AccountStatus.Active)
+        throw new BadRequestError("Account not linked with spotify")
+
+      req.powerUp = powerUp
+      req.spotifyApiOptions = {
+        accessToken: powerUp.tokens.accessToken,
+        powerUpId: powerUp._id.toString(),
+        refreshToken: powerUp.tokens.refreshToken,
+      }
 
       next()
     }

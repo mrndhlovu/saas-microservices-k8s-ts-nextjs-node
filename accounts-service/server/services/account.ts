@@ -1,11 +1,31 @@
 import { AccountOptions } from "@tusksui/shared"
 
 import Account, { IAccountDocument } from "../models/Account"
+import PowerUp from "../models/Powerup"
 
 class AccountServices {
+  findAccountOnlyByUseIdPopulated = async (userId: string) => {
+    const account = await Account.findOne({ _id: userId }).populate({
+      path: "powerUps",
+      model: "PowerUp",
+      select: { tokens: 0, updatedAt: 0 },
+    })
+    return account
+  }
+
   findAccountOnlyByUseId = async (userId: string) => {
     const account = await Account.findOne({ _id: userId })
     return account
+  }
+
+  findPowerUpByUseIdAndName = async (userId: string, name: string) => {
+    const powerUp = await PowerUp.findOne({ ownerId: userId, name })
+    return powerUp
+  }
+
+  findPowerUpOnlyById = async (_id: string) => {
+    const powerUp = await PowerUp.findOne({ _id })
+    return powerUp
   }
 
   addAccountExpiryDate = (account: IAccountDocument) => {
@@ -55,11 +75,13 @@ class AccountServices {
   }
 
   getEventData(account: any) {
-    const filterFields = ["__v"]
-
     Object.keys(account).map(key => {
       if (key === "__v") {
         delete account.__v
+      }
+
+      if (key === "tokens") {
+        delete account.tokens
       }
 
       if (key === "_id") {

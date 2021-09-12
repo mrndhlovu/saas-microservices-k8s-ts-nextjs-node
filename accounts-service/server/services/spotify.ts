@@ -1,42 +1,253 @@
 import axios from "axios"
-import PowerUp, { IPowerUpDocument } from "../models/Powerup"
-import qs from "qs"
+import SpotifyWebApi from "spotify-web-api-node"
+
 import { BadRequestError, NotAuthorisedError } from "@tusksui/shared"
+import PowerUp, { IPowerUpDocument } from "../models/Powerup"
+
+declare global {
+  namespace Express {
+    interface Request {
+      powerUp: IPowerUpDocument
+      spotifyApiOptions: ISpotifyRequestOptions
+    }
+  }
+}
+
+export interface ISpotifyRequestOptions {
+  accessToken: string
+  powerUpId: string
+  refreshToken: string
+}
+
+type RefreshTokenCallback = <T extends ISpotifyRequestOptions, Y>(
+  updatedOptions: T
+) => Promise<void | Y>
+
+const spotifyApi = new SpotifyWebApi({
+  clientId: process.env.SPOTIFY_ID!,
+  clientSecret: process.env.SPOTIFY_SECRET!,
+  redirectUri: process.env.SPOTIFY_REDIRECT_URI!,
+})
 
 class SpotifyServices {
-  private scopes =
-    "user-read-email playlist-modify-private playlist-read-private user-read-playback-state"
-  private authEndpoint = "https://accounts.spotify.com/api/token"
+  private endPoint = "https://api.spotify.com/v1/me"
 
-  findPowerUpOnlyByUseId = async (userId: string) => {
-    const powerUp = await PowerUp.findOne({ ownerId: userId })
-    return powerUp
+  private authHeaders(accessToken: string) {
+    return {
+      Authorization: `Bearer ${accessToken}`,
+    }
   }
 
-  findPowerUpOnlyById = async (_id: string) => {
-    const powerUp = await PowerUp.findOne({ _id })
-    return powerUp
-  }
+  async getAccessTokens(code: string) {
+    const response = await spotifyApi.authorizationCodeGrant(code).then(
+      data => data.body,
+      err => {
+        console.log("Something went wrong!", err.body)
+        return err.body
+      }
+    )
 
-  async getAuthTokens(code: string) {
-    const params = new URLSearchParams()
-    params.append("client_id", process.env.SPOTIFY_ID!)
-    params.append("client_secret", process.env.SPOTIFY_SECRET!)
-    params.append("redirect_uri", process.env.SPOTIFY_REDIRECT_URI!)
-    params.append("code", code)
-    params.append("grant_type", "authorization_code")
-
-    const response = await axios
-      .post(this.authEndpoint, params, {
-        headers: { "content-type": "application/x-www-form-urlencoded" },
-      })
-      .then(res => res?.data)
-      .catch(err => err?.response?.data)
-
-    if (!response.access_token)
-      throw new NotAuthorisedError(response?.error_description)
+    if (response.error) throw new NotAuthorisedError(response?.error)
 
     return response
+  }
+
+  private async refreshToken<
+    T extends ISpotifyRequestOptions,
+    Y extends RefreshTokenCallback
+  >(options: T, callback: Y) {
+    spotifyApi.setRefreshToken(options.refreshToken)
+
+    const response = await spotifyApi.refreshAccessToken().then(
+      data => {
+        spotifyApi.setAccessToken(data.body["access_token"])
+        return data.body
+      },
+      err => err.body
+    )
+
+    if (response?.error) {
+      throw new NotAuthorisedError("Could not refresh access token")
+    }
+
+    const updatedPowerUp = await PowerUp.findOneAndUpdate(
+      { _id: options.powerUpId },
+      {
+        $set: { "tokens.accessToken": response.access_token },
+      }
+    )
+    await updatedPowerUp?.save()
+
+    // console.log(
+    //   response?.access_token,
+    //   "======================",
+    //   updatedPowerUp!.tokens.accessToken,
+    //   "==============",
+    //   options.accessToken
+    // )
+
+    await callback({
+      accessToken: response.access_token,
+      powerUpId: updatedPowerUp!._id.toString(),
+      refreshToken: options.refreshToken,
+    })
+  }
+
+  getAuthUrl(scopes: string[], state: string) {
+    return spotifyApi.createAuthorizeURL(scopes, state, true)
+  }
+
+  async getUserDevices(
+    options: ISpotifyRequestOptions
+    // reFresh?: boolean
+  ): Promise<void | SpotifyApi.UserDevicesResponse> {
+    spotifyApi.setAccessToken(options.accessToken)
+
+    return await spotifyApi
+      .getMyDevices()
+      .then(res => res.body)
+      .catch(async err => {
+        if (err?.statusCode === 401) {
+          return await this.refreshToken(
+            options,
+            (async updatedOptions =>
+              await this.getUserDevices(updatedOptions)) as RefreshTokenCallback
+          )
+        }
+        throw new BadRequestError(err.body?.error)
+      })
+  }
+
+  async modifyPlayback<T extends ISpotifyRequestOptions>(
+    options: T & {
+      state: string
+      deviceId: string
+      seek?: number
+    }
+  ) {
+    spotifyApi.setAccessToken(options.accessToken)
+
+    let request: any
+
+    switch (options.state) {
+      case "pause":
+        return (request = await spotifyApi.pause())
+
+      case "next":
+        return (request = await spotifyApi.skipToNext({
+          device_id: options.deviceId,
+        }))
+
+      case "previous":
+        return (request = await spotifyApi.skipToPrevious({
+          device_id: options.deviceId,
+        }))
+      case "play":
+        return (request = await spotifyApi.play({
+          device_id: options.deviceId,
+        }))
+
+      case "seek":
+        return (request = await spotifyApi.seek(options.seek!, {
+          device_id: options.deviceId,
+        }))
+
+      default:
+        break
+    }
+    if (!request) return
+
+    request
+      .then((res: any) => res.body)
+      .catch(async (err: any) => {
+        if (err?.statusCode === 401) {
+          return await this.refreshToken(
+            options,
+            (async (newOptions: ISpotifyRequestOptions) =>
+              await this.modifyPlayback({
+                ...options,
+                ...newOptions,
+              })) as RefreshTokenCallback
+          )
+        }
+
+        throw new BadRequestError(err.response?.data?.error?.message)
+      })
+  }
+
+  async selectPlayer<T extends ISpotifyRequestOptions>(
+    options: T & {
+      deviceId: string
+      play: boolean
+    }
+  ) {
+    spotifyApi.setAccessToken(options.accessToken)
+
+    const response = await spotifyApi
+      .transferMyPlayback([options.deviceId], { play: options.play })
+      .then(res => res)
+      .catch(async err => {
+        if (err?.response?.status === 401) {
+          await this.refreshToken(
+            options,
+            async (newOptions: ISpotifyRequestOptions) =>
+              await this.selectPlayer({ ...options, ...newOptions })
+          )
+        } else {
+          return err.response
+        }
+      })
+
+    console.log(response?.data)
+
+    return response?.data
+  }
+
+  async startOrResumePlayback<T extends ISpotifyRequestOptions>(
+    options: T & { deviceId: string; offset: boolean; position_ms: number }
+  ) {
+    const response = await spotifyApi
+      .play({ position_ms: 1234333 })
+      .then(res => res)
+      .catch(async err => {
+        if (err?.response?.status === 401) {
+          await this.refreshToken(
+            options,
+            async (newOptions: ISpotifyRequestOptions) =>
+              await this.startOrResumePlayback({ ...options, ...newOptions })
+          )
+        } else {
+          return err.response
+        }
+      })
+
+    console.log(response?.data)
+
+    return response?.data
+  }
+
+  async getCurrentlyPlaying<T extends ISpotifyRequestOptions>(
+    options: T
+  ): Promise<void | SpotifyApi.CurrentlyPlayingObject> {
+    return await axios
+      .get(
+        `${this.endPoint}/player/currently-playing?market=IE&additional_types=episode`,
+        { headers: this.authHeaders(options.accessToken) }
+      )
+      .then(res => res.data)
+      .catch(async err => {
+        if (err?.response?.status === 401) {
+          return await this.refreshToken(
+            options,
+            (async newOptions =>
+              await this.getCurrentlyPlaying(
+                newOptions
+              )) as RefreshTokenCallback
+          )
+        }
+
+        throw new BadRequestError(err.response?.data?.error?.message)
+      })
   }
 }
 

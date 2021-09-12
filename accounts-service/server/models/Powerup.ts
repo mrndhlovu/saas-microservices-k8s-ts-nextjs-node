@@ -13,7 +13,6 @@ const PowerUpSchema = new Schema<IPowerUpDocument>(
       default: {
         accessToken: "",
         refreshToken: "",
-        scope: "",
       },
     },
     status: {
@@ -54,7 +53,6 @@ export interface IPowerUp {
   tokens: {
     accessToken: string
     refreshToken: string
-    scope: string
   }
   status: AccountStatus
   name: string
