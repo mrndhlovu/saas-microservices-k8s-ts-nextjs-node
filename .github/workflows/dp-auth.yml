@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-        # with:
-        #   token: ${{ secrets.WORKFLOWS_TOKEN }}
+        with:
+          token: ${{ secrets.WORKFLOWS_TOKEN }}
 
       - run: cd auth-service && docker buiLd -t ndhlovu/auth .
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
