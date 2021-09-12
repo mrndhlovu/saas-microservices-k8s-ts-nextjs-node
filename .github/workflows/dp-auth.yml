@@ -13,7 +13,7 @@ jobs:
 
         with:
           # persist-credentials: false
-          token: ${{ secrets.WORKFLOWS_TOKEN }}
+          token: ${{ secrets.PAT }}
 
       - run: cd auth-service && docker buiLd -t ndhlovu/auth .
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
