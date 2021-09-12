@@ -13,10 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-        with:
-          persist-credentials: false
+        # with:
+        #   persist-credentials: false
 
-          token: ${{ secrets.PAT }}
+        #   token: ${{ secrets.PAT }}
 
       - run: cd auth-service && docker buiLd -t ndhlovu/auth .
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
