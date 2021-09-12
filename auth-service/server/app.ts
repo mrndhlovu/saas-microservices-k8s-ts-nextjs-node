@@ -10,7 +10,8 @@ import authRoutes from "./routes"
 const inTestMode = process.env.NODE_ENV === "test"
 
 const app = express()
-const baseUrl = "/api/auth"
+
+const BASE_URL = "/api/auth"
 
 app.set("trust proxy", true)
 
@@ -19,7 +20,7 @@ app.use(express.json())
 app.use(cookieSession({ signed: false, secure: !inTestMode }))
 app.use(express.urlencoded({ extended: false }))
 
-app.use(baseUrl, authRoutes)
+app.use(BASE_URL, authRoutes)
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)
 
