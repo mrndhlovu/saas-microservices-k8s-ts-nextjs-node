@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "auth/**"
+      - 'auth/**'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           token: ${{secrets.PAT}}
-      - run: cd auth && docker buiLd -t ndhlovu/auth .
+      - run: cd auth-service && docker buiLd -t ndhlovu/auth .
       - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
