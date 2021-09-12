@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - "auth/**"
-
 jobs:
   build:
     runs-on: ubuntu-latest
