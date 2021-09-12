@@ -8,10 +8,9 @@ import { errorService } from "@tusksui/shared"
 import authRoutes from "./routes"
 
 const inTestMode = process.env.NODE_ENV === "test"
+const BASE_URL = "/api/auth"
 
 const app = express()
-
-const BASE_URL = "/api/auth"
 
 app.set("trust proxy", true)
 
