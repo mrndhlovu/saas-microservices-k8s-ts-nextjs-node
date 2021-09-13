@@ -1,3 +1,5 @@
+[![deploy-accounts-service](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-accounts-service.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-accounts-service.yml) | [![deploy-auth-service](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-auth-service.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-auth-service.yml) | [![deploy-auth-service](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-auth-service.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-auth-service.yml) | [![deploy-auth-service](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-auth-service.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-auth-service.yml) | [![deploy-email-service](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-email-service.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-email-service.yml) | [![deploy-manifests](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-manifests.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-manifests.yml) | [![deploy-manifests](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-manifests.yml/badge.svg)](https://github.com/mrndhlovu/trello-microservices-k8s/actions/workflows/deploy-manifests.yml)
+
 # Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes.
 
 ## Description
@@ -6,7 +8,7 @@ The project is an attempt to build a scalable event based microservices architec
 
 ## Table of Contents
 
-- [Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes](#trello-clone-microservices-app-built-with-typescript-node-nextjs-docker-and-kubernetes)
+- [Trello Clone Microservices app built with Typescript, Node, NextJS, Docker and Kubernetes.](#trello-clone-microservices-app-built-with-typescript-node-nextjs-docker-and-kubernetes)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
   - [Screenshots](#screenshots)
