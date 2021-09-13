@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+
+spec:
+  rules:
+    - host: tusks.dev
+      http:
+        paths:
+          - path: /api/auth/?(.*)
+            backend:
+              serviceName: auth-srv
+              servicePort: 3000
+
+          - path: /api/boards/?(.*)
+            backend:
+              serviceName: board-srv
+              servicePort: 3000
+
+          - path: /api/lists/?(.*)
+            backend:
+              serviceName: board-srv
+              servicePort: 3000
+
+          - path: /api/cards/?(.*)
+            backend:
+              serviceName: board-srv
+              servicePort: 3000
+
+          - path: /api/accounts/?(.*)
+            backend:
+              serviceName: accounts-srv
+              servicePort: 3000
+
+          - path: /api/payments/?(.*)
+            backend:
+              serviceName: payments-srv
+              servicePort: 3000
+
+          - path: /api/email/?(.*)
+            backend:
+              serviceName: email-srv
+              servicePort: 3000
+
+          - path: /?(.*)
+            backend:
+              serviceName: client-srv
+              servicePort: 3000
