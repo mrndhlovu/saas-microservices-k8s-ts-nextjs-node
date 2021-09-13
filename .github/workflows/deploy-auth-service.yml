@@ -23,8 +23,8 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - run: docker push ndhlovu/auth
       - uses: digitalocean/action-doctl@v2
-        with: 
+        with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          
+
       - run: doctl kubernetes cluster kubeconfig save tusks
-      - run: kubectl roolout restart deployment auth-depl
+      - run: kubectl rollout restart deployment auth-depl

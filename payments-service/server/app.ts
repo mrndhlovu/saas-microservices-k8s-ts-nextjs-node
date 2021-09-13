@@ -16,7 +16,6 @@ app.use(
   cookieSession({ signed: false, secure: process.env.NODE_ENV !== "test" })
 )
 app.use(express.urlencoded({ extended: false }))
-
 app.use("/api/payments", paymentRoutes)
 
 app.all("*", errorService.handleNotFoundError)

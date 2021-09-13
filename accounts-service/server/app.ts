@@ -18,7 +18,6 @@ app.use(
   cookieSession({ signed: false, secure: process.env.NODE_ENV !== "test" })
 )
 app.use(express.urlencoded({ extended: false }))
-
 app.use("/api/accounts", accountRoutes)
 
 app.use("/api/accounts/powerups/spotify", spotifyRoutes)

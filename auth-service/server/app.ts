@@ -19,7 +19,6 @@ app.use(cookieParser())
 app.use(express.json())
 app.use(cookieSession({ signed: false, secure: !inTestMode }))
 app.use(express.urlencoded({ extended: false }))
-
 app.use(BASE_URL, authRoutes)
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)

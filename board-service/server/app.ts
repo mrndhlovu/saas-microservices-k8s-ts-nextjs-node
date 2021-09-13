@@ -14,7 +14,6 @@ app.use(cookieParser())
 app.use(express.json())
 app.use(cookieSession({ signed: false, secure: true }))
 app.use(express.urlencoded({ extended: false }))
-
 app.use("/api/boards", boardRoutes)
 app.use("/api/cards", cardRoutes)
 app.use("/api/lists", listRoutes)

@@ -112,7 +112,6 @@ const ControlButtons = () => {
       <ButtonGroup className="control-buttons">
         <IoIosSkipBackward size={18} id="previous" />
         <MdReplay10 id="seek|back" size={15} onClick={modifyPlaybackState} />
-
         {!isPlaying ? (
           <BiPlayCircle size={25} id="play" onClick={modifyPlaybackState} />
         ) : (
@@ -120,7 +119,6 @@ const ControlButtons = () => {
         )}
 
         <MdForward10 id="seek" size={15} onClick={modifyPlaybackState} />
-
         <IoIosSkipForward onClick={modifyPlaybackState} size={18} id="next" />
       </ButtonGroup>
       <ProgressTracker progress={progress} setProgress={setProgress} />
