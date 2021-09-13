@@ -4,6 +4,7 @@ import cookieSession from "cookie-session"
 import express from "express"
 
 import { errorService } from "@tusksui/shared"
+
 const BASE_URL = "/api/auth"
 
 import authRoutes from "./routes"
