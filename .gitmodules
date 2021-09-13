@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 # [submodule "shared"] 
 #    path = shared 
 #    url = https://github.com/mrndhlovu/tusksui-shared
+=======
+[submodule "shared"] 
+   path = shared 
+   url = https://github.com/mrndhlovu/tusksui-shared.git
+>>>>>>> 45322df2926073f8395213ed2be6aa3cd63e9fe6
