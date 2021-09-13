@@ -5,9 +5,9 @@ import express from "express"
 
 import { errorService } from "@tusksui/shared"
 
-const BASE_URL = "/api/auth"
-
 import authRoutes from "./routes"
+
+const BASE_URL = "/api/auth"
 
 const inTestMode = process.env.NODE_ENV === "test"
 

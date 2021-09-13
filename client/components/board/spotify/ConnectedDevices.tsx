@@ -51,7 +51,7 @@ const ConnectedDevices = () => {
     <Select
       onChange={handleSelectedDevice}
       size="xs"
-      placeholder="Connected devices"
+      placeholder="Connected devices."
       defaultValue={activeDevice?.id || ""}
     >
       {devices?.map(device => (

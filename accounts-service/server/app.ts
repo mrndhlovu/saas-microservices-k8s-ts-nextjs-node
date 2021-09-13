@@ -20,6 +20,7 @@ app.use(
 app.use(express.urlencoded({ extended: false }))
 
 app.use("/api/accounts", accountRoutes)
+
 app.use("/api/accounts/powerups/spotify", spotifyRoutes)
 
 app.all("*", errorService.handleNotFoundError)
