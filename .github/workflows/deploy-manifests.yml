@@ -1,11 +1,11 @@
-name: deploy-auth-service
+name: deploy-manifests
 
 on:
   push:
     branches:
       - main
     paths:
-      - "auth-service/**"
+      - "infra/**"
 
 jobs:
   build:
@@ -16,15 +16,10 @@ jobs:
           submodules: true
           persist-credentials: false
           token: ${{ secrets.PAT }}
-      - run: cd auth-service && docker build -t ndhlovu/auth .
-      - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      - run: docker push ndhlovu/auth
+
       - uses: digitalocean/action-doctl@v2
         with: 
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           
       - run: doctl kubernetes cluster kubeconfig save tusks
-      - run: kubectl roolout restart deployment auth-depl
+      - run: kubectl apply -f infra/k8s && kubectl apply -f infra/k8s-prod
