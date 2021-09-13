@@ -17,7 +17,6 @@ app.use(express.urlencoded({ extended: false }))
 app.use("/api/boards", boardRoutes)
 app.use("/api/cards", cardRoutes)
 app.use("/api/lists", listRoutes)
-
 app.all("*", errorService.handleNotFoundError)
 app.use(errorService.errorHandler)
 

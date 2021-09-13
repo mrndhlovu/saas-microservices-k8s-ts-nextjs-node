@@ -27,4 +27,4 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - run: doctl kubernetes cluster kubeconfig save tusks
-      - run: kubectl rollout restart deployment board-depl
+      - run: kubectl rollout restart deployment boards-depl
