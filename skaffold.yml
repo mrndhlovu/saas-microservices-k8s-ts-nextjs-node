@@ -27,6 +27,9 @@ build:
           - "**/*.ts"
           - "**/*.tsx"
           - "**/*.css"
+          - "**/*.scss"
+          - "**/*.sass"
+          - "**/*.js"
 
         # manual:
         #   - src: "**/*.ts/**/*.tsx/**/*.css/**/*.js"
