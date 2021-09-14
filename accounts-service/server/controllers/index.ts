@@ -72,6 +72,16 @@ class AccountController {
     res.send(devices)
   }
 
+  async getUsePlaylists(req: Request, res: Response) {
+    const list = await spotifyService.getUsePlaylists({
+      ...req.spotifyApiOptions,
+      limit: req.query.limit! as string,
+      offset: req.query.offset! as string,
+    })
+
+    res.send(list)
+  }
+
   async getCurrentlyPlaying(req: Request, res: Response) {
     const track = await spotifyService.getCurrentlyPlaying({
       ...req.spotifyApiOptions,

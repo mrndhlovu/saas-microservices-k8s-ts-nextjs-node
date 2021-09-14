@@ -30,6 +30,14 @@ router.get(
 )
 
 router.get(
+  "/playlists",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  accountMiddleware.checkValidSpotifyPowerUp,
+  errorService.catchAsyncError(accountController.getUsePlaylists)
+)
+
+router.get(
   "/:powerUpId/revoke",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,

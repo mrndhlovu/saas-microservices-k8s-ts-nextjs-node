@@ -118,6 +118,32 @@ class SpotifyServices {
       })
   }
 
+  async getUsePlaylists<T extends ISpotifyRequestOptions>(
+    options: T & {
+      offset: string
+      limit: string
+    }
+  ): Promise<void | SpotifyApi.ListOfUsersPlaylistsResponse> {
+    spotifyApi.setAccessToken(options.accessToken)
+
+    return await spotifyApi
+      .getUserPlaylists({ limit: +options.limit, offset: +options.offset })
+      .then(res => res.body)
+      .catch(async err => {
+        if (err?.statusCode === 401) {
+          return await this.refreshToken(
+            options,
+            (async updatedOptions =>
+              await this.getUsePlaylists({
+                ...options,
+                ...updatedOptions,
+              })) as RefreshTokenCallback
+          )
+        }
+        throw new BadRequestError(err.body?.error)
+      })
+  }
+
   async modifyPlayback<T extends ISpotifyRequestOptions>(
     options: T & {
       state: string
