@@ -26,14 +26,6 @@ build:
         infer:
           - "**/*.ts"
           - "**/*.tsx"
-          - "**/*.css"
-          - "**/*.scss"
-          - "**/*.sass"
-          - "**/*.js"
-
-        # manual:
-        #   - src: "**/*.ts/**/*.tsx/**/*.css/**/*.js"
-        #     dest: .
 
     - image: ndhlovu/boards
       context: board-service

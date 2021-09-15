@@ -17,6 +17,7 @@ import { natsService } from "../services/nats"
 import Board, { BoardDocument } from "../models/Board"
 import Attachment from "../models/Attachment"
 import { IUploadFile } from "../types"
+import { BoardViewedPublisher } from "../events/publishers/board-viewed"
 
 declare global {
   namespace Express {
@@ -29,19 +30,34 @@ declare global {
 
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {
-    const { archived } = req.query
+    const { archived, populate } = req.query
+
     const isArchived = Boolean(archived !== "false")
 
-    let boards = await Board.find({
+    const boards = await Board.find({
       owner: req.currentUserJwt.userId,
       archived: !isArchived,
-    })
+    }).populate([
+      { path: "lists" },
+      {
+        path: "cards",
+        model: "Card",
+        match: { archived: false },
+      },
+    ])
 
     res.send(boards)
   }
 
   getBoardById = async (req: Request, res: Response) => {
     const board = await boardService.getPopulatedBoard(req.params.boardId)
+
+    if (board) {
+      await new BoardViewedPublisher(natsService.client).publish({
+        boardId: board._id,
+        userId: board.owner,
+      })
+    }
 
     res.send(board)
   }
