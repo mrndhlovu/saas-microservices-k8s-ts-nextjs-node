@@ -1,13 +1,15 @@
 import { NotFoundError } from "@tusksui/shared"
 import { ObjectId } from "mongodb"
 
-import { BoardDocument, IBoard } from "../models/Board"
+import Board, { BoardDocument, IBoard } from "../models/Board"
 import { IChangePosition } from "../types"
 import { idToObjectId } from "../helpers"
 import { listService } from "./list"
 import Card from "../models/Card"
 import { body } from "express-validator"
 import Attachment from "../models/Attachment"
+import List from "../models/List"
+import { boardService } from "."
 
 class CardServices {
   findCardOnlyById = async (cardId: string) => {
@@ -57,10 +59,6 @@ class CardServices {
   }
 
   async changePosition(board: BoardDocument, options: IChangePosition) {
-    const sourceList = await listService.findListById(options.sourceListId!)
-
-    if (!sourceList) throw new NotFoundError("Source list not found.")
-
     if (options.isSwitchingList) {
       const targetList = await listService.findListById(options.targetListId!)
 
@@ -70,11 +68,33 @@ class CardServices {
       if (!card) throw new NotFoundError("Drag source not found.")
 
       card.listId = options.targetListId!
+      if (options.isSwitchingBoard) {
+        board.cards.filter(
+          card => !card.equals(idToObjectId(options.sourceCardId))
+        )
+
+        await board.save()
+        const targetBoard = await Board.findOneAndUpdate(
+          { _id: options.targetBoardId },
+          {
+            $addToSet: { cards: new ObjectId(options.sourceCardId) },
+          }
+        )
+
+        card.boardId = new ObjectId(options.targetBoardId!)
+        await targetBoard!.save()
+      }
+
       await card?.save()
 
-      sourceList.cards = sourceList.cards.filter(
-        cardId => !cardId.equals(idToObjectId(options.sourceCardId))
+      var sourceList = await List.findOneAndUpdate(
+        { _id: options.sourceListId! },
+        {
+          $pull: { cards: { $eq: new ObjectId(options.sourceCardId) } },
+        }
       )
+
+      if (!sourceList) throw new NotFoundError("Source list not found.")
 
       await sourceList.save()
 
@@ -85,15 +105,23 @@ class CardServices {
       const cardsCopy = [...targetList.cards]
       const cardId = new ObjectId(options.targetCardId)
 
-      cardsCopy.splice(targetPosition, 0, cardId)
+      if (targetPosition === -1) {
+        cardsCopy.splice(0, 0, cardId)
+      } else {
+        cardsCopy.splice(targetPosition, 0, cardId)
+      }
 
       targetList.cards = cardsCopy
+
       await targetList.save()
 
       return
     }
 
-    const cardsCopy = [...board.cards]
+    var sourceList = await listService.findListById(options.sourceListId!)
+    if (!sourceList) throw new NotFoundError("Source list not found.")
+
+    const cardsCopy = [...sourceList.cards]
 
     const sourcePosition = cardsCopy.findIndex(
       id => id.toHexString() === options.sourceCardId
@@ -102,6 +130,8 @@ class CardServices {
     const targetPosition = cardsCopy.findIndex(
       id => id.toHexString() === options.targetCardId
     )
+
+    if (sourcePosition === targetPosition) return
 
     cardsCopy.splice(sourcePosition, 1)
 

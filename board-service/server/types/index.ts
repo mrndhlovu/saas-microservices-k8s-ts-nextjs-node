@@ -4,7 +4,9 @@ export interface IChangePosition {
   sourceListId?: string
   targetListId?: string
   boardId?: string
+  targetBoardId?: string
   isSwitchingList?: boolean
+  isSwitchingBoard?: boolean
 }
 
 export interface IUploadFile {

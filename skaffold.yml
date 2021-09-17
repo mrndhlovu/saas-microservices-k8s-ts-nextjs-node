@@ -23,12 +23,9 @@ build:
       docker:
         dockerfile: Dockerfile
       sync:
-        # infer:
-        #   - "src/**/*.ts"
-        #   - "src/**/*.tsx"
-        manual:
-          - src: ".src"
-            dest: .
+        infer:
+          - "**/*.tsx"
+          - "**/*.ts"
 
     - image: ndhlovu/boards
       context: board-service

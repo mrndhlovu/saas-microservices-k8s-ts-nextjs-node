@@ -37,14 +37,17 @@ class BoardController {
     const boards = await Board.find({
       owner: req.currentUserJwt.userId,
       archived: !isArchived,
-    }).populate([
-      { path: "lists" },
-      {
+    }).populate({
+      path: "lists",
+      match: {
+        archived: { $ne: true },
+      },
+      populate: {
         path: "cards",
         model: "Card",
-        match: { archived: false },
+        match: { archived: { $ne: true } },
       },
-    ])
+    })
 
     res.send(boards)
   }
