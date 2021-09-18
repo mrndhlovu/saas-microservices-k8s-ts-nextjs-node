@@ -1,3 +1,5 @@
+import { Types } from "mongoose"
+
 export interface IChangePosition {
   sourceCardId: string
   targetCardId: string
@@ -16,6 +18,10 @@ export interface IUploadFile {
   extension: string
   content: ArrayBuffer
   path: string
+}
+
+export interface IRemoveRecordIdOptions {
+  [key: string]: { $in: Types.ObjectId[] }
 }
 
 export interface IUploadedFile {

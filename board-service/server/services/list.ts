@@ -2,9 +2,12 @@ import { ObjectId } from "mongodb"
 
 import { IPermissionType } from "@tusksui/shared"
 
-import List from "../models/List"
-import { IBoard } from "../models/Board"
+import { boardService } from "."
 import { IChangePosition } from "../types"
+import Board, { IBoard } from "../models/Board"
+import Card from "../models/Card"
+import List from "../models/List"
+import { idToObjectId } from "../helpers"
 
 export interface IUpdateListMemberOptions {
   currentPermFlag: number
@@ -54,17 +57,17 @@ class ListServices {
     const listsCopy = [...board.lists]
 
     const sourcePosition = listsCopy.findIndex(
-      id => id?.toHexString() === options.sourceListId
+      id => id?.toString() === options.sourceListId
     )
 
     const targetPosition = listsCopy.findIndex(
-      id => id?.toHexString() === options.targetListId
+      id => id?.toString() === options.targetListId
     )
 
     const isMovingLeft = sourcePosition > targetPosition
 
     const sourceId = listsCopy.find(
-      id => id?.toHexString() === options.sourceListId
+      id => id?.toString() === options.sourceListId
     )
 
     listsCopy.splice(sourcePosition, 1)
@@ -75,7 +78,38 @@ class ListServices {
         : targetPosition
       : targetPosition
 
-    listsCopy.splice(newPosition, 0, sourceId!)
+    if (options.isSwitchingBoard) {
+      const cardIds: ObjectId[] = []
+
+      await Card.find({ listId: options.sourceListId! }, (err, records) => {
+        records?.map(async record => {
+          cardIds.push(record._id)
+          record.boardId = new ObjectId(options.targetBoardId!)
+          await record.save()
+        })
+      })
+
+      if (cardIds.length > 0) {
+        await boardService.removeRecordIds(board._id, {
+          cards: { $in: cardIds },
+          lists: { $in: [idToObjectId(options.sourceListId!)] },
+        })
+      }
+
+      const targetBoard = await Board.findByIdAndUpdate(
+        { _id: options.targetBoardId },
+        {
+          $push: {
+            lists: { $each: [options.sourceListId], $position: newPosition },
+            cards: { $each: cardIds },
+          },
+        }
+      )
+
+      await targetBoard!.save()
+    } else {
+      listsCopy.splice(newPosition, 0, sourceId!)
+    }
 
     board.lists = listsCopy
     return board

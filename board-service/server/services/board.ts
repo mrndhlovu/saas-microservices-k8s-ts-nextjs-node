@@ -1,16 +1,17 @@
-import { CallbackError } from "mongoose"
+import { CallbackError, ObjectId } from "mongoose"
 import { v2 } from "cloudinary"
 import axios from "axios"
 
 import {
   BadRequestError,
   IPermissionType,
+  NotFoundError,
   permissionManager,
 } from "@tusksui/shared"
 
 import Board, { BoardDocument, IBoardMember } from "../models/Board"
 import { idToObjectId } from "../helpers"
-import { IUploadFile } from "../types"
+import { IRemoveRecordIdOptions, IUploadFile } from "../types"
 import { allowedUploadTypes } from "../utils/constants"
 
 const cloudinary = v2
@@ -103,9 +104,18 @@ class BoardServices {
 
     const response = await Promise.all(uploadPromises)
 
-    // if()
-
     return response
+  }
+
+  async removeRecordIds(boardId: ObjectId, options: IRemoveRecordIdOptions) {
+    const board = await Board.findByIdAndUpdate(boardId, {
+      $pull: { ...options },
+    })
+
+    if (!board) throw new NotFoundError("Board not found")
+    await board.save()
+
+    return board
   }
 
   getPopulatedBoard = async (boardId: string) => {
@@ -113,7 +123,12 @@ class BoardServices {
       _id: idToObjectId(boardId),
       archived: false,
     }).populate([
-      { path: "lists" },
+      {
+        path: "lists",
+        match: {
+          archived: { $ne: true },
+        },
+      },
       {
         path: "cards",
         model: "Card",
