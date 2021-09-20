@@ -37,6 +37,34 @@ router.post(
   errorService.catchAsyncError(cardController.createLabel)
 )
 
+router.post(
+  "/create-checklist",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.createChecklist)
+)
+
+router.post(
+  "/create-task",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.createTask)
+)
+
+router.post(
+  "/update-task",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.updateTask)
+)
+
+router.post(
+  "/update-checklist",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.updateChecklist)
+)
+
 router.get(
   "/user/labels",
   authMiddleware.validateRequiredAccessJwt,
@@ -49,6 +77,27 @@ router.get(
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(cardController.getAttachmentsByCardId)
+)
+
+router.get(
+  "/:cardId/checklists",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.getChecklistsByCardId)
+)
+
+router.delete(
+  "/:checklistId/:taskId/del-task",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.deleteTask)
+)
+
+router.delete(
+  "/:cardId/:checklistId/del-checklist",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.deleteChecklist)
 )
 
 router.post(

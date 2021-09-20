@@ -1,5 +1,5 @@
 import { ObjectID } from "mongodb"
-import { Schema, Document, model } from "mongoose"
+import { Schema, Document, model, ObjectId, Types } from "mongoose"
 
 export interface ICard {
   activities: string[]
@@ -8,7 +8,7 @@ export interface ICard {
   attachments: string[]
   boardId: ObjectID
   cardId: string
-  checklists: string[]
+  checklists: Types.ObjectId[]
   comments: string[]
   imageCover: ObjectID
   colorCover: string

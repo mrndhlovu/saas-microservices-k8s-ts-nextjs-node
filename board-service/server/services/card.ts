@@ -1,15 +1,16 @@
+import { ObjectId, Types } from "mongoose"
+
 import { NotFoundError } from "@tusksui/shared"
-import { ObjectId } from "mongodb"
 
 import Board, { BoardDocument, IBoard } from "../models/Board"
 import { IChangePosition } from "../types"
 import { idToObjectId } from "../helpers"
 import { listService } from "./list"
 import Card from "../models/Card"
-import { body } from "express-validator"
 import Attachment from "../models/Attachment"
 import List from "../models/List"
-import { boardService } from "."
+import Checklist from "../models/Checklist"
+import Task from "../models/Task"
 
 class CardServices {
   findCardOnlyById = async (cardId: string) => {
@@ -38,6 +39,26 @@ class CardServices {
   findAttachmentByCardId = async (cardId: string) => {
     const cards = await Attachment.findOne({ cardId })
     return cards
+  }
+
+  findChecklistByCardId = async (cardId: Types.ObjectId) => {
+    const checklists = await Checklist.find({ cardId }).populate({
+      path: "tasks",
+      model: "Task",
+    })
+    return checklists
+  }
+
+  findChecklistById = async (_id: string) => {
+    const checklist = await Checklist.findById(_id)
+
+    return checklist
+  }
+
+  findTaskById = async (_id: string) => {
+    const task = await Task.findById(_id)
+
+    return task
   }
 
   findAttachmentById = async (_id: string) => {
@@ -69,19 +90,17 @@ class CardServices {
 
       card.listId = options.targetListId!
       if (options.isSwitchingBoard) {
-        board.cards.filter(
-          card => !card.equals(idToObjectId(options.sourceCardId))
-        )
+        board.cards.filter(card => card.toString() === options.sourceCardId)
 
         await board.save()
         const targetBoard = await Board.findOneAndUpdate(
           { _id: options.targetBoardId },
           {
-            $addToSet: { cards: new ObjectId(options.sourceCardId) },
+            $addToSet: { cards: idToObjectId(options.sourceCardId) },
           }
         )
 
-        card.boardId = new ObjectId(options.targetBoardId!)
+        card.boardId = idToObjectId(options.targetBoardId!)
         await targetBoard!.save()
       }
 
@@ -90,7 +109,7 @@ class CardServices {
       var sourceList = await List.findOneAndUpdate(
         { _id: options.sourceListId! },
         {
-          $pull: { cards: { $eq: new ObjectId(options.sourceCardId) } },
+          $pull: { cards: { $eq: idToObjectId(options.sourceCardId) } },
         }
       )
 
@@ -103,7 +122,7 @@ class CardServices {
       )
 
       const cardsCopy = [...targetList.cards]
-      const cardId = new ObjectId(options.targetCardId)
+      const cardId = idToObjectId(options.targetCardId)
 
       if (targetPosition === -1) {
         cardsCopy.splice(0, 0, cardId)
@@ -135,12 +154,12 @@ class CardServices {
 
     cardsCopy.splice(sourcePosition, 1)
 
-    const cardId = new ObjectId(options.sourceCardId)
+    const cardId = idToObjectId(options.sourceCardId)
 
     cardsCopy.splice(targetPosition, 0, cardId!)
 
     sourceList.cards = cardsCopy
-    board.cards = cardsCopy
+    // board.cards = cardsCopy
 
     await sourceList.save()
     await board.save()

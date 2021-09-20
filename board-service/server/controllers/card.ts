@@ -4,13 +4,15 @@ import { idToObjectId } from "../helpers"
 import Attachment from "../models/Attachment"
 import Board from "../models/Board"
 
-import Card, { CardDocument } from "../models/Card"
-import Label from "../models/Label"
-import List from "../models/List"
+import { allowedCardUpdateFields } from "../utils/constants"
 import { boardService } from "../services"
 import { cardService } from "../services/card"
 import { IUploadFile } from "../types"
-import { allowedCardUpdateFields } from "../utils/constants"
+import Card, { CardDocument } from "../models/Card"
+import Checklist from "../models/Checklist"
+import Label from "../models/Label"
+import List from "../models/List"
+import Task from "../models/Task"
 
 declare global {
   namespace Express {
@@ -34,6 +36,15 @@ class CardController {
     const { cardId } = req.params
 
     const card = await cardService.findCardById(cardId)
+    if (!card) throw new BadRequestError("Card with that id was not found")
+
+    res.send(card)
+  }
+
+  getChecklistsByCardId = async (req: Request, res: Response) => {
+    const cardId = req.params.cardId! as string
+
+    const card = await cardService.findChecklistByCardId(idToObjectId(cardId))
     if (!card) throw new BadRequestError("Card with that id was not found")
 
     res.send(card)
@@ -93,6 +104,51 @@ class CardController {
     res.status(201).send(label)
   }
 
+  createChecklist = async (req: Request, res: Response) => {
+    const { title, cardId } = req.body
+
+    const checklist = new Checklist({
+      title,
+      cardId,
+      owner: req.currentUserJwt.userId,
+    })
+    if (!checklist) throw new BadRequestError("Failed to create checklist.")
+
+    const card = await cardService.findCardOnlyById(cardId)
+    console.log(card?.checklists)
+    if (!card) throw new BadRequestError("Card with that id was not found")
+
+    card?.checklists.unshift(checklist._id)
+
+    await checklist.save()
+    await card.save()
+
+    res.status(201).send(checklist)
+  }
+
+  createTask = async (req: Request, res: Response) => {
+    const { item, checklistId } = req.body
+
+    const task = new Task({
+      item,
+      checklist: idToObjectId(checklistId),
+    })
+    if (!task) throw new BadRequestError("Failed to create checklist.")
+
+    const checklist = await cardService.findChecklistById(checklistId)
+
+    if (!checklist) {
+      throw new BadRequestError("Checklist with that id was not found")
+    }
+    checklist.tasks.push(task._id)
+    console.log(checklist.tasks)
+
+    await checklist.save()
+    await task.save()
+
+    res.status(201).send(task)
+  }
+
   deleteCard = async (req: Request, res: Response) => {
     const { listId, cardId } = req.params
     const { deleteAll } = req.query
@@ -112,6 +168,44 @@ class CardController {
 
     await card.delete()
     res.status(200).send({})
+  }
+
+  deleteChecklist = async (req: Request, res: Response) => {
+    const { checklistId, cardId } = req.params
+
+    const checklist = await cardService.findChecklistById(checklistId)
+    if (!checklist) {
+      throw new BadRequestError("Checklist with that id was not found")
+    }
+
+    const card = await Card.findByIdAndUpdate(cardId, {
+      $pull: { checklists: idToObjectId(checklistId) },
+    })
+
+    if (!card) throw new BadRequestError("Card with that id was not found")
+
+    await checklist.delete()
+    await card.save()
+    res.status(HTTPStatusCode.NoContent).send()
+  }
+
+  deleteTask = async (req: Request, res: Response) => {
+    const { checklistId, taskId } = req.params
+
+    const task = await cardService.findTaskById(taskId)
+    if (!task) {
+      throw new BadRequestError("Checklist with that id was not found")
+    }
+
+    const checklist = await Checklist.findByIdAndUpdate(checklistId, {
+      $pull: { tasks: idToObjectId(taskId) },
+    })
+
+    if (!checklist) throw new BadRequestError("Card with that id was not found")
+
+    await task.delete()
+    await checklist.save()
+    res.status(HTTPStatusCode.NoContent).send()
   }
 
   uploadCoverImage = async (req: Request, res: Response) => {
@@ -208,9 +302,8 @@ class CardController {
         )
 
         if (!attachment) throw new BadRequestError("Attachment not found")
-        console.log(idToObjectId(req.body.imageCover).equals(attachment._id))
 
-        if (idToObjectId(req.body.imageCover).equals(attachment._id)) {
+        if (req.body.imageCover === attachment._id.toString()) {
           attachment.active = !attachment.active
 
           await attachment.save()
@@ -307,6 +400,34 @@ class CardController {
     const cardRecord = await cardService.getPopulatedCard(cardId)
 
     res.status(200).send(cardRecord)
+  }
+
+  updateChecklist = async (req: Request, res: Response) => {
+    const { checklistId } = req.body
+    if (!checklistId) throw new NotFoundError("Checklist id is required")
+
+    const checklist = await Checklist.findByIdAndUpdate(checklistId, {
+      $set: { ...req.body },
+    })
+    if (!checklist) throw new NotFoundError("Checklist not found")
+
+    await checklist.save()
+
+    res.status(200).send(checklist)
+  }
+
+  updateTask = async (req: Request, res: Response) => {
+    const { taskId } = req.body
+    if (!taskId) throw new NotFoundError("Task id is required")
+
+    const task = await Task.findByIdAndUpdate(taskId, {
+      $set: { ...req.body },
+    })
+    if (!task) throw new NotFoundError("Task not found")
+
+    await task.save()
+
+    res.status(200).send(task)
   }
 }
 

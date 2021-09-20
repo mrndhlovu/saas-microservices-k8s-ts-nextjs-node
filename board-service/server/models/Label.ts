@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb"
 import { Schema, Document, model } from "mongoose"
 
 const LabelSchema = new Schema<ILabelDocument>({

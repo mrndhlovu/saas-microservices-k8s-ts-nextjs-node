@@ -42,3 +42,10 @@ export enum activeBoardBg {
   COLOR = "color",
   IMAGE = "image",
 }
+
+export enum TASK_STATUS {
+  TODO = "todo",
+  CANCELED = "cancelled",
+  DOING = "doing",
+  DONE = "done",
+}

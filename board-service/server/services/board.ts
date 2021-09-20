@@ -132,11 +132,19 @@ class BoardServices {
       {
         path: "cards",
         model: "Card",
-        match: { archived: false },
-        populate: {
-          path: "imageCover",
-          model: "Attachment",
+        match: {
+          archived: { $ne: true },
         },
+        populate: [
+          {
+            path: "imageCover",
+            model: "Attachment",
+          },
+          {
+            path: "checklists",
+            model: "Checklist",
+          },
+        ],
       },
     ])
 
