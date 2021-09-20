@@ -45,7 +45,5 @@ export enum activeBoardBg {
 
 export enum TASK_STATUS {
   TODO = "todo",
-  CANCELED = "cancelled",
-  DOING = "doing",
-  DONE = "done",
+  DONE = "complete",
 }

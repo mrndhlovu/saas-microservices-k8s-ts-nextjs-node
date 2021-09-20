@@ -67,7 +67,7 @@ class CardController {
     const { listId, boardId } = req.params
     const { title, position } = req.body
 
-    const card = new Card({ title, position, listId, boardId })
+    const card = new Card({ title, listId, boardId })
     if (!card) throw new BadRequestError("Card failed to create card.")
 
     const list = await List.findOneAndUpdate(
@@ -133,7 +133,7 @@ class CardController {
       item,
       checklist: idToObjectId(checklistId),
     })
-    if (!task) throw new BadRequestError("Failed to create checklist.")
+    if (!task) throw new BadRequestError("Failed to create task.")
 
     const checklist = await cardService.findChecklistById(checklistId)
 
@@ -141,12 +141,46 @@ class CardController {
       throw new BadRequestError("Checklist with that id was not found")
     }
     checklist.tasks.push(task._id)
-    console.log(checklist.tasks)
 
     await checklist.save()
     await task.save()
 
     res.status(201).send(task)
+  }
+
+  convertTaskToCard = async (req: Request, res: Response) => {
+    const { taskId, checklistId, boardId, listId } = req.body
+
+    const task = await cardService.findTaskById(taskId)
+    if (!task) {
+      throw new BadRequestError("Checklist with that id was not found")
+    }
+
+    const card = new Card({ title: task.item, listId, boardId })
+
+    const checklist = await Checklist.findByIdAndUpdate(checklistId, {
+      $pull: { tasks: idToObjectId(taskId) },
+    })
+
+    if (!checklist) throw new BadRequestError("Card with that id was not found")
+
+    const board = await Board.findOneAndUpdate(
+      { _id: boardId },
+      { $push: { cards: card._id } }
+    )
+
+    if (!board) {
+      throw new BadRequestError(
+        "Card should be linked to a valid board and list"
+      )
+    }
+
+    await task.delete()
+    await checklist.save()
+    await card.save()
+    await board.save()
+
+    res.status(201).send(card)
   }
 
   deleteCard = async (req: Request, res: Response) => {
@@ -406,9 +440,13 @@ class CardController {
     const { checklistId } = req.body
     if (!checklistId) throw new NotFoundError("Checklist id is required")
 
-    const checklist = await Checklist.findByIdAndUpdate(checklistId, {
-      $set: { ...req.body },
-    })
+    const checklist = await Checklist.findByIdAndUpdate(
+      checklistId,
+      {
+        $set: { ...req.body.update },
+      },
+      { new: true }
+    )
     if (!checklist) throw new NotFoundError("Checklist not found")
 
     await checklist.save()
@@ -420,9 +458,13 @@ class CardController {
     const { taskId } = req.body
     if (!taskId) throw new NotFoundError("Task id is required")
 
-    const task = await Task.findByIdAndUpdate(taskId, {
-      $set: { ...req.body },
-    })
+    const task = await Task.findByIdAndUpdate(
+      taskId,
+      {
+        $set: { ...req.body.update },
+      },
+      { new: true }
+    )
     if (!task) throw new NotFoundError("Task not found")
 
     await task.save()

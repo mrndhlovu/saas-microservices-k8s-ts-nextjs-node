@@ -1,5 +1,5 @@
 import { ObjectID } from "mongodb"
-import { Schema, Document, model, ObjectId, Types } from "mongoose"
+import { Schema, Document, model, Types } from "mongoose"
 
 export interface ICard {
   activities: string[]
@@ -100,10 +100,6 @@ const CardSchema = new Schema(
     dueDate: {
       type: String,
       default: "",
-    },
-    position: {
-      type: Number,
-      required: true,
     },
   },
   {

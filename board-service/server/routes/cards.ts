@@ -86,6 +86,13 @@ router.get(
   errorService.catchAsyncError(cardController.getChecklistsByCardId)
 )
 
+router.post(
+  "/convert-task",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.convertTaskToCard)
+)
+
 router.delete(
   "/:checklistId/:taskId/del-task",
   authMiddleware.validateRequiredAccessJwt,

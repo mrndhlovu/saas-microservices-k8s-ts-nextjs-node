@@ -11,7 +11,7 @@ const TaskSchema = new Schema<ITaskDocument>({
     type: Schema.Types.ObjectId,
     required: true,
   },
-  status: {
+  state: {
     type: String,
     enum: Object.values(TASK_STATUS),
     default: TASK_STATUS.TODO,
@@ -37,7 +37,7 @@ TaskSchema.methods.toJSON = function () {
 }
 
 export interface ITaskDocument extends Document {
-  status: TASK_STATUS
+  state: TASK_STATUS
   checklist: ObjectId
   item: string
   assignees: string[]
