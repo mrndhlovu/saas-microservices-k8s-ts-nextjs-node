@@ -7,8 +7,9 @@ import {
   BoardCreatedListener,
   BoardDeletedListener,
   AccountUpdatedListener,
+  NewActivityListener,
+  BoardViewedListener,
 } from "./events/listeners"
-import { BoardViewedListener } from "./events/listeners/board-viewed"
 
 class Server {
   private validateEnvVariables() {
@@ -55,6 +56,7 @@ class Server {
     new BoardDeletedListener(natsService.client).listen()
     new AccountUpdatedListener(natsService.client).listen()
     new BoardViewedListener(natsService.client).listen()
+    new NewActivityListener(natsService.client).listen()
 
     await database.connect()
     app.listen(port, () => {

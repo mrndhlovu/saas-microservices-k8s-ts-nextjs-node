@@ -1,12 +1,19 @@
 import { Request, Response } from "express"
 
-import { BadRequestError, HTTPStatusCode, NotFoundError } from "@tusksui/shared"
+import {
+  ACTION_KEYS,
+  ACTIVITY_TYPES,
+  BadRequestError,
+  HTTPStatusCode,
+  NewActivityPublisher,
+  NotFoundError,
+} from "@tusksui/shared"
 
 import { allowedListUpdateFields } from "../utils/constants"
 import { listService } from "../services/list"
 import Board from "../models/Board"
 import List, { IListDocument } from "../models/List"
-import { boardService } from "../services"
+import { boardService, natsService } from "../services"
 
 declare global {
   namespace Express {
@@ -54,6 +61,21 @@ class ListController {
 
     await list.save()
     await board.save()
+
+    await new NewActivityPublisher(natsService.client).publish({
+      type: ACTIVITY_TYPES.BOARD,
+      userId: req.currentUserJwt.userId!,
+      id: board._id.toString(),
+      actionKey: ACTION_KEYS.CREATE_LIST,
+      data: {
+        id: board?._id,
+        name: board.title,
+        list: {
+          id: list?._id,
+          name: list.title,
+        },
+      },
+    })
 
     res.status(201).send(list)
   }

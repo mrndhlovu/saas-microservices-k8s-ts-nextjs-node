@@ -1,11 +1,18 @@
-import { BadRequestError, HTTPStatusCode, NotFoundError } from "@tusksui/shared"
+import {
+  ACTION_KEYS,
+  ACTIVITY_TYPES,
+  BadRequestError,
+  HTTPStatusCode,
+  NewActivityPublisher,
+  NotFoundError,
+} from "@tusksui/shared"
 import { Request, Response } from "express"
 import { idToObjectId } from "../helpers"
 import Attachment from "../models/Attachment"
 import Board from "../models/Board"
 
 import { allowedCardUpdateFields } from "../utils/constants"
-import { boardService } from "../services"
+import { boardService, natsService } from "../services"
 import { cardService } from "../services/card"
 import { IUploadFile } from "../types"
 import Card, { CardDocument } from "../models/Card"
@@ -13,6 +20,7 @@ import Checklist from "../models/Checklist"
 import Label from "../models/Label"
 import List from "../models/List"
 import Task from "../models/Task"
+import { listeners } from "process"
 
 declare global {
   namespace Express {
@@ -89,6 +97,25 @@ class CardController {
     await card.save()
     await list.save()
     await board.save()
+
+    await new NewActivityPublisher(natsService.client).publish({
+      type: ACTIVITY_TYPES.BOARD,
+      userId: req.currentUserJwt.userId!,
+      id: board._id.toString(),
+      actionKey: ACTION_KEYS.CREATE_CARD,
+      data: {
+        id: board?._id,
+        name: board.title,
+        list: {
+          id: list._id,
+          name: list.title,
+        },
+        card: {
+          id: card._id,
+          name: card.title,
+        },
+      },
+    })
 
     res.status(201).send(card)
   }

@@ -17,6 +17,7 @@ import { natsService } from "../services"
 import { spotifyService } from "../services/spotify"
 import Account, { IAccountDocument } from "../models/Account"
 import PowerUp, { IPowerUpDocument } from "../models/Powerup"
+import Activity from "../models/Activity"
 
 declare global {
   namespace Express {
@@ -33,6 +34,14 @@ class AccountController {
     const accounts = await Account.find({})
 
     res.send(accounts)
+  }
+
+  getActivities = async (req: Request, res: Response) => {
+    const activities = await Activity.find({
+      "memberCreator.id": req.currentUserJwt.userId,
+    })
+
+    res.send(activities)
   }
 
   getAccountById = async (req: Request, res: Response) => {

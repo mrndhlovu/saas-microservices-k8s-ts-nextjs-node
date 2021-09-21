@@ -6,6 +6,9 @@ import {
   NotFoundError,
   permissionManager,
   ROLES,
+  NewActivityPublisher,
+  ACTIVITY_TYPES,
+  ACTION_KEYS,
 } from "@tusksui/shared"
 
 import { boardService } from "../services/board"
@@ -131,6 +134,17 @@ class BoardController {
     await new BoardCreatedPublisher(natsService.client).publish({
       id: updatedBoard._id,
       ownerId: updatedBoard.owner,
+    })
+
+    await new NewActivityPublisher(natsService.client).publish({
+      type: ACTIVITY_TYPES.BOARD,
+      userId: req.currentUserJwt.userId!,
+      id: board._id.toString(),
+      actionKey: ACTION_KEYS.CREATE_BOARD,
+      data: {
+        id: board?._id,
+        name: board.title,
+      },
     })
 
     res.status(201).send(updatedBoard)

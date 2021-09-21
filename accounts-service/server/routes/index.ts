@@ -15,6 +15,13 @@ router.get(
 )
 
 router.get(
+  "/activities",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.getActivities)
+)
+
+router.get(
   "/create",
   errorService.catchAsyncError(accountController.createAccount)
 )

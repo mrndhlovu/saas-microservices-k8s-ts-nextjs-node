@@ -1,5 +1,5 @@
 import { authenticator, totp, hotp } from "otplib"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 import qrcode from "qrcode"
 import { IUserDocument } from "../models/User"
 import { BadRequestError } from "@tusksui/shared"

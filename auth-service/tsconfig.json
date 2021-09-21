@@ -70,6 +70,6 @@
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },
   "exclude": ["**/node_modules"],
-  "include": ["server"],
+  "include": ["server", "../accounts-service/server/models/Activity.ts"],
   "files": ["server/types/global.d.ts"]
 }

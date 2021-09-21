@@ -1,11 +1,10 @@
 import isEmail from "validator/lib/isEmail"
-import { ObjectId } from "mongodb"
-import { Schema, Document, model } from "mongoose"
+import { Schema, Document, model, Types } from "mongoose"
 
 import { authService } from "../services/auth"
 import { IAccountCreatedEvent, IJwtAccessTokens } from "@tusksui/shared"
 
-const UserSchema: Schema<IUserDocument> = new Schema(
+const UserSchema = new Schema<IUserDocument>(
   {
     username: {
       type: String,
@@ -43,7 +42,7 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       },
     },
     boardIds: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Board" }],
+      type: [String],
       required: true,
       default: [],
     },
@@ -68,11 +67,7 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       required: true,
       default: [],
     },
-    loginTypes: {
-      type: Array,
-      default: [],
-      required: true,
-    },
+
     multiFactorAuth: {
       type: Boolean,
       default: false,
@@ -88,7 +83,6 @@ const UserSchema: Schema<IUserDocument> = new Schema(
       trim: true,
       minlength: 4,
     },
-
     tokens: {
       type: Object,
       default: {
@@ -102,6 +96,7 @@ const UserSchema: Schema<IUserDocument> = new Schema(
     },
     account: {
       type: Object,
+      default: {},
     },
     twoStepRecovery: {
       type: Object,
@@ -140,7 +135,7 @@ UserSchema.methods.toJSON = function () {
   return userObject
 }
 
-UserSchema.virtual("fullName").get(function (this: IUserAttributes) {
+UserSchema.virtual("fullName").get(function (this: IUserDocument) {
   if (!this.firstname) return ""
   return `${this.firstname} ${this.lastname || ""}`
 })
@@ -167,24 +162,22 @@ UserSchema.pre("save", function (next) {
 })
 
 interface IUseBoardRoles {
-  [key: string]: ObjectId[]
+  [key: string]: Types.ObjectId[]
 }
-
-type ILoginTypes = "email" | "username"
 
 type IRecoveryToken = {
   token: string
   setupDate: string
 }
 
-export interface IUserAttributes {
+export interface IUser {
   avatar?: string
   bio?: string
   email: string
   firstname?: string
   initials?: string
   lastname?: string
-  loginTypes: ILoginTypes[]
+  loginTypes: string[]
   password: string
   account: IAccountCreatedEvent["data"]
   boardIds: string[]
@@ -196,12 +189,13 @@ export interface IUserAttributes {
   username: string
   viewedRecent?: string[]
   multiFactorAuth: boolean
-  permissionFlag: Number
+  permissionFlag: number
   twoStepRecovery: IRecoveryToken
 }
 
-export interface IUserDocument extends IUserAttributes, Document {
-  _id: ObjectId
+export interface IUserDocument extends Document, IUser {
+  createdAt: boolean | string | number
+  updatedAt: boolean | string | number
 }
 
 export const User = model<IUserDocument>("User", UserSchema)
