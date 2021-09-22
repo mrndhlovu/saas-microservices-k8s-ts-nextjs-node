@@ -1,5 +1,4 @@
-import { ObjectID, ObjectId } from "mongodb"
-import { Schema, Document, model } from "mongoose"
+import { Schema, Document, Types, model } from "mongoose"
 import Board from "./Board"
 import Card, { CardDocument } from "./Card"
 
@@ -53,17 +52,17 @@ ListSchema.methods.toJSON = function () {
 
 ListSchema.pre("remove", async function (next) {
   const board = await Board.findOne({ _id: this.boardId })
-  const cards = await Card.find({ listId: this._id.toHexString() })
+  const cards = await Card.find({ listId: this._id.toString() })
   const cardIds = cards.map(card => card._id as string)
 
   if (board) {
-    board.lists.map(async (listId: ObjectID) => {
-      if (listId.toString() === this._id.toHexString()) {
-        board.lists.filter(id => id !== this._id.toHexString())
+    board.lists.map(async (listId: Types.ObjectId) => {
+      if (listId.toString() === this._id.toString()) {
+        board.lists.filter(id => id !== this._id.toString())
       }
     })
 
-    // board?.cards.filter(id => cardIds.includes(id.toString()))
+    board?.cards.filter(id => cardIds.includes(id.toString()))
 
     board.save()
   }
@@ -79,9 +78,9 @@ ListSchema.pre("remove", async function (next) {
 
 export interface IList {
   title: string
-  boardId: ObjectId
+  boardId: Types.ObjectId
   archived: boolean
-  cards: ObjectId[]
+  cards: Types.ObjectId[]
 }
 
 export interface IListDocument extends Document, IList {

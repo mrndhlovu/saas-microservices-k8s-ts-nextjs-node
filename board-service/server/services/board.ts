@@ -3,8 +3,11 @@ import { v2 } from "cloudinary"
 import axios from "axios"
 
 import {
+  ACTION_KEYS,
+  ACTIVITY_TYPES,
   BadRequestError,
   IPermissionType,
+  NewActivityPublisher,
   NotFoundError,
   permissionManager,
 } from "@tusksui/shared"
@@ -13,6 +16,8 @@ import Board, { BoardDocument, IBoardMember } from "../models/Board"
 import { idToObjectId } from "../helpers"
 import { IRemoveRecordIdOptions, IUploadFile } from "../types"
 import { allowedUploadTypes } from "../utils/constants"
+import { Request } from "express"
+import { natsService } from "."
 
 const cloudinary = v2
 
@@ -28,6 +33,16 @@ export interface IUpdateBoardMemberOptions {
   newRole: IPermissionType
   isNew: boolean
   userId: string
+}
+
+export interface IActionLogger {
+  type: ACTIVITY_TYPES
+  actionKey: ACTION_KEYS
+  data: {
+    id: string
+    name: string
+    [key: string]: any
+  }
 }
 
 class BoardServices {
@@ -176,6 +191,15 @@ class BoardServices {
 
   validateEditableFields = <T>(allowedFields: T[], updates: T[]) => {
     return updates.every((update: T) => allowedFields.includes(update))
+  }
+
+  async logAction(req: Request, options: IActionLogger) {
+    await new NewActivityPublisher(natsService.client).publish({
+      type: options.type,
+      userId: req.currentUserJwt.userId!,
+      actionKey: options.actionKey,
+      data: options.data,
+    })
   }
 }
 

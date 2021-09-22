@@ -98,22 +98,20 @@ class CardController {
     await list.save()
     await board.save()
 
-    await new NewActivityPublisher(natsService.client).publish({
-      type: ACTIVITY_TYPES.BOARD,
-      userId: req.currentUserJwt.userId!,
-      id: board._id.toString(),
+    await cardService.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
       actionKey: ACTION_KEYS.CREATE_CARD,
       data: {
-        id: board?._id,
-        name: board.title,
-        list: {
-          id: list._id,
-          name: list.title,
-        },
-        card: {
-          id: card._id,
-          name: card.title,
-        },
+        id: boardId,
+        name: title,
+      },
+      list: {
+        id: list._id,
+        name: list.title,
+      },
+      card: {
+        id: card._id,
+        name: card.title,
       },
     })
 
@@ -142,13 +140,26 @@ class CardController {
     if (!checklist) throw new BadRequestError("Failed to create checklist.")
 
     const card = await cardService.findCardOnlyById(cardId)
-    console.log(card?.checklists)
+
     if (!card) throw new BadRequestError("Card with that id was not found")
 
     card?.checklists.unshift(checklist._id)
 
     await checklist.save()
     await card.save()
+
+    await cardService.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
+      actionKey: ACTION_KEYS.ADD_CHECKLIST,
+      data: {
+        id: cardId,
+        name: card.title,
+      },
+      checklist: {
+        id: checklist._id,
+        name: checklist.title,
+      },
+    })
 
     res.status(201).send(checklist)
   }
@@ -207,6 +218,23 @@ class CardController {
     await card.save()
     await board.save()
 
+    await cardService.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
+      actionKey: ACTION_KEYS.CONVERT_TASK_TO_CARD,
+      data: {
+        id: task._id,
+        name: task.item,
+      },
+      card: {
+        id: card._id,
+        name: task.item,
+      },
+      checklist: {
+        id: checklist._id,
+        name: checklist.title,
+      },
+    })
+
     res.status(201).send(card)
   }
 
@@ -228,7 +256,17 @@ class CardController {
     if (!card) throw new BadRequestError("Card with that id was not found")
 
     await card.delete()
-    res.status(200).send({})
+
+    await cardService.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
+      actionKey: ACTION_KEYS.DELETED_CARD,
+      data: {
+        id: cardId,
+        name: card.title,
+      },
+    })
+
+    res.status(HTTPStatusCode.NoContent).send()
   }
 
   deleteChecklist = async (req: Request, res: Response) => {

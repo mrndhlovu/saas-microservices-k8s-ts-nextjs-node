@@ -63,9 +63,8 @@ class ListController {
     await board.save()
 
     await new NewActivityPublisher(natsService.client).publish({
-      type: ACTIVITY_TYPES.BOARD,
+      type: ACTIVITY_TYPES.LIST,
       userId: req.currentUserJwt.userId!,
-      id: board._id.toString(),
       actionKey: ACTION_KEYS.CREATE_LIST,
       data: {
         id: board?._id,

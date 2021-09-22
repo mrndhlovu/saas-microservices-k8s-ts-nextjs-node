@@ -136,13 +136,11 @@ class BoardController {
       ownerId: updatedBoard.owner,
     })
 
-    await new NewActivityPublisher(natsService.client).publish({
+    await boardService.logAction(req, {
       type: ACTIVITY_TYPES.BOARD,
-      userId: req.currentUserJwt.userId!,
-      id: board._id.toString(),
       actionKey: ACTION_KEYS.CREATE_BOARD,
       data: {
-        id: board?._id,
+        id: board._id,
         name: board.title,
       },
     })
@@ -177,13 +175,23 @@ class BoardController {
 
     board.save()
 
-    res.status(200).send({})
+    await boardService.logAction(req, {
+      type: ACTIVITY_TYPES.BOARD,
+      actionKey: ACTION_KEYS.ARCHIVED_BOARD,
+      data: {
+        id: board._id,
+        name: board.title,
+      },
+    })
+
+    res.status(HTTPStatusCode.NoContent).send()
   }
 
   deleteBoard = async (req: Request, res: Response) => {
     const board = req.board!
 
     const boardId = board._id
+    const title = board.title
 
     new BoardDeletedPublisher(natsService.client).publish({
       id: boardId.toHexString(),
@@ -191,6 +199,15 @@ class BoardController {
     })
 
     await board.delete()
+
+    await boardService.logAction(req, {
+      type: ACTIVITY_TYPES.BOARD,
+      actionKey: ACTION_KEYS.DELETED_BOARD,
+      data: {
+        id: boardId,
+        name: title,
+      },
+    })
 
     res.status(HTTPStatusCode.NoContent).send()
   }

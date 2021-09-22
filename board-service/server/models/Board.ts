@@ -1,4 +1,4 @@
-import { Schema, Document, model, ObjectId } from "mongoose"
+import { Schema, Document, model, Types } from "mongoose"
 import { activeBoardBg } from "../types"
 import Card from "./Card"
 import List from "./List"
@@ -13,7 +13,7 @@ const BoardSchema = new Schema<BoardDocument>(
       trim: true,
     },
     lists: {
-      type: [{ type: Schema.Types.ObjectId, ref: "List", pos: Number }],
+      type: [{ type: Schema.Types.ObjectId, ref: "List" }],
       required: true,
       default: [],
     },
@@ -89,10 +89,10 @@ BoardSchema.methods.toJSON = function () {
 
 BoardSchema.pre("remove", function (next) {
   this.cards.map(
-    async (cardId: ObjectId) => await Card.findByIdAndRemove(cardId)
+    async (cardId: Types.ObjectId) => await Card.findByIdAndRemove(cardId)
   )
   this.lists.map(
-    async (listId: ObjectId) => await List.findByIdAndRemove(listId)
+    async (listId: Types.ObjectId) => await List.findByIdAndRemove(listId)
   )
 
   next()
@@ -109,8 +109,8 @@ export interface IBoard extends Document {
     team: boolean
     workspace: boolean
   }
-  lists: ObjectId[]
-  cards: ObjectId[]
+  lists: Types.ObjectId[]
+  cards: Types.ObjectId[]
   owner: string
   archived: boolean
   comments: string[]

@@ -1,16 +1,30 @@
-import { ObjectId, Types } from "mongoose"
+import { Request } from "express"
+import { Types } from "mongoose"
 
-import { NotFoundError } from "@tusksui/shared"
+import { NewActivityPublisher, NotFoundError } from "@tusksui/shared"
 
-import Board, { BoardDocument, IBoard } from "../models/Board"
+import { IActionLogger, natsService } from "."
 import { IChangePosition } from "../types"
 import { idToObjectId } from "../helpers"
 import { listService } from "./list"
-import Card from "../models/Card"
 import Attachment from "../models/Attachment"
-import List from "../models/List"
+import Board, { BoardDocument } from "../models/Board"
+import Card from "../models/Card"
 import Checklist from "../models/Checklist"
+import List from "../models/List"
 import Task from "../models/Task"
+
+export type ResourceProps = {
+  id: string
+  name: string
+}
+
+export interface IActionLoggerWithCardAndListOptions extends IActionLogger {
+  card?: ResourceProps
+  list?: ResourceProps
+  checklist?: ResourceProps
+  task?: ResourceProps
+}
 
 class CardServices {
   findCardOnlyById = async (cardId: string) => {
@@ -117,8 +131,8 @@ class CardServices {
 
       await sourceList.save()
 
-      const targetPosition = targetList.cards.findIndex(cardId =>
-        cardId.equals(idToObjectId(options.targetCardId))
+      const targetPosition = targetList.cards.findIndex(
+        cardId => cardId.toString() === options.targetCardId
       )
 
       const cardsCopy = [...targetList.cards]
@@ -143,11 +157,11 @@ class CardServices {
     const cardsCopy = [...sourceList.cards]
 
     const sourcePosition = cardsCopy.findIndex(
-      id => id.toHexString() === options.sourceCardId
+      id => id.toString() === options.sourceCardId
     )
 
     const targetPosition = cardsCopy.findIndex(
-      id => id.toHexString() === options.targetCardId
+      id => id.toString() === options.targetCardId
     )
 
     if (sourcePosition === targetPosition) return
@@ -159,12 +173,27 @@ class CardServices {
     cardsCopy.splice(targetPosition, 0, cardId!)
 
     sourceList.cards = cardsCopy
-    // board.cards = cardsCopy
+    board.cards = sourceList.cards
 
     await sourceList.save()
     await board.save()
 
     return
+  }
+
+  async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {
+    await new NewActivityPublisher(natsService.client).publish({
+      type: options.type,
+      userId: req.currentUserJwt.userId!,
+      actionKey: options.actionKey,
+      data: {
+        ...options.data,
+        card: options.card,
+        list: options?.list,
+        checklist: options?.checklist,
+        task: options?.task,
+      },
+    })
   }
 }
 
