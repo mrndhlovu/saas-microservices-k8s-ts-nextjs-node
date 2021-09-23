@@ -5,6 +5,7 @@ import {
   Subjects,
   queueGroupNames,
   IAuthedActivityEvent,
+  ACTION_KEYS,
 } from "@tusksui/shared"
 import Activity from "../../models/Activity"
 
@@ -13,6 +14,17 @@ export class AuthActivityListener extends Listener<IAuthedActivityEvent> {
   queueGroupName = queueGroupNames.AUTH_ACTIVITY_QUEUE_GROUP
 
   async onMessage(data: IAuthedActivityEvent["data"], msg: Message) {
+    console.log(data)
+
+    if (data.actionKey === ACTION_KEYS.REMOVE_CARD_ATTACHMENT) {
+      const activity = await Activity.findOne({
+        "entities.attachment.id": data.entities?.attachment.id,
+      })
+
+      if (activity) {
+        await activity.delete()
+      }
+    }
     const activity = new Activity({
       type: data.type,
       memberCreator: data.user,
@@ -21,8 +33,6 @@ export class AuthActivityListener extends Listener<IAuthedActivityEvent> {
     })
 
     await activity.save()
-
-    console.log(activity)
 
     msg.ack()
   }

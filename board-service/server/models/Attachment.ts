@@ -1,5 +1,4 @@
-import { ObjectID, ObjectId } from "mongodb"
-import { Schema, Document, model } from "mongoose"
+import { Schema, Document, model, Types } from "mongoose"
 
 const AttachmentSchema = new Schema<IAttachmentDocument>({
   url: {
@@ -8,6 +7,9 @@ const AttachmentSchema = new Schema<IAttachmentDocument>({
     trim: true,
   },
   edgeColor: {
+    type: String,
+  },
+  title: {
     type: String,
   },
   height: {
@@ -22,6 +24,12 @@ const AttachmentSchema = new Schema<IAttachmentDocument>({
   cardId: {
     type: Schema.Types.ObjectId,
     ref: "Card",
+  },
+  resourceId: {
+    type: String,
+  },
+  resourceType: {
+    type: String,
   },
   boardId: {
     type: Schema.Types.ObjectId,
@@ -44,12 +52,16 @@ AttachmentSchema.methods.toJSON = function () {
 }
 
 export interface IAttachmentDocument extends Document {
-  url: string
+  active: boolean
+  boardId: Types.ObjectId
+  cardId: Types.ObjectId
   edgeColor: string
   height: number
+  resourceId: string
+  resourceType: string
+  title: string
+  url: string
   width: number
-  active: boolean
-  cardId: ObjectID
 }
 
 const Attachment = model<IAttachmentDocument>("Attachment", AttachmentSchema)

@@ -122,6 +122,14 @@ class BoardServices {
     return response
   }
 
+  async deleteImages(names: string[]) {
+    const deletePromises = names.map(name => cloudinary.uploader.destroy(name))
+
+    const response = await Promise.all(deletePromises)
+
+    return response
+  }
+
   async removeRecordIds(boardId: ObjectId, options: IRemoveRecordIdOptions) {
     const board = await Board.findByIdAndUpdate(boardId, {
       $pull: { ...options },

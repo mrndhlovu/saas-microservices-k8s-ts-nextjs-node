@@ -22,6 +22,7 @@ import Task from "../models/Task"
 export type ResourceProps = {
   id: string
   name: string
+  [key: string]: any
 }
 
 export interface IActionLoggerWithCardAndListOptions extends IActionLogger {

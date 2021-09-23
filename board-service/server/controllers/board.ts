@@ -104,6 +104,9 @@ class BoardController {
       edgeColor: data?.colors[0]?.[0],
       active: true,
       boardId: board._id,
+      title: data.original_filename,
+      resourceId: data.public_id,
+      resourceType: data.resource_type,
     })
 
     await attachment.save()
@@ -121,7 +124,8 @@ class BoardController {
 
       attachment: {
         id: attachment._id.toString(),
-        name: `${data?.url}|${data?.original_filename}`,
+        url: data?.url,
+        name: data?.original_filename,
       },
     })
 
@@ -227,11 +231,34 @@ class BoardController {
 
   deleteAttachment = async (req: Request, res: Response) => {
     const { attachmentId } = req.params
-    const attachment = await Attachment.findById(attachmentId)
 
+    const attachment = await Attachment.findById(attachmentId)
     if (!attachment) throw new NotFoundError("Attachment not found")
 
+    const id = attachment._id.toString()
+    const name = attachment.title
+    const resourceId = attachment.resourceId
+    const boardId = attachment.boardId.toString()
+
     attachment.delete()
+
+    const deleteResponse = await boardService.deleteImages([resourceId])
+
+    console.log("====================================")
+    console.log(deleteResponse)
+    console.log("====================================")
+
+    await boardService.logAction(req, {
+      type: ACTIVITY_TYPES.BOARD,
+      actionKey: ACTION_KEYS.REMOVE_CARD_ATTACHMENT,
+      entities: {
+        boardId,
+      },
+      attachment: {
+        id,
+        name,
+      },
+    })
 
     res.status(HTTPStatusCode.NoContent).send()
   }

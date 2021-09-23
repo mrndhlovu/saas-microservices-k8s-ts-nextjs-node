@@ -332,6 +332,10 @@ class CardController {
       width: data.width,
       edgeColor: data?.colors[0]?.[0],
       active: true,
+      boardId: card.boardId,
+      title: data.original_filename,
+      resourceId: data.public_id,
+      resourceType: data.resource_type,
     })
 
     await attachment.save()
@@ -352,7 +356,8 @@ class CardController {
       },
       attachment: {
         id: attachment._id.toString(),
-        name: `${data?.url}|${data?.original_filename}`,
+        url: data?.url,
+        name: data?.original_filename,
       },
     })
 
