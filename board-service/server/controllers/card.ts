@@ -1,6 +1,6 @@
 import {
   ACTION_KEYS,
-  ACTIVITY_TYPES,
+  ACTION_TYPES,
   BadRequestError,
   HTTPStatusCode,
   NotFoundError,
@@ -97,7 +97,7 @@ class CardController {
     await board.save()
 
     await cardService.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: ACTION_KEYS.CREATE_CARD,
       entities: {
         boardId,
@@ -147,7 +147,7 @@ class CardController {
     await card.save()
 
     await cardService.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: ACTION_KEYS.ADD_CHECKLIST,
       entities: {
         boardId: card.boardId.toString(),
@@ -220,7 +220,7 @@ class CardController {
     await board.save()
 
     await cardService.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: ACTION_KEYS.CONVERT_TASK_TO_CARD,
       entities: {
         boardId: board._id,
@@ -263,7 +263,7 @@ class CardController {
     await card.delete()
 
     await cardService.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: ACTION_KEYS.DELETED_CARD,
       entities: {
         boardId: card.boardId.toString(),
@@ -345,7 +345,7 @@ class CardController {
     await card.save()
 
     await cardService.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: ACTION_KEYS.ADD_CARD_ATTACHMENT,
       entities: {
         boardId: card.boardId.toString(),

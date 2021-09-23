@@ -2,19 +2,18 @@ import { Request, Response } from "express"
 
 import {
   ACTION_KEYS,
-  ACTIVITY_TYPES,
+  ACTION_TYPES,
   BadRequestError,
   HTTPStatusCode,
-  NewActivityPublisher,
   NotFoundError,
 } from "@tusksui/shared"
 
 import { allowedListUpdateFields } from "../utils/constants"
+import { boardService, natsService } from "../services"
+import { IActionLoggerWithCardAndListOptions } from "../services/card"
 import { listService } from "../services/list"
 import Board from "../models/Board"
 import List, { IListDocument } from "../models/List"
-import { boardService, natsService } from "../services"
-import { IActionLoggerWithCardAndListOptions } from "../services/card"
 
 declare global {
   namespace Express {
@@ -64,7 +63,7 @@ class ListController {
     await board.save()
 
     await listService.logAction(req, {
-      type: ACTIVITY_TYPES.LIST,
+      type: ACTION_TYPES.LIST,
       actionKey: ACTION_KEYS.CREATE_LIST,
       entities: {
         boardId: board?._id,

@@ -3,8 +3,8 @@ import { Types } from "mongoose"
 
 import {
   ACTION_KEYS,
-  ACTIVITY_TYPES,
-  NewActivityPublisher,
+  ACTION_TYPES,
+  NewActionPublisher,
   NotFoundError,
 } from "@tusksui/shared"
 
@@ -165,7 +165,7 @@ class CardServices {
       await targetList.save()
 
       await this.logAction(req, {
-        type: ACTIVITY_TYPES.CARD,
+        type: ACTION_TYPES.CARD,
         actionKey: options?.isSwitchingBoard
           ? ACTION_KEYS.TRANSFER_CARD
           : ACTION_KEYS.MOVE_CARD_TO_LIST,
@@ -224,7 +224,7 @@ class CardServices {
     await board.save()
 
     await this.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: isMovingUp
         ? ACTION_KEYS.MOVE_CARD_UP
         : ACTION_KEYS.MOVE_CARD_DOWN,
@@ -241,7 +241,7 @@ class CardServices {
   }
 
   async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {
-    await new NewActivityPublisher(natsService.client).publish({
+    await new NewActionPublisher(natsService.client).publish({
       type: options.type,
       userId: req.currentUserJwt.userId!,
       actionKey: options.actionKey,

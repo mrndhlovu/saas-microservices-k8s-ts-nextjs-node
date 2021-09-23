@@ -6,8 +6,7 @@ import {
   NotFoundError,
   permissionManager,
   ROLES,
-  NewActivityPublisher,
-  ACTIVITY_TYPES,
+  ACTION_TYPES,
   ACTION_KEYS,
 } from "@tusksui/shared"
 
@@ -116,7 +115,7 @@ class BoardController {
     await board.save()
 
     await boardService.logAction(req, {
-      type: ACTIVITY_TYPES.CARD,
+      type: ACTION_TYPES.CARD,
       actionKey: ACTION_KEYS.ADD_CARD_ATTACHMENT,
       entities: {
         boardId: board._id.toString(),
@@ -154,7 +153,7 @@ class BoardController {
     })
 
     await boardService.logAction(req, {
-      type: ACTIVITY_TYPES.BOARD,
+      type: ACTION_TYPES.BOARD,
       actionKey: ACTION_KEYS.CREATE_BOARD,
       entities: {
         boardId: board._id,
@@ -193,7 +192,7 @@ class BoardController {
     board.save()
 
     await boardService.logAction(req, {
-      type: ACTIVITY_TYPES.BOARD,
+      type: ACTION_TYPES.BOARD,
       actionKey: ACTION_KEYS.ARCHIVED_BOARD,
       entities: {
         boardId: board._id.toString(),
@@ -218,7 +217,7 @@ class BoardController {
     await board.delete()
 
     await boardService.logAction(req, {
-      type: ACTIVITY_TYPES.BOARD,
+      type: ACTION_TYPES.BOARD,
       actionKey: ACTION_KEYS.DELETED_BOARD,
       entities: {
         boardId,
@@ -244,12 +243,8 @@ class BoardController {
 
     const deleteResponse = await boardService.deleteImages([resourceId])
 
-    console.log("====================================")
-    console.log(deleteResponse)
-    console.log("====================================")
-
     await boardService.logAction(req, {
-      type: ACTIVITY_TYPES.BOARD,
+      type: ACTION_TYPES.BOARD,
       actionKey: ACTION_KEYS.REMOVE_CARD_ATTACHMENT,
       entities: {
         boardId,

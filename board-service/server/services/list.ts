@@ -2,9 +2,9 @@ import { ObjectId } from "mongodb"
 
 import {
   ACTION_KEYS,
-  ACTIVITY_TYPES,
+  ACTION_TYPES,
   IPermissionType,
-  NewActivityPublisher,
+  NewActionPublisher,
   NotFoundError,
 } from "@tusksui/shared"
 
@@ -120,7 +120,7 @@ class ListServices {
       await targetBoard!.save()
 
       await this.logAction(req, {
-        type: ACTIVITY_TYPES.LIST,
+        type: ACTION_TYPES.LIST,
         actionKey: ACTION_KEYS.TRANSFER_LIST,
         entities: {
           boardId: req.body.boardId,
@@ -136,7 +136,7 @@ class ListServices {
       })
     } else {
       await this.logAction(req, {
-        type: ACTIVITY_TYPES.LIST,
+        type: ACTION_TYPES.LIST,
         actionKey: isMovingLeft
           ? ACTION_KEYS.MOVE_LIST_LEFT
           : ACTION_KEYS.MOVE_LIST_RIGHT,
@@ -161,7 +161,7 @@ class ListServices {
   }
 
   async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {
-    await new NewActivityPublisher(natsService.client).publish({
+    await new NewActionPublisher(natsService.client).publish({
       type: options.type,
       userId: req.currentUserJwt.userId!,
       actionKey: options.actionKey,

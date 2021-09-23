@@ -4,10 +4,10 @@ import axios from "axios"
 
 import {
   ACTION_KEYS,
-  ACTIVITY_TYPES,
+  ACTION_TYPES,
   BadRequestError,
   IPermissionType,
-  NewActivityPublisher,
+  NewActionPublisher,
   NotFoundError,
   permissionManager,
 } from "@tusksui/shared"
@@ -34,15 +34,6 @@ export interface IUpdateBoardMemberOptions {
   newRole: IPermissionType
   isNew: boolean
   userId: string
-}
-
-export interface IActionLogger {
-  type: ACTIVITY_TYPES
-  actionKey: ACTION_KEYS
-  entities: {
-    boardId: string
-    name?: string
-  }
 }
 
 class BoardServices {
@@ -202,7 +193,7 @@ class BoardServices {
   }
 
   async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {
-    await new NewActivityPublisher(natsService.client).publish({
+    await new NewActionPublisher(natsService.client).publish({
       type: options.type,
       userId: req.currentUserJwt.userId!,
       actionKey: options.actionKey,

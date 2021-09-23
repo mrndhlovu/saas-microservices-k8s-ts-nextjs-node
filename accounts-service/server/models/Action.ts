@@ -1,12 +1,12 @@
 import { Schema, Document, model, Types } from "mongoose"
 
-import { ACTIVITY_TYPES } from "@tusksui/shared"
+import { ACTION_TYPES } from "@tusksui/shared"
 
-const ActivitySchema = new Schema<IActivityDocument>(
+const ActionSchema = new Schema<IActionDocument>(
   {
     type: {
       type: String,
-      enum: Object.values(ACTIVITY_TYPES),
+      enum: Object.values(ACTION_TYPES),
       required: true,
     },
     translationKey: {
@@ -31,14 +31,14 @@ const ActivitySchema = new Schema<IActivityDocument>(
   }
 )
 
-ActivitySchema.pre("save", async function (next) {
+ActionSchema.pre("save", async function (next) {
   if (this.updatedAt) {
     this.updatedAt = Date.now()
   }
   next()
 })
 
-ActivitySchema.methods.toJSON = function () {
+ActionSchema.methods.toJSON = function () {
   const list = this.toObject({
     transform: function (_doc, ret, _options) {
       ret.id = ret._id
@@ -51,19 +51,19 @@ ActivitySchema.methods.toJSON = function () {
   return list
 }
 
-ActivitySchema.pre("remove", async function (next) {
+ActionSchema.pre("remove", async function (next) {
   next()
 })
 
-export type ActivityEntities = {
+export type ActionEntities = {
   boardId: string
   name: string
   [key: string]: any
 }
 
-export interface IActivity {
-  entities: ActivityEntities
-  type: ACTIVITY_TYPES
+export interface IAction {
+  entities: ActionEntities
+  type: ACTION_TYPES
   memberCreator: {
     username: string
     id: string
@@ -73,11 +73,11 @@ export interface IActivity {
   translationKey: string
 }
 
-export interface IActivityDocument extends Document, IActivity {
+export interface IActionDocument extends Document, IAction {
   createdAt: boolean | string | number
   updatedAt: boolean | string | number
 }
 
-const Activity = model<IActivityDocument>("Activity", ActivitySchema)
+const Action = model<IActionDocument>("Action", ActionSchema)
 
-export default Activity
+export default Action
