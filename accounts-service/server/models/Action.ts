@@ -1,4 +1,4 @@
-import { Schema, Document, model, Types } from "mongoose"
+import { Schema, Document, model } from "mongoose"
 
 import { ACTION_TYPES } from "@tusksui/shared"
 
@@ -57,7 +57,7 @@ ActionSchema.pre("remove", async function (next) {
 
 export type ActionEntities = {
   boardId: string
-  name: string
+  name?: string
   [key: string]: any
 }
 

@@ -6,7 +6,7 @@ import { natsService } from "./services/nats"
 import { UserDeletedListener, UserCreatedListener } from "./events/listeners"
 import { CustomerCreatedListener } from "./events/listeners/customer-created"
 import { PaymentCreatedListener } from "./events/listeners/payment-created"
-import { AuthActivityListener } from "./events/listeners/authed-activity"
+import { AuthActionListener } from "./events/listeners/authed-action"
 
 class Server {
   private loadEnvVariables() {
@@ -44,7 +44,7 @@ class Server {
     new UserCreatedListener(natsService.client).listen()
     new CustomerCreatedListener(natsService.client).listen()
     new PaymentCreatedListener(natsService.client).listen()
-    new AuthActivityListener(natsService.client).listen()
+    new AuthActionListener(natsService.client).listen()
   }
 
   async start() {

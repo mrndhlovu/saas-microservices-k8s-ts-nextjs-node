@@ -36,6 +36,15 @@ export interface IUpdateBoardMemberOptions {
   userId: string
 }
 
+export interface IActionLogger {
+  type: ACTION_TYPES
+  actionKey: ACTION_KEYS
+  entities: {
+    boardId: string
+    name?: string
+  }
+}
+
 class BoardServices {
   updateBoardMemberRole = async (
     board: BoardDocument,

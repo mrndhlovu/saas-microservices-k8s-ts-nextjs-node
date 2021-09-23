@@ -3,6 +3,8 @@ import axios from "axios"
 import {
   AccountOptions,
   AccountStatus,
+  ACTION_KEYS,
+  ACTION_TYPES,
   BadRequestError,
   HTTPStatusCode,
   IJwtAuthToken,
@@ -17,7 +19,7 @@ import { natsService } from "../services"
 import { spotifyService } from "../services/spotify"
 import Account, { IAccountDocument } from "../models/Account"
 import PowerUp, { IPowerUpDocument } from "../models/Powerup"
-import Activity from "../models/Activity"
+import Action from "../models/Action"
 
 declare global {
   namespace Express {
@@ -37,12 +39,62 @@ class AccountController {
   }
 
   getActivities = async (req: Request, res: Response) => {
-    const activities = await Activity.find({
+    const activities = await Action.find({
       "memberCreator.id": req.currentUserJwt.userId,
       "entities.boardId": req.params?.boardId,
     })
 
     res.send(activities)
+  }
+
+  async comment(req: Request, res: Response) {
+    const action = new Action({
+      entities: {
+        boardId: req.body.boardId,
+        comment: {
+          text: req.body.comment,
+          parentId: req.body?.parentId,
+        },
+      },
+      memberCreator: {
+        username: req.body.username,
+        id: req.currentUserJwt.userId,
+        fullName: req.body.fullName,
+        initials: req.body.initials,
+      },
+      type: ACTION_TYPES.COMMENT,
+      translationKey: ACTION_KEYS.COMMENT_ON_CARD,
+    })
+
+    await action.save()
+
+    res.send(action)
+  }
+
+  async updateComment(req: Request, res: Response) {
+    const action = await Action.findByIdAndUpdate(
+      req.body.commentId,
+      {
+        $set: { "entities.comment": { text: req.body.comment, edited: true } },
+      },
+      { new: true }
+    )
+
+    if (!action) throw new NotFoundError("Action not found")
+
+    await action.save()
+
+    res.send(action)
+  }
+
+  async deleteComment(req: Request, res: Response) {
+    const action = await Action.findById(req.params.commentId)
+
+    if (!action) throw new NotFoundError("Action not found")
+
+    await action.delete()
+
+    res.status(HTTPStatusCode.NoContent).send()
   }
 
   getAccountById = async (req: Request, res: Response) => {
@@ -54,16 +106,6 @@ class AccountController {
 
     res.send(powerUps)
   }
-
-  // async getCurrentlyPlaying(req: Request, res: Response) {
-  //   const track = await spotifyService.getCurrentlyPlaying({accessToken:req.powerUpAccessToken})
-  //   res.send(track)
-  // }
-
-  // async startOrResumePlayback(req: Request, res: Response) {
-  //   const track = await spotifyService.startOrResumePlayback({accessToken:req.powerUpAccessToken})
-  //   res.send(track)
-  // }
 
   async getRedirectUrl(req: Request, res: Response) {
     const { state, scopes } = req.query

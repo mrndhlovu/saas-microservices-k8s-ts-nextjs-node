@@ -4,22 +4,22 @@ import {
   Listener,
   Subjects,
   queueGroupNames,
-  INewActivityEvent,
+  INewActionEvent,
 } from "@tusksui/shared"
 
 import { natsService } from "../../services/nats"
 import { User } from "../../models/User"
-import { AuthedActivityPublisher } from "../publishers/authed-activity"
+import { AuthedActionPublisher } from "../publishers/authed-action"
 
-export class NewActivityListener extends Listener<INewActivityEvent> {
-  readonly subject: Subjects.NewActivity = Subjects.NewActivity
-  queueGroupName = queueGroupNames.AUTH_ACTIVITY_QUEUE_GROUP
+export class NewActionListener extends Listener<INewActionEvent> {
+  readonly subject: Subjects.NewAction = Subjects.NewAction
+  queueGroupName = queueGroupNames.AUTH_ACTION_QUEUE_GROUP
 
-  async onMessage(data: INewActivityEvent["data"], msg: Message) {
+  async onMessage(data: INewActionEvent["data"], msg: Message) {
     const user = await User.findById(data.userId)
 
     if (user) {
-      new AuthedActivityPublisher(natsService.client).publish({
+      new AuthedActionPublisher(natsService.client).publish({
         ...data,
         user: {
           id: user._id,

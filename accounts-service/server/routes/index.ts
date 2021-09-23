@@ -15,7 +15,7 @@ router.get(
 )
 
 router.get(
-  "/:boardId/activities",
+  "/:boardId/actions",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(accountController.getActivities)
@@ -37,6 +37,27 @@ router.get(
   "/verify/:token",
   accountMiddleware.validateVerificationJwt,
   errorService.catchAsyncError(accountController.verifyAccount)
+)
+
+router.post(
+  "/comment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.comment)
+)
+
+router.post(
+  "/edit-comment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.updateComment)
+)
+
+router.delete(
+  "/:commentId/del-comment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.deleteComment)
 )
 
 router
