@@ -3,7 +3,6 @@ import {
   ACTIVITY_TYPES,
   BadRequestError,
   HTTPStatusCode,
-  NewActivityPublisher,
   NotFoundError,
 } from "@tusksui/shared"
 import { Request, Response } from "express"
@@ -12,7 +11,7 @@ import Attachment from "../models/Attachment"
 import Board from "../models/Board"
 
 import { allowedCardUpdateFields } from "../utils/constants"
-import { boardService, natsService } from "../services"
+import { boardService } from "../services"
 import { cardService } from "../services/card"
 import { IUploadFile } from "../types"
 import Card, { CardDocument } from "../models/Card"
@@ -20,7 +19,6 @@ import Checklist from "../models/Checklist"
 import Label from "../models/Label"
 import List from "../models/List"
 import Task from "../models/Task"
-import { listeners } from "process"
 
 declare global {
   namespace Express {
@@ -101,8 +99,8 @@ class CardController {
     await cardService.logAction(req, {
       type: ACTIVITY_TYPES.CARD,
       actionKey: ACTION_KEYS.CREATE_CARD,
-      data: {
-        id: boardId,
+      entities: {
+        boardId,
         name: title,
       },
       list: {
@@ -151,7 +149,10 @@ class CardController {
     await cardService.logAction(req, {
       type: ACTIVITY_TYPES.CARD,
       actionKey: ACTION_KEYS.ADD_CHECKLIST,
-      data: {
+      entities: {
+        boardId: card.boardId.toString(),
+      },
+      card: {
         id: cardId,
         name: card.title,
       },
@@ -221,9 +222,9 @@ class CardController {
     await cardService.logAction(req, {
       type: ACTIVITY_TYPES.CARD,
       actionKey: ACTION_KEYS.CONVERT_TASK_TO_CARD,
-      data: {
-        id: task._id,
-        name: task.item,
+      entities: {
+        boardId: board._id,
+        name: board.title,
       },
       card: {
         id: card._id,
@@ -232,6 +233,10 @@ class CardController {
       checklist: {
         id: checklist._id,
         name: checklist.title,
+      },
+      task: {
+        id: task._id,
+        name: task.item,
       },
     })
 
@@ -246,9 +251,9 @@ class CardController {
 
     if (shouldDeleteAll) {
       const cards = await Card.find({ listId })
-
       cards.map(async (card: CardDocument) => await card.delete())
 
+      //TODO pull from  list after deleting cards
       return res.status(200).send({})
     }
 
@@ -260,7 +265,10 @@ class CardController {
     await cardService.logAction(req, {
       type: ACTIVITY_TYPES.CARD,
       actionKey: ACTION_KEYS.DELETED_CARD,
-      data: {
+      entities: {
+        boardId: card.boardId.toString(),
+      },
+      card: {
         id: cardId,
         name: card.title,
       },
@@ -332,6 +340,23 @@ class CardController {
 
     await card.save()
 
+    await cardService.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
+      actionKey: ACTION_KEYS.ADD_CARD_ATTACHMENT,
+      entities: {
+        boardId: card.boardId.toString(),
+      },
+      card: {
+        id: card._id.toString(),
+        name: card.title,
+      },
+      attachment: {
+        id: attachment._id.toString(),
+        name: `${data?.url}|${data?.original_filename}`,
+      },
+    })
+
+    console.log(card)
     res.status(200).send(attachment)
   }
 
@@ -353,7 +378,7 @@ class CardController {
 
     if (!board) throw new NotFoundError("Board id is required")
 
-    await cardService.changePosition(board, req.body)
+    await cardService.changePosition(board, req.body, req)
 
     await board.save()
 
@@ -433,7 +458,7 @@ class CardController {
       case updates.includes("colorCover"):
         if (card?.imageCover) {
           var attachment = await cardService.findAttachmentById(
-            card?.imageCover?.toHexString()
+            card?.imageCover?.toString()
           )
 
           if (attachment?.active) {
@@ -458,7 +483,7 @@ class CardController {
       case updates.includes("coverUrl"):
         if (card?.imageCover) {
           var attachment = await cardService.findAttachmentById(
-            card?.imageCover?.toHexString()
+            card?.imageCover?.toString()
           )
 
           if (attachment?.active) {

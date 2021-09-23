@@ -14,6 +14,7 @@ import { listService } from "../services/list"
 import Board from "../models/Board"
 import List, { IListDocument } from "../models/List"
 import { boardService, natsService } from "../services"
+import { IActionLoggerWithCardAndListOptions } from "../services/card"
 
 declare global {
   namespace Express {
@@ -62,17 +63,16 @@ class ListController {
     await list.save()
     await board.save()
 
-    await new NewActivityPublisher(natsService.client).publish({
+    await listService.logAction(req, {
       type: ACTIVITY_TYPES.LIST,
-      userId: req.currentUserJwt.userId!,
       actionKey: ACTION_KEYS.CREATE_LIST,
-      data: {
-        id: board?._id,
+      entities: {
+        boardId: board?._id,
         name: board.title,
-        list: {
-          id: list?._id,
-          name: list.title,
-        },
+      },
+      list: {
+        id: list?._id,
+        name: list.title,
       },
     })
 
@@ -84,7 +84,7 @@ class ListController {
 
     if (!board) throw new NotFoundError("Board id is required")
 
-    await listService.changePosition(board, req.body)
+    await listService.changePosition(board, req.body, req)
 
     await board.save()
 

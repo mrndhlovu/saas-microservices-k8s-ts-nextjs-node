@@ -18,6 +18,7 @@ import { IRemoveRecordIdOptions, IUploadFile } from "../types"
 import { allowedUploadTypes } from "../utils/constants"
 import { Request } from "express"
 import { natsService } from "."
+import { IActionLoggerWithCardAndListOptions } from "./card"
 
 const cloudinary = v2
 
@@ -38,10 +39,9 @@ export interface IUpdateBoardMemberOptions {
 export interface IActionLogger {
   type: ACTIVITY_TYPES
   actionKey: ACTION_KEYS
-  data: {
-    id: string
-    name: string
-    [key: string]: any
+  entities: {
+    boardId: string
+    name?: string
   }
 }
 
@@ -193,12 +193,12 @@ class BoardServices {
     return updates.every((update: T) => allowedFields.includes(update))
   }
 
-  async logAction(req: Request, options: IActionLogger) {
+  async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {
     await new NewActivityPublisher(natsService.client).publish({
       type: options.type,
       userId: req.currentUserJwt.userId!,
       actionKey: options.actionKey,
-      data: options.data,
+      entities: { ...options.entities, attachment: options?.attachment },
     })
   }
 }

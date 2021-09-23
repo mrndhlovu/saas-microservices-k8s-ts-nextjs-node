@@ -112,6 +112,19 @@ class BoardController {
 
     await board.save()
 
+    await boardService.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
+      actionKey: ACTION_KEYS.ADD_CARD_ATTACHMENT,
+      entities: {
+        boardId: board._id.toString(),
+      },
+
+      attachment: {
+        id: attachment._id.toString(),
+        name: `${data?.url}|${data?.original_filename}`,
+      },
+    })
+
     res.status(200).send(attachment)
   }
 
@@ -139,8 +152,8 @@ class BoardController {
     await boardService.logAction(req, {
       type: ACTIVITY_TYPES.BOARD,
       actionKey: ACTION_KEYS.CREATE_BOARD,
-      data: {
-        id: board._id,
+      entities: {
+        boardId: board._id,
         name: board.title,
       },
     })
@@ -178,8 +191,8 @@ class BoardController {
     await boardService.logAction(req, {
       type: ACTIVITY_TYPES.BOARD,
       actionKey: ACTION_KEYS.ARCHIVED_BOARD,
-      data: {
-        id: board._id,
+      entities: {
+        boardId: board._id.toString(),
         name: board.title,
       },
     })
@@ -190,11 +203,11 @@ class BoardController {
   deleteBoard = async (req: Request, res: Response) => {
     const board = req.board!
 
-    const boardId = board._id
+    const boardId = board._id.toString()
     const title = board.title
 
     new BoardDeletedPublisher(natsService.client).publish({
-      id: boardId.toHexString(),
+      id: boardId.toString(),
       ownerId: req.currentUserJwt.userId!,
     })
 
@@ -203,11 +216,22 @@ class BoardController {
     await boardService.logAction(req, {
       type: ACTIVITY_TYPES.BOARD,
       actionKey: ACTION_KEYS.DELETED_BOARD,
-      data: {
-        id: boardId,
+      entities: {
+        boardId,
         name: title,
       },
     })
+
+    res.status(HTTPStatusCode.NoContent).send()
+  }
+
+  deleteAttachment = async (req: Request, res: Response) => {
+    const { attachmentId } = req.params
+    const attachment = await Attachment.findById(attachmentId)
+
+    if (!attachment) throw new NotFoundError("Attachment not found")
+
+    attachment.delete()
 
     res.status(HTTPStatusCode.NoContent).send()
   }

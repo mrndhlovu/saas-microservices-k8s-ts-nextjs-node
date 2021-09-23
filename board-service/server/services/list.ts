@@ -1,13 +1,21 @@
 import { ObjectId } from "mongodb"
 
-import { IPermissionType } from "@tusksui/shared"
+import {
+  ACTION_KEYS,
+  ACTIVITY_TYPES,
+  IPermissionType,
+  NewActivityPublisher,
+  NotFoundError,
+} from "@tusksui/shared"
 
-import { boardService } from "."
+import { boardService, natsService } from "."
 import { IChangePosition } from "../types"
 import Board, { IBoard } from "../models/Board"
 import Card from "../models/Card"
 import List from "../models/List"
 import { idToObjectId } from "../helpers"
+import { IActionLoggerWithCardAndListOptions } from "./card"
+import { Request } from "express"
 
 export interface IUpdateListMemberOptions {
   currentPermFlag: number
@@ -53,8 +61,11 @@ class ListServices {
     return list
   }
 
-  async changePosition(board: IBoard, options: IChangePosition) {
+  async changePosition(board: IBoard, options: IChangePosition, req: Request) {
     const listsCopy = [...board.lists]
+    const sourceList = await this.findListById(options.sourceListId!)
+
+    if (!sourceList) throw new NotFoundError("Source list not found")
 
     const sourcePosition = listsCopy.findIndex(
       id => id?.toString() === options.sourceListId
@@ -107,7 +118,37 @@ class ListServices {
       )
 
       await targetBoard!.save()
+
+      await this.logAction(req, {
+        type: ACTIVITY_TYPES.LIST,
+        actionKey: ACTION_KEYS.TRANSFER_LIST,
+        entities: {
+          boardId: req.body.boardId,
+        },
+        list: {
+          id: sourceList._id.toString(),
+          name: sourceList.title,
+        },
+        targetBoard:
+          options.isSwitchingBoard && targetBoard
+            ? { id: targetBoard._id.toString(), name: targetBoard.title }
+            : undefined,
+      })
     } else {
+      await this.logAction(req, {
+        type: ACTIVITY_TYPES.LIST,
+        actionKey: isMovingLeft
+          ? ACTION_KEYS.MOVE_LIST_LEFT
+          : ACTION_KEYS.MOVE_LIST_RIGHT,
+        entities: {
+          boardId: req.body.boardId,
+        },
+        list: {
+          id: sourceList._id.toString(),
+          name: sourceList.title,
+        },
+      })
+
       listsCopy.splice(newPosition, 0, sourceId!)
     }
 
@@ -117,6 +158,20 @@ class ListServices {
 
   validateEditableFields = <T>(allowedFields: T[], updates: T[]) => {
     return updates.every((update: T) => allowedFields.includes(update))
+  }
+
+  async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {
+    await new NewActivityPublisher(natsService.client).publish({
+      type: options.type,
+      userId: req.currentUserJwt.userId!,
+      actionKey: options.actionKey,
+      entities: {
+        ...options.entities,
+        list: options?.list,
+        targetList: options?.targetList,
+        targetBoard: options?.targetBoard,
+      },
+    })
   }
 }
 

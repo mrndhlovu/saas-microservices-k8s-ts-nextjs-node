@@ -15,7 +15,7 @@ router.get(
 )
 
 router.get(
-  "/activities",
+  "/:boardId/activities",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(accountController.getActivities)

@@ -17,7 +17,7 @@ export class AuthActivityListener extends Listener<IAuthedActivityEvent> {
       type: data.type,
       memberCreator: data.user,
       translationKey: data.actionKey,
-      data: data.data,
+      entities: data.entities,
     })
 
     await activity.save()

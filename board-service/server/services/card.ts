@@ -1,7 +1,12 @@
 import { Request } from "express"
 import { Types } from "mongoose"
 
-import { NewActivityPublisher, NotFoundError } from "@tusksui/shared"
+import {
+  ACTION_KEYS,
+  ACTIVITY_TYPES,
+  NewActivityPublisher,
+  NotFoundError,
+} from "@tusksui/shared"
 
 import { IActionLogger, natsService } from "."
 import { IChangePosition } from "../types"
@@ -22,8 +27,11 @@ export type ResourceProps = {
 export interface IActionLoggerWithCardAndListOptions extends IActionLogger {
   card?: ResourceProps
   list?: ResourceProps
+  targetList?: ResourceProps
   checklist?: ResourceProps
   task?: ResourceProps
+  targetBoard?: ResourceProps
+  attachment?: ResourceProps
 }
 
 class CardServices {
@@ -93,7 +101,11 @@ class CardServices {
     return updates.every((update: T) => allowedFields.includes(update))
   }
 
-  async changePosition(board: BoardDocument, options: IChangePosition) {
+  async changePosition(
+    board: BoardDocument,
+    options: IChangePosition,
+    req: Request
+  ) {
     if (options.isSwitchingList) {
       const targetList = await listService.findListById(options.targetListId!)
 
@@ -103,11 +115,13 @@ class CardServices {
       if (!card) throw new NotFoundError("Drag source not found.")
 
       card.listId = options.targetListId!
+      let targetBoard
+
       if (options.isSwitchingBoard) {
         board.cards.filter(card => card.toString() === options.sourceCardId)
 
         await board.save()
-        const targetBoard = await Board.findOneAndUpdate(
+        targetBoard = await Board.findOneAndUpdate(
           { _id: options.targetBoardId },
           {
             $addToSet: { cards: idToObjectId(options.sourceCardId) },
@@ -115,6 +129,7 @@ class CardServices {
         )
 
         card.boardId = idToObjectId(options.targetBoardId!)
+
         await targetBoard!.save()
       }
 
@@ -148,11 +163,39 @@ class CardServices {
 
       await targetList.save()
 
+      await this.logAction(req, {
+        type: ACTIVITY_TYPES.CARD,
+        actionKey: options?.isSwitchingBoard
+          ? ACTION_KEYS.TRANSFER_CARD
+          : ACTION_KEYS.MOVE_CARD_TO_LIST,
+        entities: {
+          boardId: req.body.boardId,
+        },
+        card: {
+          id: options.sourceCardId,
+          name: card.title,
+        },
+        list: {
+          id: sourceList._id.toString(),
+          name: sourceList.title,
+        },
+        targetList: {
+          id: targetList._id.toString(),
+          name: targetList.title,
+        },
+        targetBoard:
+          options.isSwitchingBoard && targetBoard
+            ? { id: targetBoard._id.toString(), name: targetBoard.title }
+            : undefined,
+      })
+
       return
     }
 
     var sourceList = await listService.findListById(options.sourceListId!)
-    if (!sourceList) throw new NotFoundError("Source list not found.")
+    var sourceCard = await this.findCardOnlyById(options.sourceCardId!)
+    if (!sourceList || !sourceCard)
+      throw new NotFoundError("Source list not found.")
 
     const cardsCopy = [...sourceList.cards]
 
@@ -165,6 +208,7 @@ class CardServices {
     )
 
     if (sourcePosition === targetPosition) return
+    const isMovingUp = sourcePosition > targetPosition
 
     cardsCopy.splice(sourcePosition, 1)
 
@@ -178,6 +222,20 @@ class CardServices {
     await sourceList.save()
     await board.save()
 
+    await this.logAction(req, {
+      type: ACTIVITY_TYPES.CARD,
+      actionKey: isMovingUp
+        ? ACTION_KEYS.MOVE_CARD_UP
+        : ACTION_KEYS.MOVE_CARD_DOWN,
+      entities: {
+        boardId: req.body.boardId,
+      },
+      card: {
+        name: sourceCard.title,
+        id: sourceCard?._id.toString(),
+      },
+    })
+
     return
   }
 
@@ -186,12 +244,15 @@ class CardServices {
       type: options.type,
       userId: req.currentUserJwt.userId!,
       actionKey: options.actionKey,
-      data: {
-        ...options.data,
+      entities: {
+        ...options.entities,
         card: options.card,
         list: options?.list,
         checklist: options?.checklist,
         task: options?.task,
+        targetList: options?.targetList,
+        attachment: options?.attachment,
+        targetBoard: options?.targetBoard,
       },
     })
   }

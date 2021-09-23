@@ -37,6 +37,13 @@ router.get(
   errorService.catchAsyncError(boardController.getAttachmentsByBoardId)
 )
 
+router.delete(
+  "/:attachmentId/del-attachment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.deleteAttachment)
+)
+
 router
   .route("/:boardId")
   .get(

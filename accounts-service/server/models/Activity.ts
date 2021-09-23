@@ -13,7 +13,7 @@ const ActivitySchema = new Schema<IActivityDocument>(
       type: String,
       required: true,
     },
-    data: {
+    entities: {
       type: Object,
       default: {},
     },
@@ -55,10 +55,14 @@ ActivitySchema.pre("remove", async function (next) {
   next()
 })
 
-export type ActivityData = { id: string; name: string; [key: string]: any }
+export type ActivityEntities = {
+  boardId: string
+  name: string
+  [key: string]: any
+}
 
 export interface IActivity {
-  data: ActivityData
+  entities: ActivityEntities
   type: ACTIVITY_TYPES
   memberCreator: {
     username: string

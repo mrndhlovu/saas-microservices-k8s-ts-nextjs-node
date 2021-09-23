@@ -39,6 +39,7 @@ class AccountController {
   getActivities = async (req: Request, res: Response) => {
     const activities = await Activity.find({
       "memberCreator.id": req.currentUserJwt.userId,
+      "entities.boardId": req.params?.boardId,
     })
 
     res.send(activities)

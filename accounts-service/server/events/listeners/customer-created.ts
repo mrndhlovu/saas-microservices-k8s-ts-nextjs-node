@@ -3,6 +3,7 @@ import { Message } from "node-nats-streaming"
 import {
   ICustomerCreated,
   Listener,
+  NotFoundError,
   queueGroupNames,
   Subjects,
 } from "@tusksui/shared"
@@ -26,7 +27,7 @@ export class CustomerCreatedListener extends Listener<ICustomerCreated> {
       )
 
       if (!account) {
-        throw new Error("Account not found")
+        throw new NotFoundError("Account not found")
       }
 
       await account.save()
@@ -37,7 +38,7 @@ export class CustomerCreatedListener extends Listener<ICustomerCreated> {
 
       msg.ack()
     } catch (error) {
-      return error.message
+      return error
     }
   }
 }

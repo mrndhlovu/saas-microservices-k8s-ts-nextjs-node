@@ -1,4 +1,3 @@
-import { ObjectID } from "mongodb"
 import { Schema, Document, model, Types } from "mongoose"
 
 export interface ICard {
@@ -6,11 +5,11 @@ export interface ICard {
   archived: boolean
   assignees: string[]
   attachments: string[]
-  boardId: ObjectID
+  boardId: Types.ObjectId
   cardId: string
   checklists: Types.ObjectId[]
   comments: string[]
-  imageCover: ObjectID
+  imageCover: Types.ObjectId
   colorCover: string
   description: string
   dueDate: string
