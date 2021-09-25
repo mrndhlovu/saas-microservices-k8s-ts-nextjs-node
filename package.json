@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@types/emoji-mart": "^3.0.6"
+  }
+}
