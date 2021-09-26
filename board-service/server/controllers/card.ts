@@ -7,15 +7,12 @@ import {
 } from "@tusksui/shared"
 import { Request, Response } from "express"
 import { idToObjectId } from "../helpers"
-import Attachment, { IAttachmentDocument } from "../models/Attachment"
+import Attachment from "../models/Attachment"
 import Board from "../models/Board"
 
 import { allowedCardUpdateFields } from "../utils/constants"
 import { boardService } from "../services"
-import {
-  cardService,
-  IActionLoggerWithCardAndListOptions,
-} from "../services/card"
+import { cardService } from "../services/card"
 import { IUploadFile } from "../types"
 import Card, { CardDocument } from "../models/Card"
 import Checklist from "../models/Checklist"

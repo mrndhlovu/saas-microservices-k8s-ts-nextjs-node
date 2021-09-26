@@ -18,7 +18,14 @@ router.get(
   "/:boardId/actions",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
-  errorService.catchAsyncError(accountController.getActivities)
+  errorService.catchAsyncError(accountController.getActions)
+)
+
+router.get(
+  "/:boardId/:attachmentId/action",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.getActionByAttachmentId)
 )
 
 router.get(

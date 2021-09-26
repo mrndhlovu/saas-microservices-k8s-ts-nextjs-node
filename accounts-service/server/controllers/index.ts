@@ -38,13 +38,22 @@ class AccountController {
     res.send(accounts)
   }
 
-  getActivities = async (req: Request, res: Response) => {
-    const activities = await Action.find({
+  async getActionByAttachmentId(req: Request, res: Response) {
+    const action = await Action.findOne({
+      "entities.attachment.id": req.params.attachmentId,
+      "entities.boardId": req.params?.boardId,
+    })
+
+    res.send(action)
+  }
+
+  getActions = async (req: Request, res: Response) => {
+    const actions = await Action.find({
       "memberCreator.id": req.currentUserJwt.userId,
       "entities.boardId": req.params?.boardId,
     })
 
-    res.send(activities)
+    res.send(actions)
   }
 
   async comment(req: Request, res: Response) {

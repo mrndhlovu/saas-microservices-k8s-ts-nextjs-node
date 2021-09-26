@@ -9,8 +9,7 @@ import {
 } from "@tusksui/shared"
 
 import { allowedListUpdateFields } from "../utils/constants"
-import { boardService, natsService } from "../services"
-import { IActionLoggerWithCardAndListOptions } from "../services/card"
+import { boardService } from "../services"
 import { listService } from "../services/list"
 import Board from "../models/Board"
 import List, { IListDocument } from "../models/List"
