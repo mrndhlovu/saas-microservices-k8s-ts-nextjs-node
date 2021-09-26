@@ -7,12 +7,15 @@ import {
 } from "@tusksui/shared"
 import { Request, Response } from "express"
 import { idToObjectId } from "../helpers"
-import Attachment from "../models/Attachment"
+import Attachment, { IAttachmentDocument } from "../models/Attachment"
 import Board from "../models/Board"
 
 import { allowedCardUpdateFields } from "../utils/constants"
 import { boardService } from "../services"
-import { cardService } from "../services/card"
+import {
+  cardService,
+  IActionLoggerWithCardAndListOptions,
+} from "../services/card"
 import { IUploadFile } from "../types"
 import Card, { CardDocument } from "../models/Card"
 import Checklist from "../models/Checklist"
@@ -24,6 +27,20 @@ declare global {
   namespace Express {
     interface Request {
       uploadFiles?: IUploadFile[]
+    }
+    namespace MulterS3 {
+      interface File extends Multer.File {
+        bucket: string
+        key: string
+        acl: string
+        contentType: string
+        contentDisposition: null
+        storageClass: string
+        serverSideEncryption: null
+        metadata: any
+        location: string
+        etag: string
+      }
     }
   }
 }
@@ -361,8 +378,64 @@ class CardController {
       },
     })
 
-    console.log(card)
     res.status(200).send(attachment)
+  }
+
+  addLinkAttachment = async (req: Request, res: Response) => {
+    const { cardId } = req.params
+    if (!cardId) throw new NotFoundError("Card id query string required")
+
+    const card = await cardService.findCardOnlyById(cardId as string)
+    if (!card) throw new NotFoundError("Card not found")
+
+    const attachment = new Attachment({
+      cardId: card._id,
+      url: req.body.link,
+      boardId: card.boardId,
+      title: req.body?.name,
+      resourceId: card._id.toString(),
+      resourceType: "link",
+    })
+
+    await attachment.save()
+    await card.save()
+
+    await cardService.logAction(req, {
+      type: ACTION_TYPES.CARD,
+      actionKey: ACTION_KEYS.ADD_CARD_ATTACHMENT,
+      entities: {
+        boardId: card.boardId.toString(),
+      },
+      card: {
+        id: card._id.toString(),
+        name: card.title,
+      },
+      attachment: {
+        id: attachment._id.toString(),
+        url: req.body?.link,
+        name: req.body?.name,
+        type: "link",
+      },
+    })
+
+    res.status(200).send(attachment)
+  }
+
+  uploadAttachment = async (req: Request, res: Response) => {
+    const { cardId } = req.params
+
+    if (!cardId) throw new NotFoundError("Card id query string required")
+
+    const card = await cardService.findCardOnlyById(cardId as string)
+    if (!card) throw new NotFoundError("Card not found")
+    const data = await cardService.saveUploadFiles(
+      req,
+      req.files as Express.MulterS3.File[],
+      card
+    )
+
+    console.log(data)
+    res.status(200).send(data)
   }
 
   deleteLabel = async (req: Request, res: Response) => {

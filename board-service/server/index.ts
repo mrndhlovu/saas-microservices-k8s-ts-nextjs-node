@@ -19,6 +19,10 @@ class Server {
       CLOUDINARY_API_KEY,
       CLOUDINARY_CLOUD_NAME,
       UNSPLASH_ACCESS_KEY,
+      REGION_AWS,
+      ACCESS_KEY_ID_AWS,
+      SECRET_ACCESS_KEY_AWS,
+      S3_BUCKET_AWS,
     } = process.env
 
     if (
@@ -32,7 +36,11 @@ class Server {
       !CLOUDINARY_CLOUD_NAME ||
       !CLOUDINARY_API_KEY ||
       !CLOUDINARY_API_SECRET ||
-      !UNSPLASH_ACCESS_KEY
+      !UNSPLASH_ACCESS_KEY ||
+      !SECRET_ACCESS_KEY_AWS ||
+      !ACCESS_KEY_ID_AWS ||
+      !REGION_AWS ||
+      !S3_BUCKET_AWS
     ) {
       throw new BadRequestError("Some Env variables are missing!")
     }

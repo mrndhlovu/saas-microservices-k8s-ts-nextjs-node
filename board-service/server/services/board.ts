@@ -1,6 +1,10 @@
 import { CallbackError, ObjectId } from "mongoose"
+import { Request } from "express"
 import { v2 } from "cloudinary"
+import AWS from "aws-sdk"
 import axios from "axios"
+import multer from "multer"
+import multerS3 from "multer-s3"
 
 import {
   ACTION_KEYS,
@@ -12,21 +16,27 @@ import {
   permissionManager,
 } from "@tusksui/shared"
 
-import Board, { BoardDocument, IBoardMember } from "../models/Board"
+import { allowedUploadTypes } from "../utils/constants"
+import { IActionLoggerWithCardAndListOptions } from "./card"
 import { idToObjectId } from "../helpers"
 import { IRemoveRecordIdOptions, IUploadFile } from "../types"
-import { allowedUploadTypes } from "../utils/constants"
-import { Request } from "express"
 import { natsService } from "."
-import { IActionLoggerWithCardAndListOptions } from "./card"
+import Board, { BoardDocument, IBoardMember } from "../models/Board"
 
 const cloudinary = v2
+const s3 = new AWS.S3()
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
+})
+
+s3.config.update({
+  region: process.env.REGION_AWS,
+  accessKeyId: process.env.ACCESS_KEY_ID_AWS,
+  secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS,
 })
 
 export interface IUpdateBoardMemberOptions {
@@ -95,6 +105,36 @@ class BoardServices {
 
     return updateBoardRecord
   }
+
+  diskStorage = multer({
+    storage: multer.diskStorage({
+      filename: function (_req, file, cb) {
+        cb(null, file.originalname)
+      },
+    }),
+  })
+
+  s3Storage = multer({
+    fileFilter: function (_req, file, cb) {
+      const mimetype = file.mimetype.split("/")?.[1]
+
+      console.log({ mimetype })
+
+      if (allowedUploadTypes.includes(mimetype)) return cb(null, true)
+      cb(new BadRequestError("File type cannot be uploaded!"))
+    },
+    storage: multerS3({
+      s3,
+      bucket: `${process.env.S3_BUCKET_AWS!}/attachments`,
+      acl: "public-read",
+      metadata: function (_req, file, cb) {
+        cb(null, { fieldName: file.fieldname })
+      },
+      key: function (_req, file, cb) {
+        cb(null, file.originalname)
+      },
+    }),
+  })
 
   validatedUpload(files: IUploadFile[]) {
     return files.every(file => allowedUploadTypes.includes(file.extension))

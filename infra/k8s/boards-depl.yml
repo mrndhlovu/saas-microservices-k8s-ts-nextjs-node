@@ -58,6 +58,30 @@ spec:
                   name: env-config
                   key: UNSPLASH_ACCESS_KEY
 
+            - name: S3_BUCKET_AWS
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: S3_BUCKET_AWS
+
+            - name: REGION_AWS
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: REGION_AWS
+
+            - name: ACCESS_KEY_ID_AWS
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: ACCESS_KEY_ID_AWS
+
+            - name: SECRET_ACCESS_KEY_AWS
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: SECRET_ACCESS_KEY_AWS
+
             - name: PORT
               valueFrom:
                 secretKeyRef:

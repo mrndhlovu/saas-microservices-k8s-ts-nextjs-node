@@ -12,9 +12,9 @@ import { IActionLogger, natsService } from "."
 import { IChangePosition } from "../types"
 import { idToObjectId } from "../helpers"
 import { listService } from "./list"
-import Attachment from "../models/Attachment"
+import Attachment, { IAttachmentDocument } from "../models/Attachment"
 import Board, { BoardDocument } from "../models/Board"
-import Card from "../models/Card"
+import Card, { CardDocument } from "../models/Card"
 import Checklist from "../models/Checklist"
 import List from "../models/List"
 import Task from "../models/Task"
@@ -100,6 +100,54 @@ class CardServices {
 
   validateEditableFields = <T>(allowedFields: T[], updates: T[]) => {
     return updates.every((update: T) => allowedFields.includes(update))
+  }
+
+  async saveUploadFiles(
+    req: Request,
+    uploadedFiles: Express.MulterS3.File[],
+    card: CardDocument
+  ) {
+    const attachments: IAttachmentDocument[] = []
+    const actions: IActionLoggerWithCardAndListOptions[] = []
+
+    const recordPromises = uploadedFiles?.map(async file => {
+      const attachment = new Attachment({
+        cardId: card._id,
+        url: file.location,
+        boardId: card.boardId,
+        title: file.originalname,
+        resourceId: file.etag,
+        resourceType: file.originalname.split(".")?.[1],
+      })
+
+      await attachment.save()
+      attachments.push(attachment)
+
+      const action = {
+        type: ACTION_TYPES.CARD,
+        actionKey: ACTION_KEYS.ADD_CARD_ATTACHMENT,
+        entities: {
+          boardId: card.boardId.toString(),
+        },
+        card: {
+          id: card._id.toString(),
+          name: card.title,
+        },
+        attachment: {
+          id: attachment._id.toString(),
+          url: file.location,
+          name: file.originalname,
+          type: file.originalname.split(".")?.[1],
+        },
+      }
+
+      actions.push(action)
+      await this.logAction(req, action)
+    })
+
+    await Promise.all(recordPromises)
+
+    return { attachments, actions }
   }
 
   async changePosition(

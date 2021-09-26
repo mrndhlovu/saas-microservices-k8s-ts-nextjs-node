@@ -1,20 +1,12 @@
 import { Router } from "express"
-import multer from "multer"
 
 import { errorService, authMiddleware } from "@tusksui/shared"
 
 import { cardController } from "../controllers"
 import { boardMiddleware, cardMiddleware } from "../middleware"
+import { boardService } from "../services"
 
 const router = Router()
-
-const storage = multer.diskStorage({
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`)
-  },
-})
-
-const upload = multer({ storage })
 
 router.get(
   "/:listId",
@@ -109,11 +101,27 @@ router.delete(
 
 router.post(
   "/upload/:cardId/add-cover",
-  upload.array("file", 10),
+  boardService.diskStorage.array("file", 10),
   boardMiddleware.serializeUpload,
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(cardController.uploadCoverImage)
+)
+
+router.post(
+  "/upload/:cardId/attachment",
+  boardService.s3Storage.array("file", 10),
+  boardMiddleware.serializeUpload,
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.uploadAttachment)
+)
+
+router.post(
+  "/upload/:cardId/add-link-attachment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.addLinkAttachment)
 )
 
 router.delete(
