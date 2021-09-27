@@ -124,6 +124,20 @@ router.post(
   errorService.catchAsyncError(cardController.addLinkAttachment)
 )
 
+router.patch(
+  "/:attachmentId/update-attachment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.updateAttachment)
+)
+
+router.delete(
+  "/:attachmentId/del-attachment",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(cardController.deleteAttachment)
+)
+
 router.delete(
   "/label/:labelId",
   authMiddleware.validateRequiredAccessJwt,

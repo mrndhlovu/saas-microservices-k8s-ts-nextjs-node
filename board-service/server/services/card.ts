@@ -102,11 +102,9 @@ class CardServices {
     return updates.every((update: T) => allowedFields.includes(update))
   }
 
-  async saveUploadFiles(
-    req: Request,
-    uploadedFiles: Express.MulterS3.File[],
-    card: CardDocument
-  ) {
+  async saveUploadFiles(req: Request, card: CardDocument) {
+    const uploadedFiles = req.files as Express.MulterS3.File[]
+
     const attachments: IAttachmentDocument[] = []
     const actions: IActionLoggerWithCardAndListOptions[] = []
 

@@ -13,7 +13,7 @@ import Board from "../models/Board"
 import { allowedCardUpdateFields } from "../utils/constants"
 import { boardService } from "../services"
 import { cardService } from "../services/card"
-import { IUploadFile } from "../types"
+import { IUploadFile, TASK_STATUS } from "../types"
 import Card, { CardDocument } from "../models/Card"
 import Checklist from "../models/Checklist"
 import Label from "../models/Label"
@@ -194,6 +194,13 @@ class CardController {
       throw new BadRequestError("Checklist with that id was not found")
     }
     checklist.tasks.push(task._id)
+    if (checklist.hideComplete) {
+      checklist.hideComplete = false
+    }
+
+    if (checklist.complete) {
+      checklist.complete = false
+    }
 
     await checklist.save()
     await task.save()
@@ -378,6 +385,16 @@ class CardController {
     res.status(200).send(attachment)
   }
 
+  async updateAttachment(req: Request, res: Response) {
+    const attachment = await Attachment.findByIdAndUpdate(
+      req.params.attachmentId,
+      { $set: { title: req.body.title } },
+      { new: true }
+    )
+
+    res.status(200).send(attachment)
+  }
+
   addLinkAttachment = async (req: Request, res: Response) => {
     const { cardId } = req.params
     if (!cardId) throw new NotFoundError("Card id query string required")
@@ -425,14 +442,20 @@ class CardController {
 
     const card = await cardService.findCardOnlyById(cardId as string)
     if (!card) throw new NotFoundError("Card not found")
-    const data = await cardService.saveUploadFiles(
-      req,
-      req.files as Express.MulterS3.File[],
-      card
-    )
+    const data = await cardService.saveUploadFiles(req, card)
 
-    console.log(data)
-    res.status(200).send(data)
+    res.status(200).send(data.attachments)
+  }
+
+  deleteAttachment = async (req: Request, res: Response) => {
+    const { attachmentId } = req.params
+
+    const attachment = await Attachment.findOne({ _id: attachmentId })
+    if (!attachment)
+      throw new NotFoundError("Attachment with that id was not found")
+
+    await attachment.delete()
+    res.status(HTTPStatusCode.OK).send()
   }
 
   deleteLabel = async (req: Request, res: Response) => {
@@ -622,6 +645,7 @@ class CardController {
   updateTask = async (req: Request, res: Response) => {
     const { taskId } = req.body
     if (!taskId) throw new NotFoundError("Task id is required")
+    let allTasksComplete = false
 
     const task = await Task.findByIdAndUpdate(
       taskId,
@@ -631,10 +655,23 @@ class CardController {
       { new: true }
     )
     if (!task) throw new NotFoundError("Task not found")
-
     await task.save()
 
-    res.status(200).send(task)
+    if (req.body.update.state) {
+      const checklist = await Checklist.findById(task.checklist)
+
+      if (checklist) {
+        const tasks = await Task.find({ _id: [...checklist.tasks] })
+
+        allTasksComplete = tasks.every(task => task.state === TASK_STATUS.DONE)
+
+        checklist.complete = allTasksComplete
+
+        await checklist.save()
+      }
+    }
+
+    res.status(200).send({ task, allTasksComplete })
   }
 }
 

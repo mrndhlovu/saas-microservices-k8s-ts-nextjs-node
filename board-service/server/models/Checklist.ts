@@ -1,5 +1,8 @@
 import { Schema, Document, model, Types } from "mongoose"
 
+import { TASK_STATUS } from "../types"
+import Task from "./Task"
+
 const ChecklistSchema = new Schema<IChecklistDocument>({
   title: {
     type: String,
@@ -13,6 +16,16 @@ const ChecklistSchema = new Schema<IChecklistDocument>({
     type: Schema.Types.ObjectId,
     required: true,
     trim: true,
+  },
+  complete: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  hideComplete: {
+    type: Boolean,
+    required: true,
+    default: false,
   },
   owner: {
     type: String,
@@ -40,6 +53,8 @@ export interface IChecklistDocument extends Document {
   tasks: Types.ObjectId[]
   owner: string
   title: string
+  complete: boolean
+  hideComplete: boolean
 }
 
 const Checklist = model<IChecklistDocument>("Checklist", ChecklistSchema)
