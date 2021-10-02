@@ -22,7 +22,7 @@ router.get(
 )
 
 router.get(
-  "/:boardId/:attachmentId/action",
+  "/:boardId/action",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(accountController.getActionByAttachmentId)

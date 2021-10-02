@@ -109,7 +109,7 @@ router.post(
 )
 
 router.post(
-  "/upload/:cardId/attachment",
+  "/:cardId/upload/attachment",
   boardService.s3Storage.array("file", 10),
   boardMiddleware.serializeUpload,
   authMiddleware.validateRequiredAccessJwt,

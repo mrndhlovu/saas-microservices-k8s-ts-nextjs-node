@@ -145,7 +145,7 @@ class CardServices {
 
     await Promise.all(recordPromises)
 
-    return { attachments, actions }
+    return attachments
   }
 
   async changePosition(

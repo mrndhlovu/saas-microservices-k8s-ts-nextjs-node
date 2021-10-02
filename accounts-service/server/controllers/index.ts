@@ -39,12 +39,14 @@ class AccountController {
   }
 
   async getActionByAttachmentId(req: Request, res: Response) {
-    const action = await Action.findOne({
-      "entities.attachment.id": req.params.attachmentId,
+    const attachmentIds = (req.query.attachmentIds as string).split("|")
+
+    const actions = await Action.find({
+      "entities.attachment.id": [...attachmentIds],
       "entities.boardId": req.params?.boardId,
     })
 
-    res.send(action)
+    res.send(actions)
   }
 
   getActions = async (req: Request, res: Response) => {

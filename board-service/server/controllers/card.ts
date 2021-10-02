@@ -442,9 +442,9 @@ class CardController {
 
     const card = await cardService.findCardOnlyById(cardId as string)
     if (!card) throw new NotFoundError("Card not found")
-    const data = await cardService.saveUploadFiles(req, card)
+    const attachments = await cardService.saveUploadFiles(req, card)
 
-    res.status(200).send(data.attachments)
+    res.status(200).send(attachments)
   }
 
   deleteAttachment = async (req: Request, res: Response) => {
@@ -454,7 +454,24 @@ class CardController {
     if (!attachment)
       throw new NotFoundError("Attachment with that id was not found")
 
+    const cardId = attachment.cardId.toString()
+    const boardId = attachment.boardId.toString()
+    const name = attachment.title
+
     await attachment.delete()
+
+    await cardService.logAction(req, {
+      type: ACTION_TYPES.CARD,
+      actionKey: ACTION_KEYS.REMOVE_CARD_ATTACHMENT,
+      entities: {
+        boardId,
+      },
+      attachment: {
+        id: attachmentId,
+        name,
+      },
+    })
+
     res.status(HTTPStatusCode.OK).send()
   }
 
