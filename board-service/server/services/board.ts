@@ -199,13 +199,11 @@ class BoardServices {
           archived: { $ne: true },
         },
         populate: [
-          {
-            path: "imageCover",
-            model: "Attachment",
-          },
+          { path: "imageCover", model: "Attachment" },
           {
             path: "checklists",
             model: "Checklist",
+            populate: [{ path: "tasks", model: "Task" }],
           },
         ],
       },

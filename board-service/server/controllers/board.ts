@@ -32,7 +32,7 @@ declare global {
 
 class BoardController {
   getBoardList = async (req: Request, res: Response) => {
-    const { archived, populate } = req.query
+    const { archived } = req.query
 
     const isArchived = Boolean(archived !== "false")
 
