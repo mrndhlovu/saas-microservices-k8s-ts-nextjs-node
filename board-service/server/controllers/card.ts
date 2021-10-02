@@ -379,6 +379,7 @@ class CardController {
         id: attachment._id.toString(),
         url: data?.url,
         name: data?.original_filename,
+        type: data.format,
       },
     })
 

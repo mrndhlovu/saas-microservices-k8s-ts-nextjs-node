@@ -125,6 +125,7 @@ class BoardController {
         id: attachment._id.toString(),
         url: data?.url,
         name: data?.original_filename,
+        type: "image",
       },
     })
 
@@ -241,7 +242,7 @@ class BoardController {
 
     attachment.delete()
 
-    const deleteResponse = await boardService.deleteImages([resourceId])
+    await boardService.deleteImages([resourceId])
 
     await boardService.logAction(req, {
       type: ACTION_TYPES.BOARD,
