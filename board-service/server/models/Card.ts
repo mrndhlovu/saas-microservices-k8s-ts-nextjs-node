@@ -23,6 +23,10 @@ export interface ICard {
     edgeColor: string
     active: boolean
   }
+  due: string
+  dueComplete: boolean
+  dueReminder: number
+  start: string
 }
 
 const CardSchema = new Schema(
@@ -63,6 +67,20 @@ const CardSchema = new Schema(
       default: "",
       required: true,
     },
+    due: {
+      type: String,
+    },
+    start: {
+      type: String,
+    },
+    dueComplete: {
+      type: Boolean,
+      default: false,
+    },
+    dueReminder: {
+      type: Number,
+      default: -1,
+    },
     boardId: {
       type: Schema.Types.ObjectId,
       required: true,
@@ -96,10 +114,6 @@ const CardSchema = new Schema(
       default: [],
       required: true,
     },
-    dueDate: {
-      type: String,
-      default: "",
-    },
   },
   {
     timestamps: true,
@@ -120,7 +134,10 @@ CardSchema.methods.toJSON = function () {
   return card
 }
 
-export interface CardDocument extends ICard, Document {}
+export interface CardDocument extends ICard, Document {
+  createdAt: boolean | string | number
+  updatedAt: boolean | string | number
+}
 
 const Card = model<CardDocument>("Card", CardSchema)
 

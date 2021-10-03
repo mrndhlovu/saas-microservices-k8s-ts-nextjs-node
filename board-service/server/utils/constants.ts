@@ -16,6 +16,10 @@ export const allowedCardUpdateFields = [
   "imageCover",
   "edgeColor",
   "coverUrl",
+  "due",
+  "dueComplete",
+  "dueReminder",
+  "start",
 ]
 
 export const boardUnEditableFields = ["createdAt", "updatedAt", "id"]
