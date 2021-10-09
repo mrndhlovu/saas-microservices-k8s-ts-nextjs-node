@@ -50,10 +50,34 @@ class AccountController {
   }
 
   getActions = async (req: Request, res: Response) => {
-    const actions = await Action.find({
-      "memberCreator.id": req.currentUserJwt.userId,
-      "entities.boardId": req.params?.boardId,
-    })
+    const {
+      page = 1,
+      limit = 10,
+      sort = "updatedAt",
+      order = "asc",
+      query = "",
+    } = req.query
+
+    const sortOrder = (order as string) !== "asc" ? 1 : -1
+    const options = {
+      page: +page,
+      limit: +limit,
+      sort: { [sort as string]: sortOrder },
+      query,
+    } as {
+      page: number
+      limit: number
+      sort: { [key: string]: number }
+      query?: string
+    }
+
+    const actions = await Action.paginate(
+      {
+        "memberCreator.id": req.currentUserJwt.userId,
+        "entities.boardId": req.params?.boardId,
+      },
+      options
+    )
 
     res.send(actions)
   }
@@ -62,6 +86,7 @@ class AccountController {
     const action = new Action({
       entities: {
         boardId: req.body.boardId,
+        cardId: req.body.cardId,
         comment: {
           text: req.body.comment,
           parentId: req.body?.parentId,

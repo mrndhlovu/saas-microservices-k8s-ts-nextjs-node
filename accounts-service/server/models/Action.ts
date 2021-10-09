@@ -1,8 +1,9 @@
-import { Schema, Document, model } from "mongoose"
+import { Schema, Document, model, PaginateModel } from "mongoose"
+import mongoosePaginate from "mongoose-paginate-v2"
 
 import { ACTION_TYPES } from "@tusksui/shared"
 
-const ActionSchema = new Schema<IActionDocument>(
+const ActionSchema = new Schema(
   {
     type: {
       type: String,
@@ -31,15 +32,10 @@ const ActionSchema = new Schema<IActionDocument>(
   }
 )
 
-ActionSchema.pre("save", async function (next) {
-  if (this.updatedAt) {
-    this.updatedAt = Date.now()
-  }
-  next()
-})
+ActionSchema.plugin(mongoosePaginate)
 
 ActionSchema.methods.toJSON = function () {
-  const list = this.toObject({
+  const action = this.toObject({
     transform: function (_doc, ret, _options) {
       ret.id = ret._id
       delete ret._id
@@ -48,12 +44,8 @@ ActionSchema.methods.toJSON = function () {
     },
   })
 
-  return list
+  return action
 }
-
-ActionSchema.pre("remove", async function (next) {
-  next()
-})
 
 export type ActionEntities = {
   boardId: string
@@ -62,22 +54,27 @@ export type ActionEntities = {
 }
 
 export interface IAction {
+  createdAt: boolean | string | number
+  updatedAt: boolean | string | number
+}
+
+export interface IActionDocument extends Document {
   entities: ActionEntities
   type: ACTION_TYPES
+  translationKey: string
   memberCreator: {
     username: string
     id: string
     fullName?: string
     initials: string
   }
-  translationKey: string
 }
 
-export interface IActionDocument extends Document, IAction {
-  createdAt: boolean | string | number
-  updatedAt: boolean | string | number
-}
+interface ActionModel<T extends Document> extends PaginateModel<T> {}
 
-const Action = model<IActionDocument>("Action", ActionSchema)
+export const Action: ActionModel<IActionDocument> = model<IActionDocument>(
+  "Action",
+  ActionSchema
+)
 
 export default Action

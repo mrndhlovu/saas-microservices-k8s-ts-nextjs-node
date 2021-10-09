@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
+    node.alpha.kubernetes.io/ttl: "0"
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2021-09-26T18:13:12Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: minikube
+    kubernetes.io/os: linux
+    minikube.k8s.io/commit: a03fbcf166e6f74ef224d4a63be4277d017bb62e
+    minikube.k8s.io/name: minikube
+    minikube.k8s.io/updated_at: 2021_09_26T19_13_15_0700
+    minikube.k8s.io/version: v1.22.0
+    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/master: ""
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
+  name: minikube
+  resourceVersion: "308513"
+  uid: bda029f3-4a01-4f7c-b652-a67b719f291d
+spec:
+  podCIDR: 10.244.0.0/24
+  podCIDRs:
+    - 10.244.0.0/24
+status:
+  addresses:
+    - address: 192.168.49.2
+      type: InternalIP
+    - address: minikube
+      type: Hostname
+  allocatable:
+    cpu: "4"
+    ephemeral-storage: 236323020Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 16288624Ki
+    pods: "110"
+  capacity:
+    cpu: "4"
+    ephemeral-storage: 236323020Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 16288624Ki
+    pods: "110"
+  conditions:
+    - lastHeartbeatTime: "2021-10-07T12:51:22Z"
+      lastTransitionTime: "2021-09-26T18:13:09Z"
+      message: kubelet has sufficient memory available
+      reason: KubeletHasSufficientMemory
+      status: "False"
+      type: MemoryPressure
+    - lastHeartbeatTime: "2021-10-07T12:51:22Z"
+      lastTransitionTime: "2021-09-26T18:13:09Z"
+      message: kubelet has no disk pressure
+      reason: KubeletHasNoDiskPressure
+      status: "False"
+      type: DiskPressure
+    - lastHeartbeatTime: "2021-10-07T12:51:22Z"
+      lastTransitionTime: "2021-09-26T18:13:09Z"
+      message: kubelet has sufficient PID available
+      reason: KubeletHasSufficientPID
+      status: "False"
+      type: PIDPressure
+    - lastHeartbeatTime: "2021-10-07T12:51:22Z"
+      lastTransitionTime: "2021-09-26T18:13:28Z"
+      message: kubelet is posting ready status
+      reason: KubeletReady
+      status: "True"
+      type: Ready
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  images:
+    - names:
+        - ndhlovu/client:8c02d2c-dirty
+        - ndhlovu/client:d48f08baaea6a16fe1d512a3ce2f8ac1b80dad32a99124fa9fdefa49dbe30a93
+      sizeBytes: 814692757
+
+  nodeInfo:
+    architecture: amd64
+    bootID: 5458ceb5-f701-4ddb-9796-fe8fe2c15f09
+    containerRuntimeVersion: docker://20.10.7
+    kernelVersion: 5.13.0-7614-generic
+    kubeProxyVersion: v1.21.2
+    kubeletVersion: v1.21.2
+    machineID: 760e67beb8554645829f2357c8eb4ae7
+    operatingSystem: linux
+    osImage: Ubuntu 20.04.2 LTS
+    systemUUID: fdc252c0-e05e-4090-869e-b3ca3b0af32e
