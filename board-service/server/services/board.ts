@@ -52,6 +52,7 @@ export interface IActionLogger {
   entities: {
     boardId: string
     name?: string
+    workspace?: string
   }
 }
 

@@ -31,6 +31,13 @@ router.get(
 )
 
 router.get(
+  "/workspaces",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.getWorkspaces)
+)
+
+router.get(
   "/:boardId/attachments",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
@@ -74,6 +81,13 @@ router.post(
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(boardController.createBoard)
+)
+
+router.post(
+  "/new-workspace",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.createWorkspace)
 )
 
 router.post(

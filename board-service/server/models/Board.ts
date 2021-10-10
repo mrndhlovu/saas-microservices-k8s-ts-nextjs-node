@@ -41,8 +41,7 @@ const BoardSchema = new Schema<BoardDocument>(
       default: false,
     },
     workspaces: {
-      type: Array,
-      required: true,
+      type: [{ type: Schema.Types.ObjectId, ref: "Workspace" }],
       default: [],
     },
     members: {
@@ -117,7 +116,7 @@ export interface IBoard extends Document {
   activities: string[]
   members: IBoardMember[]
   description: string
-  workspaces: string[]
+  workspaces: Types.ObjectId[]
 }
 
 export interface IBoardMember {

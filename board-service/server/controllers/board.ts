@@ -20,6 +20,7 @@ import Board, { BoardDocument } from "../models/Board"
 import Attachment from "../models/Attachment"
 import { IUploadFile } from "../types"
 import { BoardViewedPublisher } from "../events/publishers/board-viewed"
+import Workspace, { IWorkspaceDocument } from "../models/Workspace"
 
 declare global {
   namespace Express {
@@ -72,6 +73,14 @@ class BoardController {
     const attachments = await Attachment.find({ boardId })
 
     res.send(attachments)
+  }
+
+  getWorkspaces = async (req: Request, res: Response) => {
+    const workspaces = await Workspace.find({
+      owner: req.currentUserJwt.userId!,
+    })
+
+    res.send(workspaces)
   }
 
   getUnsplashImages = async (req: Request, res: Response) => {
@@ -132,10 +141,38 @@ class BoardController {
     res.status(200).send(attachment)
   }
 
+  createWorkspace = async (req: Request, res: Response) => {
+    const userId = req.currentUserJwt.userId!
+
+    let workspace = new Workspace({ ...req.body, owner: userId })
+
+    await workspace.save()
+
+    // await new BoardCreatedPublisher(natsService.client).publish({
+    //   id: updatedBoard._id,
+    //   ownerId: updatedBoard.owner,
+    // })
+
+    // await boardService.logAction(req, {
+    //   type: ACTION_TYPES.BOARD,
+    //   actionKey: ACTION_KEYS.CREATE_BOARD,
+    //   entities: {
+    //     boardId: board._id,
+    //     name: board.title,
+    //   },
+    // })
+
+    res.status(201).send(workspace)
+  }
+
   createBoard = async (req: Request, res: Response) => {
     const userId = req.currentUserJwt.userId!
 
-    let board = new Board({ ...req.body, owner: userId })
+    let board = new Board({
+      ...req.body,
+      owner: userId,
+      workspaces: req.body?.workspaceId ? [req.body?.workspaceId] : [],
+    })
 
     const updatedBoard = await boardService.updateBoardMemberRole(board!, {
       currentPermFlag: permissionManager.permissions.BLOCKED,
@@ -159,6 +196,10 @@ class BoardController {
       entities: {
         boardId: board._id,
         name: board.title,
+        workspace:
+          req.body?.workspaceId !== undefined
+            ? req.body?.workspaceId
+            : "default",
       },
     })
 
