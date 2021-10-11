@@ -20,6 +20,10 @@ const WorkspaceSchema = new Schema<IWorkspaceDocument>(
     description: {
       type: String,
     },
+    iconColor: {
+      type: String,
+      default: "#cd5a91",
+    },
   },
   {
     timestamps: true,
@@ -56,6 +60,7 @@ export interface IList {
   category: string
   description: string
   owner: string
+  iconColor: string
 }
 
 export interface IWorkspaceDocument extends Document, IList {

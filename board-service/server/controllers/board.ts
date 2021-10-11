@@ -22,6 +22,7 @@ import { IUploadFile } from "../types"
 import { BoardViewedPublisher } from "../events/publishers/board-viewed"
 import Workspace from "../models/Workspace"
 import { WorkspaceCreatedPublisher } from "../events/publishers/workspace-created"
+import { generateRandomColor } from "../utils/constants"
 
 declare global {
   namespace Express {
@@ -145,7 +146,11 @@ class BoardController {
   createWorkspace = async (req: Request, res: Response) => {
     const userId = req.currentUserJwt.userId!
 
-    let workspace = new Workspace({ ...req.body, owner: userId })
+    let workspace = new Workspace({
+      ...req.body,
+      owner: userId,
+      iconColor: generateRandomColor(),
+    })
 
     await workspace.save()
 
