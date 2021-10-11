@@ -13,7 +13,7 @@
     "test": "jest --coverage --watchAll --no-cache"
   },
   "dependencies": {
-    "@tusksui/shared": "^0.0.72",
+    "@tusksui/shared": "^0.0.73",
     "@types/cookie-session": "^2.0.43",
     "aws-sdk": "^2.995.0",
     "axios": "^0.21.3",

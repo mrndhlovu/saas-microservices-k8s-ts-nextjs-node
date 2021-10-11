@@ -9,6 +9,7 @@ import {
   AccountUpdatedListener,
   NewActionListener,
   BoardViewedListener,
+  WorkspaceCreatedListener,
 } from "./events/listeners"
 
 class Server {
@@ -57,6 +58,7 @@ class Server {
     new AccountUpdatedListener(natsService.client).listen()
     new BoardViewedListener(natsService.client).listen()
     new NewActionListener(natsService.client).listen()
+    new WorkspaceCreatedListener(natsService.client).listen()
 
     await database.connect()
     app.listen(port, () => {

@@ -20,7 +20,8 @@ import Board, { BoardDocument } from "../models/Board"
 import Attachment from "../models/Attachment"
 import { IUploadFile } from "../types"
 import { BoardViewedPublisher } from "../events/publishers/board-viewed"
-import Workspace, { IWorkspaceDocument } from "../models/Workspace"
+import Workspace from "../models/Workspace"
+import { WorkspaceCreatedPublisher } from "../events/publishers/workspace-created"
 
 declare global {
   namespace Express {
@@ -148,19 +149,10 @@ class BoardController {
 
     await workspace.save()
 
-    // await new BoardCreatedPublisher(natsService.client).publish({
-    //   id: updatedBoard._id,
-    //   ownerId: updatedBoard.owner,
-    // })
-
-    // await boardService.logAction(req, {
-    //   type: ACTION_TYPES.BOARD,
-    //   actionKey: ACTION_KEYS.CREATE_BOARD,
-    //   entities: {
-    //     boardId: board._id,
-    //     name: board.title,
-    //   },
-    // })
+    await new WorkspaceCreatedPublisher(natsService.client).publish({
+      ownerId: userId,
+      id: workspace?._id.toString(),
+    })
 
     res.status(201).send(workspace)
   }

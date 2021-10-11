@@ -33,7 +33,7 @@ export class UserDeletedListener extends Listener<IUserDeletedEvent> {
 
       msg.ack()
     } catch (error) {
-      return error.message
+      return error
     }
   }
 }

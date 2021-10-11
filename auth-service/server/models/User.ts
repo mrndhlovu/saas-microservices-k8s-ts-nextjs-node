@@ -46,6 +46,11 @@ const UserSchema = new Schema<IUserDocument>(
       required: true,
       default: [],
     },
+    workspaces: {
+      type: [String],
+      required: true,
+      default: [],
+    },
     accountId: {
       type: String,
     },
@@ -181,6 +186,7 @@ export interface IUser {
   password: string
   account: IAccountCreatedEvent["data"]
   boardIds: string[]
+  workspaces: string[]
   resetPasswordExpires?: string
   resetPasswordToken?: string
   roles: IUseBoardRoles[]

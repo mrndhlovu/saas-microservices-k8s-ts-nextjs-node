@@ -1,7 +1,10 @@
 import { BadRequestError } from "@tusksui/shared"
 
 import { app } from "./app"
-import { UserDeletedListener } from "./events/listeners"
+import {
+  UserDeletedListener,
+  CustomerCreatedListener,
+} from "./events/listeners"
 import { database } from "./services/db"
 import { natsService } from "./services/nats"
 
@@ -52,6 +55,7 @@ class Server {
     natsService.handleOnclose()
 
     new UserDeletedListener(natsService.client).listen()
+    new CustomerCreatedListener(natsService.client).listen()
   }
 
   async start() {

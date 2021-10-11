@@ -43,6 +43,7 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
       email: user.email,
+      username: user?.username,
     }
 
     const tokens = await authService.getAuthTokens(tokenToSign)
@@ -73,6 +74,7 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
       email: user.email,
+      username: user?.username,
     }
 
     const tokens = await authService.getAuthTokens(tokenToSign)
@@ -175,6 +177,7 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       userId: req.currentUser!._id.toHexString(),
       email: req.currentUser!.email,
+      username: req.currentUser!.username,
       mfa: {
         validated: true,
         enabled: req.currentUser!.multiFactorAuth,
@@ -198,6 +201,8 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       userId: req.currentUser!._id.toHexString(),
       email: req.currentUser!.email,
+      username: req.currentUser!.username,
+
       mfa: {
         validated: true,
         enabled: isConnected,
@@ -232,6 +237,7 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
       email: user.email,
+      username: user?.username,
     }
     user.tokens = await authService.getAuthTokens(tokenToSign, {
       isRefreshingToken: true,

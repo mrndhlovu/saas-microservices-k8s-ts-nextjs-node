@@ -137,6 +137,7 @@ class AuthMiddleWare {
         const tokenToSign: IJwtAuthToken = {
           userId: existingUser._id.toHexString(),
           email: existingUser.email,
+          username: existingUser?.username,
           mfa: {
             enabled: existingUser.multiFactorAuth,
             validated: false,
