@@ -37,6 +37,27 @@ router.get(
   errorService.catchAsyncError(boardController.getWorkspaces)
 )
 
+router.patch(
+  "/:workspaceId/update-workspace",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.updateWorkspace)
+)
+
+router.delete(
+  "/:workspaceId/del-workspace",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.deleteWorkspace)
+)
+
+router.get(
+  "/workspace",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.getWorkspaceById)
+)
+
 router.get(
   "/:boardId/attachments",
   authMiddleware.validateRequiredAccessJwt,

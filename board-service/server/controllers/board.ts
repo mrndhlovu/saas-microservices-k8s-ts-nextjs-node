@@ -85,6 +85,14 @@ class BoardController {
     res.send(workspaces)
   }
 
+  getWorkspaceById = async (req: Request, res: Response) => {
+    const workspace = await Workspace.findOne({
+      _id: req.query.workspaceId!,
+    })
+
+    res.send(workspace)
+  }
+
   getUnsplashImages = async (req: Request, res: Response) => {
     const { pageIndex = "1", query = "nature", perPage = "20" } = req.query
 
@@ -95,6 +103,22 @@ class BoardController {
     )
 
     res.send(images)
+  }
+
+  updateWorkspace = async (req: Request, res: Response) => {
+    const workspaceId = req.params.workspaceId as string
+
+    const updatedWorkspace = await Workspace.findOneAndUpdate(
+      { _id: workspaceId },
+      { $set: req.body },
+      { new: true }
+    )
+
+    if (!updatedWorkspace) throw new BadRequestError("Fail to update workspace")
+
+    await updatedWorkspace.save()
+
+    res.status(200).send(updatedWorkspace)
   }
 
   uploadBgImage = async (req: Request, res: Response) => {
@@ -293,6 +317,17 @@ class BoardController {
         name,
       },
     })
+
+    res.status(HTTPStatusCode.NoContent).send()
+  }
+
+  deleteWorkspace = async (req: Request, res: Response) => {
+    const { workspaceId } = req.params
+
+    const workspace = await Workspace.findById(workspaceId)
+    if (!workspace) throw new NotFoundError("Workspace not found")
+
+    workspace.delete()
 
     res.status(HTTPStatusCode.NoContent).send()
   }

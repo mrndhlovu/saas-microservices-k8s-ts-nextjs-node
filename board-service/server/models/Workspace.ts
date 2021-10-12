@@ -20,6 +20,12 @@ const WorkspaceSchema = new Schema<IWorkspaceDocument>(
     description: {
       type: String,
     },
+    shortname: {
+      type: String,
+    },
+    visibility: {
+      type: String,
+    },
     iconColor: {
       type: String,
       default: "#cd5a91",
@@ -61,6 +67,8 @@ export interface IList {
   description: string
   owner: string
   iconColor: string
+  shortname: string
+  visibility: string
 }
 
 export interface IWorkspaceDocument extends Document, IList {
