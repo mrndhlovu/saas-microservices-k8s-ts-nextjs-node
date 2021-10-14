@@ -47,3 +47,7 @@ export enum TASK_STATUS {
   TODO = "todo",
   DONE = "complete",
 }
+
+export interface TemplateList {
+  name: string
+}

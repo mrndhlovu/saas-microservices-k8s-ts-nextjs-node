@@ -31,6 +31,13 @@ router.get(
 )
 
 router.get(
+  "/templates",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.getBoardTemplates)
+)
+
+router.get(
   "/workspaces",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,

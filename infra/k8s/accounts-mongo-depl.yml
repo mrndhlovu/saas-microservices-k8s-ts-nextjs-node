@@ -12,9 +12,30 @@ spec:
       labels:
         app: accounts-mongo
     spec:
+      volumes:
+        - name: mongo-storage
+          persistentVolumeClaim:
+            claimName: accounts-db-pvc
+
       containers:
         - name: accounts-mongo
           image: mongo
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: accounts-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+
 ---
 apiVersion: v1
 kind: Service

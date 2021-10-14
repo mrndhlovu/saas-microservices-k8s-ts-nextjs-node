@@ -18,11 +18,13 @@ import {
 import { natsService } from "../services/nats"
 import Board, { BoardDocument } from "../models/Board"
 import Attachment from "../models/Attachment"
-import { IUploadFile } from "../types"
+import { IUploadFile, TemplateList } from "../types"
 import { BoardViewedPublisher } from "../events/publishers/board-viewed"
 import Workspace from "../models/Workspace"
 import { WorkspaceCreatedPublisher } from "../events/publishers/workspace-created"
-import { generateRandomColor } from "../utils/constants"
+import { BOARD_TEMPLATES, generateRandomColor } from "../utils/constants"
+import { listService } from "../services"
+import List from "../models/List"
 
 declare global {
   namespace Express {
@@ -68,6 +70,10 @@ class BoardController {
     }
 
     res.send(board)
+  }
+
+  getBoardTemplates = async (req: Request, res: Response) => {
+    res.send(BOARD_TEMPLATES)
   }
 
   getAttachmentsByBoardId = async (req: Request, res: Response) => {
@@ -188,6 +194,7 @@ class BoardController {
 
   createBoard = async (req: Request, res: Response) => {
     const userId = req.currentUserJwt.userId!
+    const boardLists: TemplateList[] = req?.body?.templateLists
 
     let board = new Board({
       ...req.body,
@@ -203,6 +210,32 @@ class BoardController {
     })
 
     if (!updatedBoard) throw new BadRequestError("Fail to create board")
+
+    if (boardLists) {
+      boardLists.map(async item => {
+        let list = new List({
+          title: item.name,
+          boardId: updatedBoard._id.toString(),
+        })
+
+        updatedBoard.lists.push(list._id.toString())
+
+        await list.save()
+
+        await listService.logAction(req, {
+          type: ACTION_TYPES.LIST,
+          actionKey: ACTION_KEYS.CREATE_LIST,
+          entities: {
+            boardId: board?._id,
+            name: board.title,
+          },
+          list: {
+            id: list?._id,
+            name: list.title,
+          },
+        })
+      })
+    }
 
     await updatedBoard.save()
 

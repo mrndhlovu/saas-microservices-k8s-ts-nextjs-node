@@ -15,7 +15,7 @@ spec:
       volumes:
         - name: mongo-storage
           persistentVolumeClaim:
-            claimName: db-pvc
+            claimName: auth-db-pvc
 
       containers:
         - name: auth-mongo
@@ -23,6 +23,18 @@ spec:
           volumeMounts:
             - name: mongo-storage
               mountPath: /data/db
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
 
 ---
 apiVersion: v1
