@@ -56,6 +56,9 @@ const BoardSchema = new Schema<BoardDocument>(
     description: {
       type: String,
     },
+    lastViewed: {
+      type: Date,
+    },
     activeBg: {
       type: String,
       enum: Object.values(activeBoardBg),
@@ -116,6 +119,7 @@ export interface IBoard extends Document {
   activities: string[]
   members: IBoardMember[]
   description: string
+  lastViewed: number
   workspaces: Types.ObjectId[]
 }
 

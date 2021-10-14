@@ -14,8 +14,8 @@ export class BoardViewedListener extends Listener<IBoardViewedEvent> {
 
   async onMessage(data: IBoardViewedEvent["data"], msg: Message) {
     const user = await User.findOneAndUpdate(
-      { _id: data.userId, viewedRecent: { $ne: data.boardId } },
-      { $push: { viewedRecent: { $each: [data.boardId], $position: 0 } } }
+      { _id: data.userId },
+      { $push: { viewedRecent: { $each: [data.boardId] } } }
     )
 
     if (user) {

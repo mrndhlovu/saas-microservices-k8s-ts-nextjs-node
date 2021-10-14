@@ -63,6 +63,10 @@ class BoardController {
     const board = await boardService.getPopulatedBoard(req.params.boardId)
 
     if (board) {
+      board.lastViewed = Date.now()
+
+      await board.save()
+
       await new BoardViewedPublisher(natsService.client).publish({
         boardId: board._id,
         userId: board.owner,
