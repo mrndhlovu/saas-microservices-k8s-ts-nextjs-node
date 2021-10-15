@@ -26,6 +26,8 @@ class Server {
       ACCESS_KEY_ID_AWS,
       SECRET_ACCESS_KEY_AWS,
       S3_BUCKET_AWS,
+      ALGOLIA_APPLICATION_ID,
+      ALGOLIA_ADMIN_API_KEY_ID,
     } = process.env
 
     if (
@@ -43,7 +45,9 @@ class Server {
       !SECRET_ACCESS_KEY_AWS ||
       !ACCESS_KEY_ID_AWS ||
       !REGION_AWS ||
-      !S3_BUCKET_AWS
+      !S3_BUCKET_AWS ||
+      !ALGOLIA_ADMIN_API_KEY_ID ||
+      !ALGOLIA_APPLICATION_ID
     ) {
       throw new BadRequestError("Some Env variables are missing!")
     }

@@ -9,7 +9,7 @@ import {
 } from "@tusksui/shared"
 
 import { allowedListUpdateFields } from "../utils/constants"
-import { boardService } from "../services"
+import { algoliaClient, boardService } from "../services"
 import { listService } from "../services/list"
 import Board from "../models/Board"
 import List, { IListDocument } from "../models/List"
@@ -74,6 +74,17 @@ class ListController {
       },
     })
 
+    algoliaClient.addObjects([
+      {
+        objectID: list?._id.toString(),
+        type: "list",
+        userId: req.currentUserJwt.userId!,
+        list: {
+          title: list.title,
+        },
+      },
+    ])
+
     res.status(201).send(list)
   }
 
@@ -116,6 +127,14 @@ class ListController {
     if (updatedList.archived) {
     }
 
+    algoliaClient.updateObject({
+      objectID: updatedList?._id.toString(),
+
+      list: {
+        title: updatedList.title,
+      },
+    })
+
     res.status(200).send(updatedList)
   }
 
@@ -130,6 +149,7 @@ class ListController {
         throw new BadRequestError("Lists owned by current user where now found")
 
       const listIds = lists.map((list: IListDocument) => list._id)
+      algoliaClient.removeObjects(listIds as string[])
       await List.deleteMany({ _id: listIds })
 
       return res.status(200).send({})
@@ -138,6 +158,8 @@ class ListController {
     if (!list) throw new BadRequestError("List with that id was not found")
 
     await list.delete()
+
+    algoliaClient.removeObjects([req.params.listId])
 
     res.status(200).send({})
   }

@@ -66,6 +66,13 @@ router.get(
 )
 
 router.get(
+  "/search",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.search)
+)
+
+router.get(
   "/:boardId/attachments",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,

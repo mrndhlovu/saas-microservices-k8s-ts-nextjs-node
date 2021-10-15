@@ -23,8 +23,10 @@ import { BoardViewedPublisher } from "../events/publishers/board-viewed"
 import Workspace from "../models/Workspace"
 import { WorkspaceCreatedPublisher } from "../events/publishers/workspace-created"
 import { BOARD_TEMPLATES, generateRandomColor } from "../utils/constants"
-import { listService } from "../services"
+import { algoliaClient, listService } from "../services"
 import List from "../models/List"
+import Card from "../models/Card"
+import Task from "../models/Task"
 
 declare global {
   namespace Express {
@@ -241,6 +243,18 @@ class BoardController {
       })
     }
 
+    algoliaClient.addObjects([
+      {
+        objectID: board?._id,
+        type: "board",
+        userId: req.currentUserJwt.userId!,
+        board: {
+          title: board.title,
+          description: board.description,
+        },
+      },
+    ])
+
     await updatedBoard.save()
 
     await new BoardCreatedPublisher(natsService.client).publish({
@@ -281,6 +295,15 @@ class BoardController {
     if (!updatedBoard) throw new BadRequestError("Fail to update board")
 
     await updatedBoard.save()
+    if (!!board?.title || !!board.description) {
+      algoliaClient.updateObject({
+        objectID: board?._id,
+        board: {
+          title: updatedBoard.title,
+          description: updatedBoard.description,
+        },
+      })
+    }
 
     res.status(200).send(updatedBoard)
   }
@@ -325,6 +348,8 @@ class BoardController {
       },
     })
 
+    algoliaClient.removeObjects([boardId])
+
     res.status(HTTPStatusCode.NoContent).send()
   }
 
@@ -367,6 +392,37 @@ class BoardController {
     workspace.delete()
 
     res.status(HTTPStatusCode.NoContent).send()
+  }
+
+  search = async (req: Request, res: Response) => {
+    const query = req.query.searchQuery as string
+    const regex = new RegExp(query, "i")
+
+    const boards = await Board.find({
+      $and: [{ $or: [{ title: regex }, { description: regex }] }],
+    })
+
+    const workspaces = await Workspace.find({
+      $and: [
+        { $or: [{ name: regex }, { description: regex }, { category: regex }] },
+      ],
+    })
+
+    const cards = await Card.find({
+      $and: [{ $or: [{ title: regex }, { description: regex }] }],
+    })
+
+    const lists = await List.find({
+      title: { $regex: query, $options: "i" },
+    })
+
+    const tasks = await Task.find({
+      item: { $regex: query, $options: "i" },
+    })
+
+    res
+      .status(HTTPStatusCode.OK)
+      .send({ boards, cards, tasks, lists, workspaces })
   }
 }
 

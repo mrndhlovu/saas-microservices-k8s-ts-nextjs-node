@@ -15,6 +15,7 @@
   "dependencies": {
     "@tusksui/shared": "^0.0.73",
     "@types/cookie-session": "^2.0.43",
+    "algoliasearch": "^4.10.5",
     "aws-sdk": "^2.995.0",
     "axios": "^0.21.3",
     "cloudinary": "^1.26.3",

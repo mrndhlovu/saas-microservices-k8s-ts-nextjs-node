@@ -11,7 +11,7 @@ import Attachment from "../models/Attachment"
 import Board from "../models/Board"
 
 import { allowedCardUpdateFields } from "../utils/constants"
-import { boardService } from "../services"
+import { algoliaClient, boardService } from "../services"
 import { cardService } from "../services/card"
 import { IUploadFile, TASK_STATUS } from "../types"
 import Card, { CardDocument } from "../models/Card"
@@ -127,6 +127,18 @@ class CardController {
       },
     })
 
+    algoliaClient.addObjects([
+      {
+        objectID: card?._id.toString(),
+        type: "card",
+        userId: req.currentUserJwt.userId!,
+        card: {
+          title: card.title,
+          description: card?.description,
+        },
+      },
+    ])
+
     res.status(201).send(card)
   }
 
@@ -176,6 +188,18 @@ class CardController {
       },
     })
 
+    algoliaClient.addObjects([
+      {
+        objectID: checklist?._id.toString(),
+        type: "checklist",
+        userId: req.currentUserJwt.userId!,
+        checklist: {
+          title: checklist.title,
+          cardId,
+        },
+      },
+    ])
+
     res.status(201).send(checklist)
   }
 
@@ -204,6 +228,18 @@ class CardController {
 
     await checklist.save()
     await task.save()
+
+    algoliaClient.addObjects([
+      {
+        objectID: checklist?._id.toString(),
+        type: "task",
+        userId: req.currentUserJwt.userId!,
+        task: {
+          title: task.item,
+          checklistId,
+        },
+      },
+    ])
 
     res.status(201).send(task)
   }
@@ -295,6 +331,8 @@ class CardController {
       },
     })
 
+    algoliaClient.removeObjects([cardId])
+
     res.status(HTTPStatusCode.NoContent).send()
   }
 
@@ -314,6 +352,9 @@ class CardController {
 
     await checklist.delete()
     await card.save()
+
+    algoliaClient.removeObjects([checklistId])
+
     res.status(HTTPStatusCode.NoContent).send()
   }
 
@@ -333,6 +374,8 @@ class CardController {
 
     await task.delete()
     await checklist.save()
+    algoliaClient.removeObjects([taskId])
+
     res.status(HTTPStatusCode.NoContent).send()
   }
 
@@ -383,6 +426,20 @@ class CardController {
       },
     })
 
+    algoliaClient.addObjects([
+      {
+        objectID: attachment?._id.toString(),
+        type: "attachment",
+        userId: req.currentUserJwt.userId!,
+        attachment: {
+          boardId: card.boardId.toString(),
+          title: data.original_filename,
+          resourceType: data.resource_type,
+          imageUrl: data?.url,
+        },
+      },
+    ])
+
     res.status(200).send(attachment)
   }
 
@@ -392,6 +449,13 @@ class CardController {
       { $set: { title: req.body.title } },
       { new: true }
     )
+
+    algoliaClient.updateObject({
+      objectID: attachment?._id.toString(),
+      attachment: {
+        title: req.body.title,
+      },
+    })
 
     res.status(200).send(attachment)
   }
@@ -472,6 +536,8 @@ class CardController {
         name,
       },
     })
+
+    algoliaClient.removeObjects([attachmentId])
 
     res.status(HTTPStatusCode.OK).send()
   }
@@ -639,6 +705,13 @@ class CardController {
 
     const cardRecord = await cardService.getPopulatedCard(cardId)
 
+    algoliaClient.updateObject({
+      objectID: cardRecord?._id.toString(),
+      card: {
+        title: updatedCard.title,
+      },
+    })
+
     res.status(200).send(cardRecord)
   }
 
@@ -654,6 +727,13 @@ class CardController {
       { new: true }
     )
     if (!checklist) throw new NotFoundError("Checklist not found")
+
+    algoliaClient.updateObject({
+      objectID: checklist?._id.toString(),
+      checklist: {
+        title: checklist.title,
+      },
+    })
 
     await checklist.save()
 
@@ -687,6 +767,15 @@ class CardController {
 
         await checklist.save()
       }
+    }
+
+    if (req.body.update) {
+      algoliaClient.updateObject({
+        objectID: task?._id.toString(),
+        task: {
+          title: task.item,
+        },
+      })
     }
 
     res.status(200).send({ task, allTasksComplete })

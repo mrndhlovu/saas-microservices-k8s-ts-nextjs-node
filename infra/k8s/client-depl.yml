@@ -34,6 +34,12 @@ spec:
                   name: env-config
                   key: NEXT_PUBLIC_SPOTIFY_ID
 
+            - name: NEXT_PUBLIC_ALGOLIA_SEARCH_ONLY_API_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: ALGOLIA_SEARCH_ONLY_API_KEY_ID
+
             - name: NEXT_PUBLIC_HOST
               valueFrom:
                 secretKeyRef:
