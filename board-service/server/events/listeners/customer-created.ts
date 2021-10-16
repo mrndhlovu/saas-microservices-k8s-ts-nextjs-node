@@ -9,7 +9,7 @@ import {
 
 import Workspace from "../../models/Workspace"
 import { WorkspaceCreatedPublisher } from "../publishers/workspace-created"
-import { natsService } from "../../services"
+import { algoliaClient, natsService } from "../../services"
 
 export class CustomerCreatedListener extends Listener<ICustomerCreated> {
   readonly subject: Subjects.CustomerCreated = Subjects.CustomerCreated
@@ -31,6 +31,19 @@ export class CustomerCreatedListener extends Listener<ICustomerCreated> {
         ownerId: data.userId,
         id: workspace?._id.toString(),
       })
+
+      algoliaClient.addObjects([
+        {
+          objectID: workspace?._id,
+          type: "workspace",
+          userId: data.userId,
+          workspace: {
+            title: workspace.name,
+            description: workspace?.description!,
+            category: workspace?.category,
+          },
+        },
+      ])
 
       msg.ack()
     } catch (error) {

@@ -27,6 +27,7 @@ export interface IAlgoliaAddObject {
     description?: string
     cover?: string
     bgColor?: string
+    boardId?: string
   }
 
   list?: {
@@ -35,6 +36,7 @@ export interface IAlgoliaAddObject {
   workspace?: {
     title: string
     category?: string
+    description?: string
   }
 
   attachment?: {

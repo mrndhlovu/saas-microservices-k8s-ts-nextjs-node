@@ -135,6 +135,7 @@ class CardController {
         card: {
           title: card.title,
           description: card?.description,
+          boardId,
         },
       },
     ])

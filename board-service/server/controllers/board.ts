@@ -130,6 +130,15 @@ class BoardController {
 
     await updatedWorkspace.save()
 
+    algoliaClient.updateObject({
+      objectID: updatedWorkspace?._id,
+
+      workspace: {
+        title: req.body?.name,
+        description: req.body?.description,
+      },
+    })
+
     res.status(200).send(updatedWorkspace)
   }
 
@@ -194,6 +203,19 @@ class BoardController {
       ownerId: userId,
       id: workspace?._id.toString(),
     })
+
+    algoliaClient.addObjects([
+      {
+        objectID: workspace?._id,
+        type: "workspace",
+        userId: req.currentUserJwt.userId!,
+        workspace: {
+          title: workspace.name,
+          description: workspace?.description!,
+          category: workspace?.category,
+        },
+      },
+    ])
 
     res.status(201).send(workspace)
   }
@@ -390,6 +412,8 @@ class BoardController {
     if (!workspace) throw new NotFoundError("Workspace not found")
 
     workspace.delete()
+
+    algoliaClient.removeObjects([workspaceId])
 
     res.status(HTTPStatusCode.NoContent).send()
   }

@@ -40,6 +40,12 @@ spec:
                   name: env-config
                   key: ALGOLIA_SEARCH_ONLY_API_KEY_ID
 
+            - name: NEXT_PUBLIC_ALGOLIA_APPLICATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: env-config
+                  key: ALGOLIA_APPLICATION_ID
+
             - name: NEXT_PUBLIC_HOST
               valueFrom:
                 secretKeyRef:
