@@ -1,4 +1,5 @@
 import { Request, Response } from "express"
+import mongoose from "mongoose"
 
 import {
   BadRequestError,
@@ -79,7 +80,13 @@ class BoardController {
   }
 
   getBoardTemplates = async (req: Request, res: Response) => {
-    res.send(BOARD_TEMPLATES)
+    const result = BOARD_TEMPLATES.map(item => ({
+      ...item,
+      id: new mongoose.mongo.ObjectId(),
+      lists: [{ name: "Todo" }, { name: "Doing" }, { name: "Done" }],
+    }))
+
+    res.send(result)
   }
 
   getAttachmentsByBoardId = async (req: Request, res: Response) => {
