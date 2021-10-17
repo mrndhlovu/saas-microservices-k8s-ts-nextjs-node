@@ -3,10 +3,14 @@ import { BadRequestError } from "@tusksui/shared"
 import app from "./app"
 import { database } from "./services/db"
 import { natsService } from "./services/nats"
-import { UserDeletedListener, UserCreatedListener } from "./events/listeners"
-import { CustomerCreatedListener } from "./events/listeners/customer-created"
-import { PaymentCreatedListener } from "./events/listeners/payment-created"
-import { AuthActionListener } from "./events/listeners/authed-action"
+import {
+  UserDeletedListener,
+  AuthActionListener,
+  UserCreatedListener,
+  PaymentCreatedListener,
+  CustomerCreatedListener,
+  NotificationCreatedListener,
+} from "./events/listeners"
 
 class Server {
   private loadEnvVariables() {
@@ -45,6 +49,7 @@ class Server {
     new CustomerCreatedListener(natsService.client).listen()
     new PaymentCreatedListener(natsService.client).listen()
     new AuthActionListener(natsService.client).listen()
+    new NotificationCreatedListener(natsService.client).listen()
   }
 
   async start() {

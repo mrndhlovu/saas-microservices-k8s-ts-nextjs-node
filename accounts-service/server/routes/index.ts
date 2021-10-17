@@ -22,6 +22,13 @@ router.get(
 )
 
 router.get(
+  "/notifications",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.getNotifications)
+)
+
+router.get(
   "/:boardId/action",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
@@ -51,6 +58,13 @@ router.post(
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   errorService.catchAsyncError(accountController.comment)
+)
+
+router.patch(
+  "/:notificationId/update-notification",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(accountController.updateNotification)
 )
 
 router.post(

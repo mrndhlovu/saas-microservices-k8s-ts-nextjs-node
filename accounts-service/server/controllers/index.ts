@@ -20,6 +20,7 @@ import { spotifyService } from "../services/spotify"
 import Account, { IAccountDocument } from "../models/Account"
 import PowerUp, { IPowerUpDocument } from "../models/Powerup"
 import Action from "../models/Action"
+import Notification from "../models/Notification"
 
 declare global {
   namespace Express {
@@ -36,6 +37,15 @@ class AccountController {
     const accounts = await Account.find({})
 
     res.send(accounts)
+  }
+
+  getNotifications = async (req: Request, res: Response) => {
+    const notifications = await Notification.find({
+      userId: req.currentUserJwt?.userId!,
+      archived: false,
+    })
+
+    res.send(notifications)
   }
 
   async getActionByAttachmentId(req: Request, res: Response) {
@@ -105,6 +115,20 @@ class AccountController {
     await action.save()
 
     res.send(action)
+  }
+
+  updateNotification = async (req: Request, res: Response) => {
+    const notification = await Notification.findByIdAndUpdate(
+      req.params.notificationId,
+      {
+        ...req.body,
+      },
+      { new: true }
+    )
+
+    await notification?.save()
+
+    res.send(notification)
   }
 
   async updateComment(req: Request, res: Response) {

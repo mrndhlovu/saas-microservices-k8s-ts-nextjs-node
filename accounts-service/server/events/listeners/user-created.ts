@@ -7,11 +7,13 @@ import {
   Listener,
   queueGroupNames,
   Subjects,
+  CreateNotificationPublisher,
 } from "@tusksui/shared"
 import { accountService, natsService } from "../../services"
 import { AccountUpdatedPublisher, SendEmailPublisher } from "../publishers"
 import { DEFAULT_EMAIL } from "../../utils/constants"
 import Account from "../../models/Account"
+import Notification from "../../models/Notification"
 
 export class UserCreatedListener extends Listener<IUserCreatedEvent> {
   readonly subject: Subjects.UserCreated = Subjects.UserCreated
@@ -26,7 +28,17 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
       email: data.email,
     })
 
+    const notification = new Notification({
+      isRead: false,
+      body: "New account created successfully",
+      subject: "New account created successfully",
+      title: "New account created successfully",
+      userId: data.id,
+      resourceType: "new:user",
+    })
+
     await account.save()
+    await notification.save()
     const eventData = accountService.getEventData(account)
 
     const BASE_URL = "https://tusks.dev/auth/verify"

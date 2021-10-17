@@ -9,12 +9,12 @@ import {
   AccountStatus,
 } from "@tusksui/shared"
 
-import { IAccountDocument } from "../models/Account"
-import { allowedAccountUpdateFields } from "../utils/constants"
 import { accountService } from "../services/account"
-import { IVerificationJwt } from "../types"
+import { allowedAccountUpdateFields } from "../utils/constants"
+import { IAccountDocument } from "../models/Account"
 import { IPowerUpDocument } from "../models/Powerup"
 import { ISpotifyRequestOptions } from "../services/spotify"
+import { IVerificationJwt } from "../types"
 
 const { catchAsyncError } = errorService
 
