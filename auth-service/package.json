@@ -20,7 +20,7 @@
     ]
   },
   "dependencies": {
-    "@tusksui/shared": "^0.0.73",
+    "@tusksui/shared": "^0.0.80",
     "@types/cookie-session": "^2.0.43",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.5",

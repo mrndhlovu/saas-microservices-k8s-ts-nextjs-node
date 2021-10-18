@@ -33,8 +33,8 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
       body: "New account created successfully",
       subject: "New account created successfully",
       title: "New account created successfully",
-      userId: data.id,
-      resourceType: "new:user",
+      user: { id: data.id, initials: data.initials },
+      actionKey: "new:user",
     })
 
     await account.save()

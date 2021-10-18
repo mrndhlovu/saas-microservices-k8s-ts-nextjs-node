@@ -41,7 +41,7 @@ class AccountController {
 
   getNotifications = async (req: Request, res: Response) => {
     const notifications = await Notification.find({
-      userId: req.currentUserJwt?.userId!,
+      "user.id": req.currentUserJwt?.userId!,
       archived: false,
     })
 

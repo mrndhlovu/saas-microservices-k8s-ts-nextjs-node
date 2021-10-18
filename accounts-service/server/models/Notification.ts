@@ -16,10 +16,14 @@ const NotificationSchema = new Schema<INotificationDocument>(
     body: {
       type: String,
     },
-    userId: {
-      type: String,
+    user: {
+      type: Object,
+      default: {
+        id: "",
+        initials: "",
+      },
     },
-    resourceType: {
+    actionKey: {
       type: String,
     },
     archived: {
@@ -56,6 +60,11 @@ export interface INotification {
   isVerified: boolean
   subject: string
   title: string
+  actionKey: string
+  user: {
+    id: string
+    initials: string
+  }
 }
 
 export interface INotificationDocument extends Document, INotification {

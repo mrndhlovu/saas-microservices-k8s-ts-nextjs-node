@@ -20,7 +20,7 @@
     ]
   },
   "dependencies": {
-    "@tusksui/shared": "^0.0.78",
+    "@tusksui/shared": "^0.0.80",
     "@types/cookie-session": "^2.0.43",
     "@types/spotify-web-api-node": "^5.0.3",
     "axios": "^0.21.4",

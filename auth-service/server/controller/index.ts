@@ -57,6 +57,7 @@ class AuthController {
       firstname: user.firstname!,
       lastname: user.lastname!,
       email: user.email!,
+      initials: user?.initials,
     })
 
     res.status(201).send(user)

@@ -21,9 +21,8 @@ export class NotificationCreatedListener extends Listener<ICreateNotificationEve
         body: data.body,
         isRead: false,
         subject: data.subject,
-        title: data.title,
-        resourceType: data.resourceType,
-        userId: data.userId,
+        actionKey: data.actionKey,
+        user: data.user,
       })
 
       await notification.save()

@@ -8,6 +8,8 @@ import {
   ACTION_KEYS,
 } from "@tusksui/shared"
 import Action from "../../models/Action"
+import { getNotificationContext } from "../../helpers"
+import Notification from "../../models/Notification"
 
 export class AuthActionListener extends Listener<IAuthedActionEvent> {
   readonly subject: Subjects.AuthedAction = Subjects.AuthedAction
@@ -31,6 +33,21 @@ export class AuthActionListener extends Listener<IAuthedActionEvent> {
       translationKey: data.actionKey,
       entities: data.entities,
     })
+
+    const notificationContext = getNotificationContext(data.actionKey)
+
+    if (notificationContext.body) {
+      const notification = new Notification({
+        isRead: false,
+        body: notificationContext.body,
+        subject: notificationContext.subject!,
+        title: notificationContext.title!,
+        user: { id: data.user.id!, initials: data.user.initials! },
+        actionKey: data.actionKey,
+      })
+
+      await notification.save()
+    }
 
     await action.save()
 
