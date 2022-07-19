@@ -44,7 +44,7 @@ export class CookieService {
   }
 
   static async generateRefreshToken(
-    tokenToSign: IJwtAuthToken,
+    jwtAccessToken: IJwtAuthToken,
     expiresIn: string,
     currentRefreshTokenId?: string
   ) {
@@ -65,14 +65,14 @@ export class CookieService {
       }
     }
 
-    if (existingToken && existingToken.used && !existingToken.invalidated) {
-      existingToken.invalidated = true
-      existingToken.save()
-      throw new BadRequestError("Refresh Token has been used.")
-    }
+    // if (existingToken && existingToken.used && !existingToken.invalidated) {
+    //   existingToken.invalidated = true
+    //   existingToken.save()
+    //   throw new BadRequestError("Refresh Token has been used.")
+    // }
 
     const token = jwt.sign(
-      tokenToSign,
+      jwtAccessToken,
       process.env.JWT_REFRESH_TOKEN_SIGNATURE!,
       {
         expiresIn,
@@ -80,7 +80,7 @@ export class CookieService {
     )
 
     const refreshToken = new RefreshToken({
-      userId: tokenToSign.userId,
+      userId: jwtAccessToken.userId,
       token,
     })
 
@@ -109,6 +109,18 @@ export class CookieService {
     const isValid = mfaService.validatedToken(mfaToken)
 
     return { isValid, user }
+  }
+
+  static async invalidateRefreshToken(user: IUserDocument) {
+    const refreshToken = await RefreshToken.findOne({
+      userId: user._id,
+      invalidated: false,
+    })
+
+    if (refreshToken) {
+      refreshToken.invalidated = true
+      refreshToken?.save()
+    }
   }
 
   static getAuthTokens = async (

@@ -1,6 +1,6 @@
 import { Schema, Document, model } from "mongoose"
 
-const RefreshTokenSchema: Schema<IRefreshTokenDocument> = new Schema(
+const RefreshTokenSchema = new Schema<IRefreshTokenDocument>(
   {
     used: {
       type: Boolean,
@@ -10,7 +10,10 @@ const RefreshTokenSchema: Schema<IRefreshTokenDocument> = new Schema(
       type: Boolean,
       default: false,
     },
-
+    useCount: {
+      type: Number,
+      default: 0,
+    },
     token: {
       type: String,
     },
@@ -42,6 +45,7 @@ export interface IRefreshTokenDocument extends Document {
   invalidated?: boolean
   userId: string
   token: string
+  useCount: number
 }
 
 export const RefreshToken = model<IRefreshTokenDocument>(

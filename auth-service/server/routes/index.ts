@@ -64,6 +64,17 @@ router.patch(
   errorService.catchAsyncError(authController.updatePassword)
 )
 
+router.get(
+  "/refresh-token",
+  // middlewareUtils.validateRequiredRefreshJwt,
+  errorService.catchAsyncError(authController.refreshToken)
+)
+
+router.post(
+  "/forgot-password",
+  errorService.catchAsyncError(authController.forgotPassword)
+)
+
 router.delete(
   "/delete",
   middlewareUtils.validateRequiredAccessJwt,
@@ -104,14 +115,8 @@ router.post(
 )
 
 router.post(
-  "/get-verification-link",
+  "/verification-email",
   errorService.catchAsyncError(authController.getVerificationEmail)
-)
-
-router.get(
-  "/refresh-token",
-  middlewareUtils.validateRequiredRefreshJwt,
-  errorService.catchAsyncError(authController.getRefreshToken)
 )
 
 export default router

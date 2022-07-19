@@ -28,15 +28,6 @@ class Database {
         ...this.mongooseOptions,
         dbName: "boards",
       })
-      .then(() => {
-        const dbStatus = [
-          {
-            "Database Status [BS]": "Online",
-            "Database Name": "Mongo",
-          },
-        ]
-        console.table(dbStatus)
-      })
       .catch((err: Error) => {
         this.retryAttempts++
         if (this.retryAttempts > 5) {

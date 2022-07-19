@@ -19,7 +19,6 @@ class Database {
       },
     ]
     console.table(dbStatus)
-    console.log(error.message)
   }
 
   connect = async () => {
@@ -27,15 +26,6 @@ class Database {
       .connect(process.env.MONGO_URI!, {
         ...this.mongooseOptions,
         dbName: "auth",
-      })
-      .then(() => {
-        const dbStatus = [
-          {
-            "Database Status [AS]": "Online",
-            "Database Name": "Mongo",
-          },
-        ]
-        console.table(dbStatus)
       })
       .catch((err: Error) => {
         this.retryAttempts++

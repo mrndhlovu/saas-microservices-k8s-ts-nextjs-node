@@ -1,10 +1,10 @@
 import { Request, Response } from "express"
-
 import {
   ACCOUNT_TYPE,
   BadRequestError,
   IJwtAccessTokens,
   IJwtAuthToken,
+  NotAuthorisedError,
   permissionManager,
 } from "@tusksui/shared"
 import { AuthService } from "../services/auth"
@@ -102,6 +102,7 @@ class AuthController {
 
   logoutUser = async (req: Request, res: Response) => {
     await req.currentUser!.save()
+    CookieService.invalidateRefreshToken(req.currentUser!)
 
     req.session = null
     res.send({})
@@ -123,6 +124,7 @@ class AuthController {
     user.password = req.body.password
     user.save()
     req.session = null
+    CookieService.invalidateRefreshToken(user)
     res.send(user)
   }
 
@@ -148,6 +150,7 @@ class AuthController {
 
     if (updateFields.includes("username")) {
       req.session = null
+      CookieService.invalidateRefreshToken(updatedRecord)
     }
 
     res.send(updatedRecord)
@@ -171,8 +174,19 @@ class AuthController {
     })
 
     req.session = null
-
+    CookieService.invalidateRefreshToken(user)
     res.status(200).send({})
+  }
+
+  forgotPassword = async (req: Request, res: Response) => {
+    const user = await AuthService.findUserOnlyByEmail(req.body.email)
+    if (!user) throw new BadRequestError("User not found.")
+
+    const response = {
+      message: "Please check you email for your reset password link.",
+    }
+
+    res.status(200).send(response)
   }
 
   enableMfa = async (req: Request, res: Response) => {
@@ -226,18 +240,38 @@ class AuthController {
     res.status(200).send(req.currentUser)
   }
 
-  getRefreshToken = async (req: Request, res: Response) => {
+  refreshToken = async (req: Request, res: Response) => {
+    const REFRESH_TOKEN_MAX_REUSE = 5
     const user = await CookieService.findUserByRefreshJwt(
-      req.session!.jwt.refresh!
+      req.session!.jwt?.refresh!
     )
 
-    if (!user) {
+    var refreshToken = await CookieService.findRefreshTokenOnlyById(
+      req.session!.jwt?.refresh!
+    )
+
+    if (!user || refreshToken?.invalidated || !refreshToken) {
       req.session = null
-      throw new BadRequestError("Authentication credentials may have expired.")
+      throw new NotAuthorisedError(
+        "Authentication credentials may have expired."
+      )
     }
 
+    if (refreshToken.useCount > REFRESH_TOKEN_MAX_REUSE) {
+      CookieService.invalidateRefreshToken(user)
+
+      throw new NotAuthorisedError(
+        "Authentication credentials may have expired."
+      )
+    }
+    refreshToken.useCount = refreshToken.useCount + 1
+    refreshToken.save()
+
     if (!user?.account.isVerified) {
-      throw new BadRequestError(`Please verify account sent to: ${user.email}`)
+      CookieService.invalidateRefreshToken(user)
+      throw new NotAuthorisedError(
+        `Please verify account via link sent to: ${user.email}`
+      )
     }
 
     const tokenToSign: IJwtAuthToken = {
@@ -245,17 +279,17 @@ class AuthController {
       email: user.email,
       username: user?.username,
     }
-    user.tokens = await CookieService.getAuthTokens(tokenToSign, {
-      isRefreshingToken: true,
-      refreshTokenId: req.session?.jwt.refresh,
-      accessToken: req.session?.jwt.access,
-    })
+    const expiresIn = "2d"
+    user.tokens = {
+      access: CookieService.generateAccessToken(tokenToSign, expiresIn),
+      refresh: req.session?.jwt?.refresh,
+    }
 
     CookieService.generateCookies(req, user.tokens)
 
     await user.save()
 
-    res.status(200).send(user)
+    res.status(200).send({ user })
   }
 }
 
