@@ -14,7 +14,7 @@ class Server {
       NATS_CLIENT_ID,
       NATS_CLUSTER_ID,
       NATS_URL,
-      PAYMENTS_MONGO_URI,
+      MONGO_URI,
       PORT,
       STRIPE_SECRET_KEY,
     } = process.env
@@ -23,7 +23,7 @@ class Server {
       !NATS_CLIENT_ID ||
       !NATS_CLUSTER_ID ||
       !NATS_URL ||
-      !PAYMENTS_MONGO_URI ||
+      !MONGO_URI ||
       !PORT ||
       !STRIPE_SECRET_KEY
     ) {

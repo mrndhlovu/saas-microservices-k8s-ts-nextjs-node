@@ -15,6 +15,10 @@ spec:
       containers:
         - name: payments
           image: ndhlovu/payments
+          # resources:
+          # limits:
+          #   memory: 512Mi
+          #   cpu: "0.2"
           env:
             - name: JWT_TOKEN_SIGNATURE
               valueFrom:
@@ -28,11 +32,11 @@ spec:
                   name: env-config
                   key: JWT_REFRESH_TOKEN_SIGNATURE
 
-            - name: PAYMENTS_MONGO_URI
+            - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: env-config
-                  key: PAYMENTS_MONGO_URI
+                  key: MONGO_URI
 
             - name: STRIPE_SECRET_KEY
               valueFrom:
@@ -55,7 +59,7 @@ spec:
               value: tuskui
 
             - name: NATS_URL
-              value: "http:/nats-srv:4222/"
+              value: 'http:/nats-srv:4222/'
 ---
 apiVersion: v1
 kind: Service

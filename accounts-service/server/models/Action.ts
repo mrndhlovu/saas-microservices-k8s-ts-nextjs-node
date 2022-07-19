@@ -32,8 +32,6 @@ const ActionSchema = new Schema(
   }
 )
 
-ActionSchema.plugin(mongoosePaginate)
-
 ActionSchema.methods.toJSON = function () {
   const action = this.toObject({
     transform: function (_doc, ret, _options) {
@@ -70,11 +68,13 @@ export interface IActionDocument extends Document {
   }
 }
 
-interface ActionModel<T extends Document> extends PaginateModel<T> {}
+ActionSchema.plugin(mongoosePaginate)
 
-export const Action: ActionModel<IActionDocument> = model<IActionDocument>(
+interface IPaginatedAction<T extends Document> extends PaginateModel<T> {}
+
+export const Action: IPaginatedAction<IActionDocument> = model<IActionDocument>(
   "Action",
   ActionSchema
-)
+) as IPaginatedAction<IActionDocument>
 
 export default Action

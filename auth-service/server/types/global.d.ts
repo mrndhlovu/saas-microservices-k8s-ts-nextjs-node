@@ -5,7 +5,7 @@ declare global {
       PORT: string
       JWT_TOKEN_SIGNATURE: string
       JWT_REFRESH_TOKEN_SIGNATURE: string
-      AUTH_MONGO_URI: string
+      MONGO_URI: string
     }
   }
 }

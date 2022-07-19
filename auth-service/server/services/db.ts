@@ -24,7 +24,10 @@ class Database {
 
   connect = async () => {
     await mongoose
-      .connect(process.env.AUTH_MONGO_URI!, this.mongooseOptions)
+      .connect(process.env.MONGO_URI!, {
+        ...this.mongooseOptions,
+        dbName: "auth",
+      })
       .then(() => {
         const dbStatus = [
           {

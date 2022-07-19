@@ -81,13 +81,11 @@ class AccountController {
       query?: string
     }
 
-    const actions = await Action.paginate(
-      {
-        "memberCreator.id": req.currentUserJwt.userId,
-        "entities.boardId": req.params?.boardId,
-      },
-      options
-    )
+    const actions = await new Action({
+      "memberCreator.id": req.currentUserJwt.userId,
+      "entities.boardId": req.params?.boardId,
+      paginate: options,
+    })
 
     res.send(actions)
   }

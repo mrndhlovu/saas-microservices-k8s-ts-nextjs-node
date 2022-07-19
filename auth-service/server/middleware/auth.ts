@@ -1,18 +1,17 @@
 import { Response, NextFunction, Request } from "express"
 import { body, oneOf, check } from "express-validator"
-
 import {
   BadRequestError,
   errorService,
   IJwtAccessTokens,
   IJwtAuthToken,
+  NotAuthorisedError,
 } from "@tusksui/shared"
-
-import { authService } from "../services/auth"
+import { AuthService } from "../services/auth"
 import { IUserDocument } from "../models/User"
-import { mfaService } from "../services"
-import { natsService } from "../services/nats"
-import { SendEmailPublisher } from "../events/publishers/send-email"
+import { allowedOrigins } from "../utils/constants"
+import { CookieService, PasswordManager } from "../services"
+import isEmail from "validator/lib/isEmail"
 
 declare global {
   namespace Express {
@@ -28,8 +27,8 @@ declare global {
   }
 }
 
-class AuthMiddleWare {
-  checkRequiredSignUpFields = [
+export class AuthMiddleWare {
+  static checkRequiredSignUpFields = [
     body("email").isEmail().withMessage("Email provided is not valid."),
     body("username")
       .trim()
@@ -41,7 +40,7 @@ class AuthMiddleWare {
       .withMessage("Password must have more that 8 characters"),
   ]
 
-  checkRequiredLoginFields = [
+  static checkRequiredLoginFields = [
     oneOf(
       [
         check("identifier").isEmail(),
@@ -63,12 +62,12 @@ class AuthMiddleWare {
       ),
   ]
 
-  checkDuplicateEmail = async (
+  static checkDuplicateEmail = async (
     req: Request,
     _res: Response,
     next: NextFunction
   ) => {
-    const existingUser = await authService.findUserOnlyByEmail(req.body.email)
+    const existingUser = await AuthService.findUserOnlyByEmail(req.body.email)
 
     if (existingUser) {
       throw new BadRequestError(
@@ -79,9 +78,9 @@ class AuthMiddleWare {
     next()
   }
 
-  findCurrentUser = errorService.catchAsyncError(
+  static findCurrentUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const currentUser = await authService.findUserByJwt(req.currentUserJwt)
+      const currentUser = await CookieService.findUserByJwt(req.currentUserJwt)
 
       if (!currentUser) {
         throw new BadRequestError(`Authentication failed`)
@@ -89,7 +88,7 @@ class AuthMiddleWare {
 
       if (!currentUser.account.isVerified) {
         throw new BadRequestError(
-          `Please verify account sent to: ${currentUser.email}`
+          `Please verify account via an email sent to: ${currentUser.email}`
         )
       }
 
@@ -99,9 +98,9 @@ class AuthMiddleWare {
     }
   )
 
-  findPendingMfaUser = errorService.catchAsyncError(
+  static findPendingMfaUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const { isValid, user } = await authService.verifyMfaToken(
+      const { isValid, user } = await CookieService.verifyMfaToken(
         req.body?.code,
         req.currentUserJwt
       )
@@ -122,52 +121,76 @@ class AuthMiddleWare {
     }
   )
 
-  checkMultiFactorAuth = errorService.catchAsyncError(
+  static async check2FactorAuth(
+    req: Request,
+    res: Response,
+    existingUser: IUserDocument
+  ) {
+    const tokenToSign: IJwtAuthToken = {
+      userId: existingUser._id.toHexString(),
+      email: existingUser.email,
+      username: existingUser?.username,
+      mfa: {
+        enabled: existingUser.multiFactorAuth,
+        validated: false,
+      },
+    }
+
+    existingUser.tokens = {
+      ...(await CookieService.getAuthTokens(tokenToSign, {
+        accessExpiresAt: "3m",
+        refreshExpiresAt: "3m",
+      })),
+    }
+
+    CookieService.generateCookies(req, existingUser.tokens)
+
+    await existingUser.save()
+    return res.send({ multiFactorAuth: true })
+  }
+
+  static validateUser = errorService.catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
-      const existingUser = await authService.findUserByCredentials(
-        req.body.identifier,
-        req.body.password
-      )
+      const { identifier, password } = req.body
+      const existingUser = isEmail(identifier)
+        ? await AuthService.findUserOnlyByEmail(identifier)
+        : await AuthService.findUserOnlyByUsername(identifier)
 
       if (!existingUser) {
-        throw new BadRequestError(`Authentication failed`)
+        throw new BadRequestError("User not found.")
       }
 
       if (existingUser.multiFactorAuth) {
-        const tokenToSign: IJwtAuthToken = {
-          userId: existingUser._id.toHexString(),
-          email: existingUser.email,
-          username: existingUser?.username,
-          mfa: {
-            enabled: existingUser.multiFactorAuth,
-            validated: false,
-          },
-        }
-
-        existingUser.tokens = {
-          ...(await authService.getAuthTokens(tokenToSign, {
-            accessExpiresAt: "3m",
-            refreshExpiresAt: "3m",
-          })),
-        }
-
-        authService.generateAuthCookies(req, existingUser.tokens)
-
-        await existingUser.save()
-
-        // new SendEmailPublisher(natsService.client).publish({
-        //   html: `Your six digit verification code is:<div>Code: <h3>${authToken}</h3></div>`,
-        //   email: updatedUser.email,
-        //   subject: "Six digit verification code.",
-        //   from: "kandhlovuie@gmail.com",
-        // })
-
-        return res.send({ multiFactorAuth: true })
+        AuthMiddleWare.check2FactorAuth(req, res, existingUser)
       }
 
+      const passwordsMatch = await PasswordManager.compare(
+        existingUser.password,
+        req.body.password
+      )
+
+      if (!passwordsMatch) {
+        throw new NotAuthorisedError("Invalid credentials")
+      }
+
+      // new SendEmailPublisher(natsService.client).publish({
+      //   html: `Your six digit verification code is:<div>Code: <h3>${authToken}</h3></div>`,
+      //   email: updatedUser.email,
+      //   subject: "Six digit verification code.",
+      //   from: "kandhlovuie@gmail.com",
+      // })
+
+      req.currentUser = existingUser
       next()
     }
   )
-}
 
-export const authMiddleware = new AuthMiddleWare()
+  static credentials(req: Request, res: Response, next: NextFunction) {
+    const origin = req.headers.origin
+
+    if (allowedOrigins.includes(origin!)) {
+      res.setHeader("Access-Control-Allow-Origin", origin!)
+    }
+    next()
+  }
+}

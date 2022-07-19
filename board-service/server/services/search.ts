@@ -74,17 +74,16 @@ class SearchService {
   }
 
   addObjects(objects: IAlgoliaAddObject[]) {
-    return this.index
-      .saveObjects(objects)
-      .then(({ objectIDs }) => objectIDs)
-      .catch(err => {
-        throw new BadRequestError(err)
-      })
+    return
+    // return this.index
+    //   .saveObjects(objects)
+    //   .then(({ objectIDs }) => objectIDs)
+    //   .catch(err => {
+    //     throw new BadRequestError(err)
+    //   })
   }
 
   updateObject(object: IAlgoliaUpdateObject) {
-    console.log(object)
-
     return this.index
       .partialUpdateObject(object)
       .then(({ objectID }) => objectID)

@@ -2,10 +2,13 @@ import "express-async-errors"
 import cookieParser from "cookie-parser"
 import cookieSession from "cookie-session"
 import express from "express"
+import cors from "cors"
 
 import { errorService } from "@tusksui/shared"
 
 import authRoutes from "./routes"
+import { AuthMiddleWare } from "./middleware/auth"
+import { AuthService } from "./services/auth"
 
 const BASE_URL = "/api/auth"
 
@@ -14,7 +17,8 @@ const inTestMode = process.env.NODE_ENV === "test"
 const app = express()
 
 app.set("trust proxy", true)
-
+app.use(AuthMiddleWare.credentials)
+app.use(cors(AuthService.getCorsOptions()))
 app.use(cookieParser())
 app.use(express.json())
 app.use(cookieSession({ signed: false, secure: !inTestMode }))

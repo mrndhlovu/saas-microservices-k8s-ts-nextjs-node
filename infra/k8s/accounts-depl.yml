@@ -15,6 +15,10 @@ spec:
       containers:
         - name: accounts
           image: ndhlovu/accounts
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: '500m'
           env:
             - name: JWT_TOKEN_SIGNATURE
               valueFrom:
@@ -28,11 +32,11 @@ spec:
                   name: env-config
                   key: JWT_REFRESH_TOKEN_SIGNATURE
 
-            - name: ACCOUNTS_MONGO_URI
+            - name: MONGO_URI
               valueFrom:
                 secretKeyRef:
                   name: env-config
-                  key: ACCOUNTS_MONGO_URI
+                  key: MONGO_URI
 
             - name: PORT
               valueFrom:
@@ -67,7 +71,7 @@ spec:
               value: tuskui
 
             - name: NATS_URL
-              value: "http:/nats-srv:4222/"
+              value: 'http:/nats-srv:4222/'
 ---
 apiVersion: v1
 kind: Service

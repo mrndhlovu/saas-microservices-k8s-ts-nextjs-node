@@ -25,8 +25,8 @@ export class NewActionListener extends Listener<INewActionEvent> {
           id: user._id,
           initials: user.initials!,
           username: user?.username,
-          fullName: user?.firstname
-            ? `${user?.firstname} ${user?.lastname}`
+          fullName: user?.firstName
+            ? `${user?.firstName} ${user?.lastName}`
             : ``,
         },
       })

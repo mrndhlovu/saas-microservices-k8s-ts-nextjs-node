@@ -14,7 +14,7 @@ class Server {
       PORT,
       JWT_TOKEN_SIGNATURE,
       JWT_REFRESH_TOKEN_SIGNATURE,
-      BOARDS_MONGO_URI,
+      MONGO_URI,
       NATS_URL,
       NATS_CLIENT_ID,
       NATS_CLUSTER_ID,
@@ -34,7 +34,7 @@ class Server {
       !PORT ||
       !JWT_TOKEN_SIGNATURE ||
       !JWT_REFRESH_TOKEN_SIGNATURE ||
-      !BOARDS_MONGO_URI ||
+      !MONGO_URI ||
       !NATS_CLUSTER_ID ||
       !NATS_CLIENT_ID ||
       !NATS_URL ||

@@ -24,7 +24,10 @@ class Database {
 
   connect = async () => {
     await mongoose
-      .connect(process.env.EMAIL_MONGO_URI!, this.mongooseOptions)
+      .connect(process.env.MONGO_URI!, {
+        ...this.mongooseOptions,
+        dbName: "emails",
+      })
       .then(() => {
         const dbStatus = [
           {

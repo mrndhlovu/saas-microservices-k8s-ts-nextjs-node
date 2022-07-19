@@ -1,8 +1,7 @@
 import isEmail from "validator/lib/isEmail"
 import { Schema, Document, model, Types } from "mongoose"
-
-import { authService } from "../services/auth"
 import { IAccountCreatedEvent, IJwtAccessTokens } from "@tusksui/shared"
+import { PasswordManager } from "../services/password"
 
 const UserSchema = new Schema<IUserDocument>(
   {
@@ -13,12 +12,12 @@ const UserSchema = new Schema<IUserDocument>(
       minlength: 4,
       unique: true,
     },
-    firstname: {
+    firstName: {
       type: String,
       trim: true,
       minlength: 4,
     },
-    lastname: {
+    lastName: {
       type: String,
       trim: true,
       minlength: 4,
@@ -140,30 +139,29 @@ UserSchema.methods.toJSON = function () {
   return userObject
 }
 
-UserSchema.virtual("fullName").get(function (this: IUserDocument) {
-  if (!this.firstname) return ""
-  return `${this.firstname} ${this.lastname || ""}`
-})
+UserSchema.pre("validate", async function (next) {
+  if (this.isModified("password")) {
+    const hash = await PasswordManager.encrypt(this.get("password"))
+    this.set("password", hash)
+  }
 
-UserSchema.pre("save", function (next) {
-  const saltRounds = 12
+  if (this.isNew) {
+    if (this.firstName && this.lastName) {
+      const fNameInitial = this.firstName?.substring(0, 1)
+      const lNameInitial = this.lastName?.substring(0, 1)
 
-  if (!this.isModified("password")) return next()
-
-  authService.encryptUserPassword(this, this.password, saltRounds, next)
-})
-
-UserSchema.pre("save", function (next) {
-  if (this.firstname && this.lastname) {
-    const fNameInitial = this.firstname?.substring(0, 1)
-    const lNameInitial = this.lastname?.substring(0, 1)
-
-    this.initials = `${fNameInitial}${lNameInitial}`.toUpperCase()
-  } else {
-    this.initials = this.username?.substring(0, 2).toUpperCase()
+      this.initials = `${fNameInitial}${lNameInitial}`.toUpperCase()
+    } else {
+      this.initials = this.username?.substring(0, 2).toUpperCase()
+    }
   }
 
   next()
+})
+
+UserSchema.virtual("fullName").get(function (this: IUserDocument) {
+  if (!this.firstName) return ""
+  return `${this.firstName} ${this.lastName || ""}`
 })
 
 interface IUseBoardRoles {
@@ -179,9 +177,9 @@ export interface IUser {
   avatar?: string
   bio?: string
   email: string
-  firstname?: string
+  firstName?: string
   initials?: string
-  lastname?: string
+  lastName?: string
   loginTypes: string[]
   password: string
   account: IAccountCreatedEvent["data"]

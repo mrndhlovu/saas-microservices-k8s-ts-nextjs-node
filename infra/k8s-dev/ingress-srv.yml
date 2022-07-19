@@ -1,52 +1,75 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-service
+  name: ingress-srv
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/use-regex: "true"
 
 spec:
   rules:
     - host: tusks.dev
       http:
         paths:
-          - path: /api/auth/?(.*)
+          - path: /api/auth
+            pathType: Prefix
             backend:
-              serviceName: auth-srv
-              servicePort: 3000
+              service:
+                name: auth-srv
+                port:
+                  number: 3000
 
-          - path: /api/boards/?(.*)
+          - path: /api/boards
+            pathType: Prefix
             backend:
-              serviceName: board-srv
-              servicePort: 3000
+              service:
+                name: board-srv
+                port:
+                  number: 3000
 
-          - path: /api/lists/?(.*)
+          - path: /api/lists
+            pathType: Prefix
             backend:
-              serviceName: board-srv
-              servicePort: 3000
+              service:
+                name: board-srv
+                port:
+                  number: 3000
 
-          - path: /api/cards/?(.*)
+          - path: /api/cards
+            pathType: Prefix
             backend:
-              serviceName: board-srv
-              servicePort: 3000
+              service:
+                name: board-srv
+                port:
+                  number: 3000
 
-          - path: /api/accounts/?(.*)
+          - path: /api/payments
+            pathType: Prefix
             backend:
-              serviceName: accounts-srv
-              servicePort: 3000
+              service:
+                name: payments-srv
+                port:
+                  number: 3000
 
-          - path: /api/payments/?(.*)
+          - path: /api/accounts
+            pathType: Prefix
             backend:
-              serviceName: payments-srv
-              servicePort: 3000
+              service:
+                name: accounts-srv
+                port:
+                  number: 3000
 
-          - path: /api/email/?(.*)
+          - path: /api/email
+            pathType: Prefix
             backend:
-              serviceName: email-srv
-              servicePort: 3000
+              service:
+                name: email-srv
+                port:
+                  number: 3000
 
-          - path: /?(.*)
-            backend:
-              serviceName: client-srv
-              servicePort: 3000
+          # - path: /
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: client-srv
+          #       port:
+          #         number: 3000

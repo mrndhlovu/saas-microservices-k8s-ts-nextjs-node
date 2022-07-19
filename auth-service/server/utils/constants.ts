@@ -1,8 +1,7 @@
 export const editableUserFields = [
-  "firstname",
-  "lastname",
+  "firstName",
+  "lastName",
   "email",
-  "password",
   "starred",
   "username",
   "avatar",
@@ -10,6 +9,12 @@ export const editableUserFields = [
   "viewedRecent",
   "notifications",
   "multiFactorAuth",
+]
+
+export const allowedOrigins = [
+  "https://tusks.dev",
+  "http://localhost:5000",
+  "http://127.0.0.1:5555",
 ]
 
 export const BOARDS_QUEUE_GROUP_NAME = "boards-service"

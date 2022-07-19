@@ -74,11 +74,11 @@ This installation process assumes that you are running the project locally on yo
 
     Add a .env file to the root of the project and add the following required environment variables.
 
-    AUTH_MONGO_URI=mongodb://auth-mongo-srv:27017/<DB_NAME>
-    BOARDS_MONGO_URI=mongodb://boards-mongo-srv:27017/<DB_NAME>
-    ACCOUNTS_MONGO_URI=mongodb://accounts-mongo-srv:27017/<DB_NAME>
-    PAYMENTS_MONGO_URI=mongodb://payments-mongo-srv:27017/<DB_NAME>
-    EMAIL_MONGO_URI=mongodb://email-mongo-srv:27017/<DB_NAME>
+    MONGO_URI=mongodb://auth-mongo-srv:27017/<DB_NAME>
+    MONGO_URI=mongodb://boards-mongo-srv:27017/<DB_NAME>
+    MONGO_URI=mongodb://accounts-mongo-srv:27017/<DB_NAME>
+    MONGO_URI=mongodb://payments-mongo-srv:27017/<DB_NAME>
+    MONGO_URI=mongodb://email-mongo-srv:27017/<DB_NAME>
 
     JWT_TOKEN_SIGNATURE=<YOUR_JWT_TOKEN_SIGNATURE>
     JWT_REFRESH_TOKEN_SIGNATURE=<YOUR_REFRESH_JWT_TOKEN_SIGNATURE>

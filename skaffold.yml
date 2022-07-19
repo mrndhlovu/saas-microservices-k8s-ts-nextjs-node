@@ -15,17 +15,17 @@ build:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "server/**/*.ts"
+          - src: 'server/**/*.ts'
             dest: .
 
-    - image: ndhlovu/client
-      context: client
-      docker:
-        dockerfile: Dockerfile
-      sync:
-        infer:
-          - "**/*.tsx"
-          - "**/*.ts"
+    # - image: ndhlovu/client
+    #   context: client
+    #   docker:
+    #     dockerfile: Dockerfile
+    #   sync:
+    #     infer:
+    #       - '**/*.tsx'
+    #       - '**/*.ts'
 
     - image: ndhlovu/boards
       context: board-service
@@ -33,7 +33,7 @@ build:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "server/**/*.ts"
+          - src: 'server/**/*.ts'
             dest: .
 
     - image: ndhlovu/accounts
@@ -42,7 +42,7 @@ build:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "server/**/*.ts"
+          - src: 'server/**/*.ts'
             dest: .
 
     - image: ndhlovu/payments
@@ -51,7 +51,7 @@ build:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "server/**/*.ts"
+          - src: 'server/**/*.ts'
             dest: .
 
     - image: ndhlovu/email
@@ -60,5 +60,5 @@ build:
         dockerfile: Dockerfile
       sync:
         manual:
-          - src: "server/**/*.ts"
+          - src: 'server/**/*.ts'
             dest: .

@@ -7,8 +7,7 @@ import {
   IJwtAuthToken,
   permissionManager,
 } from "@tusksui/shared"
-
-import { authService } from "../services/auth"
+import { AuthService } from "../services/auth"
 import { editableUserFields } from "../utils/constants"
 import { natsService } from "../services/nats"
 import { IUserDocument, User } from "../models/User"
@@ -16,7 +15,7 @@ import {
   UserDeletedPublisher,
   UserCreatedPublisher,
 } from "../events/publishers"
-import { mfaService } from "../services"
+import { mfaService, CookieService } from "../services"
 
 declare global {
   namespace Express {
@@ -31,6 +30,7 @@ declare global {
     }
   }
 }
+
 class AuthController {
   signUpUser = async (req: Request, res: Response) => {
     let user = new User({ ...req.body })
@@ -46,16 +46,16 @@ class AuthController {
       username: user?.username,
     }
 
-    const tokens = await authService.getAuthTokens(tokenToSign)
-    authService.generateAuthCookies(req, tokens)
+    const tokens = await CookieService.getAuthTokens(tokenToSign)
+    CookieService.generateCookies(req, tokens)
 
     await user.save()
 
     new UserCreatedPublisher(natsService.client).publish({
       id: user._id.toHexString(),
       username: user.username!,
-      firstname: user.firstname!,
-      lastname: user.lastname!,
+      firstName: user.firstName!,
+      lastName: user.lastName!,
       email: user.email!,
       initials: user?.initials,
     })
@@ -68,9 +68,7 @@ class AuthController {
   }
 
   loginUser = async (req: Request, res: Response) => {
-    const { identifier, password } = req.body
-
-    const user = await authService.findUserByCredentials(identifier, password)
+    const user = req.currentUser!
 
     const tokenToSign: IJwtAuthToken = {
       userId: user._id.toHexString(),
@@ -78,9 +76,8 @@ class AuthController {
       username: user?.username,
     }
 
-    const tokens = await authService.getAuthTokens(tokenToSign)
-
-    authService.generateAuthCookies(req, tokens)
+    const tokens = await CookieService.getAuthTokens(tokenToSign)
+    CookieService.generateCookies(req, tokens)
 
     await user.save()
 
@@ -90,7 +87,7 @@ class AuthController {
   verifyCredentials = async (req: Request, res: Response) => {
     const { identifier, password } = req.body
 
-    const user = await authService.findUserByCredentials(identifier, password)
+    const user = await AuthService.findUserByCredentials(identifier, password)
 
     if (!user) throw new BadRequestError("User not found.")
 
@@ -111,20 +108,28 @@ class AuthController {
   }
 
   getVerificationEmail = async (req: Request, res: Response) => {
-    const user = await authService.findUserOnlyByEmail(req.body.email)
-
-    if (!user)
-      throw new BadRequestError(
-        `Account link to email ${req.body.email} not found.`
-      )
-
+    const user = await AuthService.findUserOnlyByEmail(req.body.email)
+    if (!user) throw new BadRequestError("Invalid credentials")
     res.send({ message: "Please check you email for your verification link" })
+  }
+
+  updatePassword = async (req: Request, res: Response) => {
+    if (!req.body.password)
+      throw new BadRequestError("password field is required")
+
+    const user = await User.findById(req?.currentUser?._id)
+    if (!user) throw new BadRequestError("Bad credentials")
+
+    user.password = req.body.password
+    user.save()
+    req.session = null
+    res.send(user)
   }
 
   updateUser = async (req: Request, res: Response) => {
     const updateFields = Object.keys(req.body)
 
-    const hasValidFields = authService.validatedUpdateFields(
+    const hasValidFields = AuthService.validatedUpdateFields(
       updateFields,
       editableUserFields
     )
@@ -132,7 +137,7 @@ class AuthController {
     if (!hasValidFields) throw new BadRequestError("Field is not editable.")
 
     const updatedRecord = await User.findOneAndUpdate(
-      { _id: req.currentUser!._id },
+      { _id: req?.currentUser?._id },
       { $set: { ...req.body } },
       { new: true }
     )
@@ -149,7 +154,7 @@ class AuthController {
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    const user = await authService.findUserByJwt(req.currentUserJwt)
+    const user = await CookieService.findUserByJwt(req.currentUserJwt)
 
     if (!user) throw new BadRequestError("User not found.")
 
@@ -185,9 +190,9 @@ class AuthController {
       },
     }
 
-    const tokens = await authService.getAuthTokens(tokenToSign)
+    const tokens = await CookieService.getAuthTokens(tokenToSign)
     req.currentUser!.multiFactorAuth = true
-    authService.generateAuthCookies(req, tokens)
+    CookieService.generateCookies(req, tokens)
 
     await req.currentUser!.save()
 
@@ -210,9 +215,9 @@ class AuthController {
       },
     }
 
-    req.currentUser!.tokens = await authService.getAuthTokens(tokenToSign)
+    req.currentUser!.tokens = await CookieService.getAuthTokens(tokenToSign)
 
-    authService.generateAuthCookies(req, req.currentUser!.tokens)
+    CookieService.generateCookies(req, req.currentUser!.tokens)
 
     mfaService.generate2StepRecoveryPassword(req.currentUser!)
 
@@ -222,7 +227,7 @@ class AuthController {
   }
 
   getRefreshToken = async (req: Request, res: Response) => {
-    const user = await authService.findUserByRefreshJwt(
+    const user = await CookieService.findUserByRefreshJwt(
       req.session!.jwt.refresh!
     )
 
@@ -240,13 +245,13 @@ class AuthController {
       email: user.email,
       username: user?.username,
     }
-    user.tokens = await authService.getAuthTokens(tokenToSign, {
+    user.tokens = await CookieService.getAuthTokens(tokenToSign, {
       isRefreshingToken: true,
       refreshTokenId: req.session?.jwt.refresh,
       accessToken: req.session?.jwt.access,
     })
 
-    authService.generateAuthCookies(req, user.tokens)
+    CookieService.generateCookies(req, user.tokens)
 
     await user.save()
 

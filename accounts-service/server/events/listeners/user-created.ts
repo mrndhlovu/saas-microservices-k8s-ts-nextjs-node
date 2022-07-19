@@ -41,11 +41,13 @@ export class UserCreatedListener extends Listener<IUserCreatedEvent> {
     await notification.save()
     const eventData = accountService.getEventData(account)
 
-    const BASE_URL = "https://tusks.dev/auth/verify"
+    const BASE_URL = "http://localhost:5000/auth/verify"
     const token: string = jwt.sign(
       { userId: data.id, email: data.email },
       process.env.JWT_TOKEN_SIGNATURE!
     )
+
+    console.log({ token })
 
     const email: IEmailEvent["data"] = {
       email: data.email,

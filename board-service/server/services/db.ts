@@ -24,7 +24,10 @@ class Database {
 
   connect = async () => {
     await mongoose
-      .connect(process.env.BOARDS_MONGO_URI!, this.mongooseOptions)
+      .connect(process.env.MONGO_URI!, {
+        ...this.mongooseOptions,
+        dbName: "boards",
+      })
       .then(() => {
         const dbStatus = [
           {
