@@ -7,6 +7,7 @@ import { User } from "../models/User"
 import { Token } from "../models/Token"
 import { PasswordManager } from "./password"
 import { totp, hotp } from "otplib"
+import { TokenType } from "../types"
 
 export class AuthService {
   static findUserOnlyByEmail = async (email: string) => {
@@ -77,6 +78,12 @@ export class AuthService {
 
     await token.save()
     return generatedNumber
+  }
+
+  static async getTokenByUserId(userId: string, tokenType: TokenType) {
+    const token = await Token.findOne({ userId, tokenType, invalidated: false })
+
+    return token
   }
 
   static async verifyOtp(submittedNumber: string, userId: string) {

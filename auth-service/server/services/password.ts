@@ -4,9 +4,9 @@ import { promisify } from "util"
 const scryptAsync = promisify(scrypt)
 
 export class PasswordManager {
-  static async encrypt(password: string): Promise<string> {
+  static async encrypt(string: string): Promise<string> {
     const salt = randomBytes(32).toString("hex")
-    const _buffer = (await scryptAsync(password, salt, 64)) as Buffer
+    const _buffer = (await scryptAsync(string, salt, 64)) as Buffer
 
     return `${_buffer.toString("hex")}.${salt}`
   }
@@ -16,11 +16,11 @@ export class PasswordManager {
   }
 
   static async compare(
-    storedPassword: string,
-    suppliedPassword: string
+    storedValue: string,
+    suppliedSupplied: string
   ): Promise<boolean> {
-    const [hashedPassword, salt] = storedPassword.split(".")
-    const _buffer = (await scryptAsync(suppliedPassword, salt, 64)) as Buffer
+    const [hashedPassword, salt] = storedValue.split(".")
+    const _buffer = (await scryptAsync(suppliedSupplied, salt, 64)) as Buffer
 
     return _buffer.toString("hex") === hashedPassword
   }

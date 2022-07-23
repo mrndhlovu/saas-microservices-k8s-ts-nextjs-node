@@ -18,6 +18,11 @@ import {
 import { mfaService, CookieService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
 
+const BASE_URL = "https://tusks.dev"
+const DID_NOT_UPDATE_PASSWORD_ENDPOINT = `${BASE_URL}/api/auth/pause-account`
+const RESTORE_ACCOUNT_ENDPOINT = `${BASE_URL}/api/auth/restore-account`
+const LOGIN_ENDPOINT = `${BASE_URL}/api/auth/login`
+
 declare global {
   namespace Express {
     interface Request {
@@ -122,6 +127,7 @@ class AuthController {
     )
 
     user.isVerified = isVerified
+    user.status = "active"
     user.save()
 
     new UserVerifiedPublisher(natsService.client).publish({
@@ -133,9 +139,29 @@ class AuthController {
     res.send({ user })
   }
 
-  getVerificationEmail = async (req: Request, res: Response) => {
+  resendOtp = async (req: Request, res: Response) => {
     const user = await AuthService.findUserOnlyByEmail(req.body.email)
-    if (!user) throw new BadRequestError("Invalid credentials")
+    if (!user) throw new BadRequestError("User not found")
+
+    const existingOtpToken = await AuthService.getTokenByUserId(user._id, "otp")
+    if (existingOtpToken) {
+      existingOtpToken.invalidated = true
+      existingOtpToken.save()
+    }
+
+    const otp = await AuthService.generateOtp(user._id)
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>To complete your sign up, and as an additional security measure, 
+      you are requested to enter the one-time password (OTP) provided 
+      in this email.<p><br>The OTP code is: <strong>${otp}</strong>`,
+      subject: "Email verification to activate your account.",
+      from: DEFAULT_EMAIL,
+    }
+    await new SendEmailPublisher(natsService.client).publish(email)
+
     res.send({ message: "Please check you email for your verification link" })
   }
 
@@ -204,15 +230,71 @@ class AuthController {
     res.status(200).send({})
   }
 
-  forgotPassword = async (req: Request, res: Response) => {
+  handleForgotPassword = async (req: Request, res: Response) => {
     const user = await AuthService.findUserOnlyByEmail(req.body.email)
     if (!user) throw new BadRequestError("User not found.")
+
+    const tokenToSign: IJwtAuthToken = {
+      userId: user._id,
+      username: user.username,
+      email: req.body.email,
+    }
+    const EXPIRES_IN = "5m"
+    const token = CookieService.generateAccessToken(tokenToSign, EXPIRES_IN)
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>Use the link below to reset your password.<p>
+      <br>The OTP code is: <a href="${BASE_URL}/auth/verify?token=${token}" rel="noreferrer" target="_blank">RESET YOUR PASSWORD NOW!</a>`,
+      subject: "Password recovery.",
+      from: DEFAULT_EMAIL,
+    }
+
+    await new SendEmailPublisher(natsService.client).publish(email)
 
     const response = {
       message: "Please check you email for your reset password link.",
     }
 
+    CookieService.invalidateRefreshToken(user)
+    req.session = null
+
     res.status(200).send(response)
+  }
+
+  validateAccount = async (req: Request, res: Response) => {
+    const user = req.currentUser
+    if (!user) throw new BadRequestError("User not found.")
+    if (!req.body.newPassword)
+      throw new BadRequestError("Password field is required")
+
+    user.password = req.body.newPassword
+    user.save()
+    req.session = null
+    CookieService.invalidateRefreshToken(user)
+
+    const tokenToSign: IJwtAuthToken = {
+      userId: "",
+      username: "",
+      email: user.email,
+    }
+    const EXPIRES_IN = "365d"
+    const token = CookieService.generateAccessToken(tokenToSign, EXPIRES_IN)
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>Your password was updated.</p
+      ><p>If you did not make this change, click the link below:</p>
+      <a rel="noreferrer" target="_blank" href="${DID_NOT_UPDATE_PASSWORD_ENDPOINT}/${token}">${DID_NOT_UPDATE_PASSWORD_ENDPOINT}</a>
+      `,
+      subject: "Password updated.",
+      from: DEFAULT_EMAIL,
+    }
+    await new SendEmailPublisher(natsService.client).publish(email)
+
+    res.status(200).send({ ok: !!user })
   }
 
   enableMfa = async (req: Request, res: Response) => {
@@ -316,6 +398,50 @@ class AuthController {
     await user.save()
 
     res.status(200).send({ user })
+  }
+
+  pauseAccount = async (req: Request, res: Response) => {
+    const user = await AuthService.findUserOnlyByEmail(req.currentUserJwt.email)
+
+    if (!user) throw new NotAuthorisedError("User not found.")
+    user.status = "paused"
+    await user.save()
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>Account paused.</p
+      ><p>Please click the link below to restore you account:</p>
+      <a rel="noreferrer" target="_blank" href="${RESTORE_ACCOUNT_ENDPOINT}">${BASE_URL}</a>
+      `,
+      subject: "Password updated.",
+      from: DEFAULT_EMAIL,
+    }
+    await new SendEmailPublisher(natsService.client).publish(email)
+
+    res.status(200).send({})
+  }
+
+  restoreAccount = async (req: Request, res: Response) => {
+    const user = req.currentUser
+    if (!user) throw new NotAuthorisedError("User not found.")
+
+    user.status = "active"
+    await user.save()
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>Account restored.</p
+      ><p>You successfully restored your account, click the link below to login:</p>
+      <a rel="noreferrer" target="_blank" href="${LOGIN_ENDPOINT}">${LOGIN_ENDPOINT}</a>
+      `,
+      subject: "Account restored.",
+      from: DEFAULT_EMAIL,
+    }
+    await new SendEmailPublisher(natsService.client).publish(email)
+
+    res.status(200).send({})
   }
 }
 

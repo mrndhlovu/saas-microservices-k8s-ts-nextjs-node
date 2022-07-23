@@ -21,3 +21,9 @@ export const allowedOrigins = [
 export const BOARDS_QUEUE_GROUP_NAME = "boards-service"
 
 export const DEFAULT_EMAIL = "kandhlovuie@gmail.com"
+
+export const SECURITY_QUESTIONS = {
+  color: "What is your favorite color?",
+  friendName: "What is the name of your best friend?",
+  petName: "What is the name of your favorite pet?",
+}

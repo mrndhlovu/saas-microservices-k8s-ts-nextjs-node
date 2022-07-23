@@ -112,11 +112,24 @@ export class CookieService {
     return { isValid, user }
   }
 
+  static verify = async <T extends string, Y extends IJwtAuthToken>(
+    token: T,
+    authJwt: Y
+  ): Promise<{ isValid: boolean; user: IUserDocument }> => {
+    const user = await CookieService.findUserByJwt(authJwt)
+
+    if (!user) throw new BadRequestError("User not found")
+
+    const isValid = mfaService.validatedToken(token)
+
+    return { isValid, user }
+  }
+
   static async invalidateRefreshToken(user: IUserDocument) {
     const refreshToken = await Token.findOne({
       userId: user._id,
       invalidated: false,
-      type: "refresh",
+      tokenType: "refresh",
     })
 
     if (refreshToken) {

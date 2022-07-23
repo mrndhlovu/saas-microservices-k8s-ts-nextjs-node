@@ -73,7 +73,27 @@ router.get(
 
 router.post(
   "/forgot-password",
-  errorService.catchAsyncError(authController.forgotPassword)
+  errorService.catchAsyncError(authController.handleForgotPassword)
+)
+
+router.post(
+  "/recover-account",
+  AuthMiddleWare.validateRequiredBearerToken,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.validateAccount)
+)
+
+router.get(
+  "/pause-account/:token",
+  AuthMiddleWare.validateParamAuthToken,
+  errorService.catchAsyncError(authController.pauseAccount)
+)
+
+router.post(
+  "/restore-account",
+  AuthMiddleWare.checkRequiredLoginFields,
+  AuthMiddleWare.validateUser,
+  errorService.catchAsyncError(authController.restoreAccount)
 )
 
 router.delete(
@@ -89,6 +109,11 @@ router.post(
   middlewareUtils.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.verifyOtp)
+)
+
+router.post(
+  "/resend-otp",
+  errorService.catchAsyncError(authController.resendOtp)
 )
 
 router.post(
@@ -123,9 +148,9 @@ router.post(
   errorService.catchAsyncError(authController.connectMfa)
 )
 
-router.post(
-  "/request-verification-email",
-  errorService.catchAsyncError(authController.getVerificationEmail)
-)
+// router.post(
+//   "/request-verification-email",
+//   errorService.catchAsyncError(authController.getVerificationEmail)
+// )
 
 export default router

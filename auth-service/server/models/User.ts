@@ -2,6 +2,7 @@ import isEmail from "validator/lib/isEmail"
 import { Schema, Document, model, Types } from "mongoose"
 import { IAccountCreatedEvent, IJwtAccessTokens } from "@tusksui/shared"
 import { PasswordManager } from "../services/password"
+import { UserAccountStatus } from "../types"
 
 const UserSchema = new Schema<IUserDocument>(
   {
@@ -120,6 +121,10 @@ const UserSchema = new Schema<IUserDocument>(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      default: "pending",
+    },
   },
   {
     timestamps: true,
@@ -200,6 +205,7 @@ export interface IUser {
   permissionFlag: number
   twoStepRecovery: IRecoveryToken
   isVerified: boolean
+  status: UserAccountStatus
 }
 
 export interface IUserDocument extends Document, IUser {

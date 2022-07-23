@@ -12,6 +12,7 @@ import { IUserDocument } from "../models/User"
 import { allowedOrigins } from "../utils/constants"
 import { CookieService, PasswordManager } from "../services"
 import isEmail from "validator/lib/isEmail"
+import jwt from "jsonwebtoken"
 
 declare global {
   namespace Express {
@@ -101,14 +102,16 @@ export class AuthMiddleWare {
 
   static findPendingMfaUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
+      const existingUser = await AuthService.findUserOnlyByEmail(req.body.email)
+
+      if (!existingUser) throw new BadRequestError("User not found.")
+
       const { isValid, user } = await CookieService.verifyMfaToken(
         req.body?.code,
-        req.currentUserJwt
+        existingUser
       )
 
-      if (!isValid) {
-        throw new BadRequestError(`Token validation failed`)
-      }
+      if (!isValid) throw new BadRequestError("Link may have expired.")
 
       if (!user.account.isVerified) {
         throw new BadRequestError(
@@ -117,6 +120,46 @@ export class AuthMiddleWare {
       }
 
       req.currentUser = user
+
+      next()
+    }
+  )
+
+  static validateRequiredBearerToken = errorService.catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const token = req.headers.authorization?.split(" ")?.[1]
+
+      if (!token) {
+        throw new NotAuthorisedError("Authorization credentials are missing.")
+      }
+
+      const currentUserJwt = jwt.verify(
+        token!,
+        process.env.JWT_TOKEN_SIGNATURE!
+      )
+
+      req.currentUserJwt = currentUserJwt as IJwtAuthToken
+
+      next()
+    }
+  )
+
+  static validateParamAuthToken = errorService.catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const token = req.params.token
+
+      if (!token) {
+        throw new NotAuthorisedError("Authorization credentials are missing.")
+      }
+
+      const currentUserJwt = jwt.verify(
+        token!,
+        process.env.JWT_TOKEN_SIGNATURE!
+      )
+
+      console.log(currentUserJwt)
+
+      req.currentUserJwt = currentUserJwt as IJwtAuthToken
 
       next()
     }
@@ -153,6 +196,7 @@ export class AuthMiddleWare {
   static validateUser = errorService.catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
       const { identifier, password } = req.body
+      const isRestoreAccountPath = req.path === "/restore-account"
       const existingUser = isEmail(identifier)
         ? await AuthService.findUserOnlyByEmail(identifier)
         : await AuthService.findUserOnlyByUsername(identifier)
@@ -167,13 +211,18 @@ export class AuthMiddleWare {
 
       const passwordsMatch = await PasswordManager.compare(
         existingUser.password,
-        req.body.password
+        password
       )
 
       if (!passwordsMatch) {
         throw new NotAuthorisedError("Invalid credentials")
       }
 
+      if (!isRestoreAccountPath && existingUser.status !== "active") {
+        throw new NotAuthorisedError(
+          `Access denied: account status is ${existingUser.status}`
+        )
+      }
       // new SendEmailPublisher(natsService.client).publish({
       //   html: `Your six digit verification code is:<div>Code: <h3>${authToken}</h3></div>`,
       //   email: updatedUser.email,

@@ -62,3 +62,10 @@ export interface IAuthTokenOptions {
 }
 
 export type TokenType = "otp" | "refresh"
+
+export type UserAccountStatus =
+  | "pending"
+  | "blocked"
+  | "paused"
+  | "archived"
+  | "active"
