@@ -34,10 +34,11 @@ router.post(
 )
 
 router.post(
-  "/verify-credentials",
+  "/confirm-action",
   AuthMiddleWare.checkRequiredLoginFields,
   middlewareUtils.validateRequestBodyFields,
-  errorService.catchAsyncError(authController.verifyCredentials)
+  AuthMiddleWare.validateUser,
+  errorService.catchAsyncError(authController.confirmAction)
 )
 
 router.get(
@@ -83,6 +84,14 @@ router.delete(
 )
 
 router.post(
+  "/verify-otp",
+  middlewareUtils.validateRequiredAccessJwt,
+  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.verifyOtp)
+)
+
+router.post(
   "/mfa/enable",
   middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
@@ -115,7 +124,7 @@ router.post(
 )
 
 router.post(
-  "/verification-email",
+  "/request-verification-email",
   errorService.catchAsyncError(authController.getVerificationEmail)
 )
 

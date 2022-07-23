@@ -3,13 +3,13 @@ import { Message } from "node-nats-streaming"
 import {
   ICustomerCreated,
   Listener,
-  NotFoundError,
   queueGroupNames,
   Subjects,
 } from "@tusksui/shared"
 
 import { accountService, natsService } from "../../services"
-import { AccountUpdatedPublisher } from "../publishers"
+import { AccountUpdatedPublisher, SendEmailPublisher } from "../publishers"
+import { DEFAULT_EMAIL } from "../../utils/constants"
 
 export class CustomerCreatedListener extends Listener<ICustomerCreated> {
   readonly subject: Subjects.CustomerCreated = Subjects.CustomerCreated
@@ -26,16 +26,11 @@ export class CustomerCreatedListener extends Listener<ICustomerCreated> {
         data.userId
       )
 
-      if (!account) {
-        throw new NotFoundError("Account not found")
+      if (account) {
+        await account.save()
+        const eventData = accountService.getEventData(account)
+        new AccountUpdatedPublisher(natsService.client).publish(eventData)
       }
-
-      await account.save()
-
-      const eventData = accountService.getEventData(account)
-
-      new AccountUpdatedPublisher(natsService.client).publish(eventData)
-
       msg.ack()
     } catch (error) {
       return error

@@ -10,6 +10,8 @@ import {
 import Workspace from "../../models/Workspace"
 import { WorkspaceCreatedPublisher } from "../publishers/workspace-created"
 import { algoliaClient, natsService } from "../../services"
+import { SendEmailPublisher } from "../publishers/send-email"
+import { DEFAULT_EMAIL } from "../../utils/constants"
 
 export class CustomerCreatedListener extends Listener<ICustomerCreated> {
   readonly subject: Subjects.CustomerCreated = Subjects.CustomerCreated
@@ -44,6 +46,19 @@ export class CustomerCreatedListener extends Listener<ICustomerCreated> {
           },
         },
       ])
+
+      const email = {
+        email: DEFAULT_EMAIL,
+        body: `
+          <div>	
+            <p>Hello Mduduzi Ndhlovu,</p>
+            <p>Start taking creating your tusks.</p>
+          <div>`,
+        subject: "Welcome to TUSKS!",
+        from: DEFAULT_EMAIL,
+      }
+
+      await new SendEmailPublisher(natsService.client).publish(email)
 
       msg.ack()
     } catch (error) {

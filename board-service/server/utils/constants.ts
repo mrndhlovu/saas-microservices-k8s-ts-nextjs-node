@@ -6,6 +6,9 @@ export const allowedBoardUpdateFields = [
   "prefs.image",
   "prefs.color",
 ]
+
+export const DEFAULT_EMAIL = "kandhlovuie@gmail.com"
+
 export const allowedListUpdateFields = ["title", "archived"]
 export const allowedCardUpdateFields = [
   "title",

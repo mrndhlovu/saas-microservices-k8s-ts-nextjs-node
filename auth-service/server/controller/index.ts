@@ -8,19 +8,20 @@ import {
   permissionManager,
 } from "@tusksui/shared"
 import { AuthService } from "../services/auth"
-import { editableUserFields } from "../utils/constants"
+import { DEFAULT_EMAIL, editableUserFields } from "../utils/constants"
 import { natsService } from "../services/nats"
 import { IUserDocument, User } from "../models/User"
 import {
   UserDeletedPublisher,
-  UserCreatedPublisher,
+  UserVerifiedPublisher,
 } from "../events/publishers"
 import { mfaService, CookieService } from "../services"
+import { SendEmailPublisher } from "../events/publishers/send-email"
 
 declare global {
   namespace Express {
     interface Request {
-      currentUser: IUserDocument | null | undefined
+      currentUser?: IUserDocument
       session:
         | {
             jwt: IJwtAccessTokens
@@ -50,15 +51,19 @@ class AuthController {
     CookieService.generateCookies(req, tokens)
 
     await user.save()
+    const otp = await AuthService.generateOtp(user._id)
 
-    new UserCreatedPublisher(natsService.client).publish({
-      id: user._id.toHexString(),
-      username: user.username!,
-      firstName: user.firstName!,
-      lastName: user.lastName!,
+    const email = {
       email: user.email!,
-      initials: user?.initials,
-    })
+      body: `
+      <p>To complete your sign up, and as an additional security measure, 
+      you are requested to enter the one-time password (OTP) provided 
+      in this email.<p><br>The OTP code is: <strong>${otp}</strong>`,
+      subject: "Email verification to activate your account.",
+      from: DEFAULT_EMAIL,
+    }
+
+    await new SendEmailPublisher(natsService.client).publish(email)
 
     res.status(201).send(user)
   }
@@ -84,13 +89,9 @@ class AuthController {
     res.status(200).send(user)
   }
 
-  verifyCredentials = async (req: Request, res: Response) => {
-    const { identifier, password } = req.body
-
-    const user = await AuthService.findUserByCredentials(identifier, password)
-
+  confirmAction = async (req: Request, res: Response) => {
+    const user = req.currentUser!
     if (!user) throw new BadRequestError("User not found.")
-
     res.status(200).send({ success: true })
   }
 
@@ -106,6 +107,30 @@ class AuthController {
 
     req.session = null
     res.send({})
+  }
+
+  verifyOtp = async (req: Request, res: Response) => {
+    if (!req.body.verificationCode)
+      throw new BadRequestError("verificationCode is required")
+
+    const user = req.currentUser
+    if (!user) throw new BadRequestError("User not found.")
+
+    const isVerified = await AuthService.verifyOtp(
+      req.body.verificationCode,
+      user._id
+    )
+
+    user.isVerified = isVerified
+    user.save()
+
+    new UserVerifiedPublisher(natsService.client).publish({
+      id: user._id,
+      email: user.email,
+      verified: user.isVerified,
+    })
+
+    res.send({ user })
   }
 
   getVerificationEmail = async (req: Request, res: Response) => {
@@ -167,12 +192,13 @@ class AuthController {
 
     await user.delete()
 
-    new UserDeletedPublisher(natsService.client).publish({
-      id: userId,
-      boardIds,
-      email,
-    })
-
+    if (user.isVerified) {
+      new UserDeletedPublisher(natsService.client).publish({
+        id: userId,
+        boardIds,
+        email,
+      })
+    }
     req.session = null
     CookieService.invalidateRefreshToken(user)
     res.status(200).send({})

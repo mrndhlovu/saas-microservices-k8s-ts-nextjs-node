@@ -9,7 +9,7 @@ import { IUserDocument, User } from "../models/User"
 import { mfaService } from "./mfa"
 import { Request } from "express"
 import { AuthService } from "./auth"
-import { RefreshToken } from "../models/RefreshToken"
+import { Token } from "../models/Token"
 
 export class CookieService {
   static generateCookies = (req: Request, tokens: IJwtAccessTokens) => {
@@ -52,17 +52,17 @@ export class CookieService {
       currentRefreshTokenId &&
       (await CookieService.findRefreshTokenOnlyById(currentRefreshTokenId!))
 
-    if (existingToken && !existingToken.used) {
+    if (existingToken && !existingToken.invalidated) {
       const tokenIsValid = CookieService.isTokenValid(
         existingToken.token,
         process.env.JWT_REFRESH_TOKEN_SIGNATURE!
       )
 
-      if (tokenIsValid) {
-        existingToken.used = true
-        existingToken.save()
-        return existingToken._id
-      }
+      // if (tokenIsValid) {
+      //   existingToken.used = true
+      //   existingToken.save()
+      //   return existingToken._id
+      // }
     }
 
     // if (existingToken && existingToken.used && !existingToken.invalidated) {
@@ -79,9 +79,10 @@ export class CookieService {
       }
     )
 
-    const refreshToken = new RefreshToken({
+    const refreshToken = new Token({
       userId: jwtAccessToken.userId,
       token,
+      tokenType: "refresh",
     })
 
     await refreshToken.save()
@@ -112,9 +113,10 @@ export class CookieService {
   }
 
   static async invalidateRefreshToken(user: IUserDocument) {
-    const refreshToken = await RefreshToken.findOne({
+    const refreshToken = await Token.findOne({
       userId: user._id,
       invalidated: false,
+      type: "refresh",
     })
 
     if (refreshToken) {
@@ -168,7 +170,7 @@ export class CookieService {
   }
 
   static async findRefreshTokenOnlyById(refreshTokenId: string) {
-    const token = await RefreshToken.findById(refreshTokenId)
+    const token = await Token.findById(refreshTokenId, { type: "refresh" })
     return token
   }
 

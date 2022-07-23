@@ -94,7 +94,7 @@ const UserSchema = new Schema<IUserDocument>(
         mfa: String,
         refresh: {
           type: Schema.Types.ObjectId,
-          ref: "RefreshToken",
+          ref: "Token",
         },
       },
     },
@@ -115,6 +115,10 @@ const UserSchema = new Schema<IUserDocument>(
         token: String,
         expiresAt: Date,
       },
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -195,6 +199,7 @@ export interface IUser {
   multiFactorAuth: boolean
   permissionFlag: number
   twoStepRecovery: IRecoveryToken
+  isVerified: boolean
 }
 
 export interface IUserDocument extends Document, IUser {

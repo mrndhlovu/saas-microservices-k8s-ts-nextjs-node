@@ -22,14 +22,13 @@ export class UserDeletedListener extends Listener<IUserDeletedEvent> {
     try {
       const account = await Account.findOne({ _id: data.id })
 
-      if (!account)
-        throw new BadRequestError("Account with that user name was not found")
+      if (account) {
+        const eventData = { email: data.email, userId: account._id }
 
-      const eventData = { email: data.email, userId: account._id }
+        await account.delete()
 
-      await account.delete()
-
-      new AccountDeletedPublisher(natsService.client).publish(eventData)
+        new AccountDeletedPublisher(natsService.client).publish(eventData)
+      }
 
       msg.ack()
     } catch (error) {

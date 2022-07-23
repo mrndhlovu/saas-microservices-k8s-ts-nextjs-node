@@ -1,31 +1,40 @@
-import sgMail from "@sendgrid/mail"
+import mailgun from "mailgun-js"
+import { BadRequestError, IEmailEvent } from "@tusksui/shared"
 
-import { IEmailEvent } from "@tusksui/shared"
+const apiKey = process.env.MAILGUN_SECRET_KEY!
+var domain = "mg.cacheops.io"
 
-sgMail.setApiKey(process.env.SEND_GRID_SECRET_KEY!)
+const mgClient = mailgun({
+  apiKey,
+  domain,
+  protocol: "https:",
+  host: "api.eu.mailgun.net",
+})
 
 class EmailService {
-  async send(data: IEmailEvent["data"]) {
+  static async send(data: IEmailEvent["data"]) {
     const msg = {
       cc: data.cc!,
       from: data.from,
-      html: data.html!,
       subject: data.subject,
-      text: data.body,
-      to: data.email,
+      html: data.body,
+      to: [data.email],
     }
 
     try {
-      // await sgMail.send(msg)
-      return 200
+      const response = await mgClient.messages().send(msg, err => {
+        if (err) throw new BadRequestError(err as any)
+
+        return 200
+      })
+
+      return response
     } catch (error) {
-      if (error.response) {
-        console.error(error.response.body)
-      }
+      console.error((error as Error).message)
 
       return 400
     }
   }
 }
 
-export const emailService = new EmailService()
+export { EmailService }

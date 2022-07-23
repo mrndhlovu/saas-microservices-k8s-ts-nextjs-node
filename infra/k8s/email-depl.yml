@@ -26,11 +26,11 @@ spec:
                   name: env-config
                   key: MONGO_URI
 
-            - name: SEND_GRID_SECRET_KEY
+            - name: MAILGUN_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: env-config
-                  key: SEND_GRID_SECRET_KEY
+                  key: MAILGUN_SECRET_KEY
 
             - name: PORT
               valueFrom:

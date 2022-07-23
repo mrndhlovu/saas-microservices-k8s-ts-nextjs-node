@@ -3,7 +3,7 @@ declare global {
     interface ProcessEnv {
       NODE_ENV: "development" | "production" | "testing"
       PORT: string
-      SEND_GRID_SECRET_KEY: string
+      MAILGUN_SECRET_KEY: string
       MONGO_URI: string
       NATS_URL: string
       NATS_CLIENT_ID: string

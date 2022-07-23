@@ -4,27 +4,11 @@ import { BadRequestError } from "@tusksui/shared"
 import { allowedOrigins } from "../utils/constants"
 import { CorsOptions } from "cors"
 import { User } from "../models/User"
+import { Token } from "../models/Token"
+import { PasswordManager } from "./password"
+import { totp, hotp } from "otplib"
 
 export class AuthService {
-  static findUserByCredentials = async (
-    identifier: string,
-    password: string
-  ) => {
-    const user = await (isEmail(identifier.trim())
-      ? AuthService.findUserOnlyByEmail(identifier.trim())
-      : AuthService.findUserOnlyByUsername(identifier.trim()))
-
-    let isMatch: boolean
-    if (!user)
-      throw new BadRequestError("Login error: check your login credentials.")
-
-    isMatch = await bcrypt.compare(password.trim(), user.password)
-    if (!isMatch)
-      throw new BadRequestError("Login error: check your login credentials.")
-
-    return user
-  }
-
   static findUserOnlyByEmail = async (email: string) => {
     const user = await User.findOne({ email })
     return user
@@ -47,6 +31,25 @@ export class AuthService {
     return targetFields.every((field: string) => editableFields.includes(field))
   }
 
+  static findUserByCredentials = async (
+    identifier: string,
+    password: string
+  ) => {
+    const user = await (isEmail(identifier.trim())
+      ? AuthService.findUserOnlyByEmail(identifier.trim())
+      : AuthService.findUserOnlyByUsername(identifier.trim()))
+
+    let isMatch: boolean
+    if (!user)
+      throw new BadRequestError("Login error: check your login credentials.")
+
+    isMatch = await bcrypt.compare(password.trim(), user.password)
+    if (!isMatch)
+      throw new BadRequestError("Login error: check your login credentials.")
+
+    return user
+  }
+
   static getCorsOptions(): CorsOptions {
     return {
       origin: (origin, callback) => {
@@ -58,5 +61,52 @@ export class AuthService {
       },
       optionsSuccessStatus: 200,
     }
+  }
+
+  static async generateOtp(userId: string) {
+    const generatedNumber = totp.generate(process.env.JWT_TOKEN_SIGNATURE!)
+    const expiresAt = PasswordManager.addMinutesToDate(new Date(), 5)
+
+    const hashedOtp = await PasswordManager.encrypt(generatedNumber)
+    const token = new Token({
+      tokenType: "otp",
+      token: hashedOtp,
+      expiresAt,
+      userId,
+    })
+
+    await token.save()
+    return generatedNumber
+  }
+
+  static async verifyOtp(submittedNumber: string, userId: string) {
+    const storedOtp = await Token.findOne({
+      userId,
+      tokenType: "otp",
+      invalidated: false,
+    })
+
+    if (!storedOtp)
+      throw new BadRequestError("Pass code did not match or may have expired")
+
+    const tokenExpired = new Date() > new Date(storedOtp.expiresAt!)
+
+    if (tokenExpired) {
+      storedOtp.invalidated = true
+      await storedOtp.save()
+      throw new BadRequestError("Pass code has expired")
+    }
+
+    const numbersMatch = PasswordManager.compare(
+      storedOtp.token,
+      submittedNumber
+    )
+
+    if (!numbersMatch) throw new BadRequestError("Pass code did not match")
+
+    storedOtp.invalidated = true
+    await storedOtp.save()
+
+    return numbersMatch
   }
 }

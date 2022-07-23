@@ -12,7 +12,7 @@ class Server {
       NATS_URL,
       MONGO_URI,
       PORT,
-      SEND_GRID_SECRET_KEY,
+      MAILGUN_SECRET_KEY,
     } = process.env
 
     if (
@@ -21,7 +21,7 @@ class Server {
       !NATS_URL ||
       !MONGO_URI ||
       !PORT ||
-      !SEND_GRID_SECRET_KEY
+      !MAILGUN_SECRET_KEY
     ) {
       throw new BadRequestError("Some Env variables are missing!")
     }

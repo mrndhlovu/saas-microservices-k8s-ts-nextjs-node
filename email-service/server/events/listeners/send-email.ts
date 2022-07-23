@@ -6,7 +6,7 @@ import {
   queueGroupNames,
   Subjects,
 } from "@tusksui/shared"
-import { emailService } from "../../services"
+import { EmailService } from "../../services/"
 
 export class SendEmailListener extends Listener<IEmailEvent> {
   readonly subject: Subjects.Email = Subjects.Email
@@ -15,7 +15,7 @@ export class SendEmailListener extends Listener<IEmailEvent> {
   onMessage = async (data: IEmailEvent["data"], msg: Message) => {
     console.log("Event data", data)
 
-    await emailService.send(data)
+    await EmailService.send(data)
 
     msg.ack()
   }

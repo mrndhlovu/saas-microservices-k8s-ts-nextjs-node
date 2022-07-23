@@ -6,9 +6,8 @@ import { natsService } from "./services/nats"
 import {
   UserDeletedListener,
   AuthActionListener,
-  UserCreatedListener,
+  UserVerifiedListener,
   PaymentCreatedListener,
-  CustomerCreatedListener,
   NotificationCreatedListener,
 } from "./events/listeners"
 
@@ -45,8 +44,7 @@ class Server {
     natsService.handleOnclose()
 
     new UserDeletedListener(natsService.client).listen()
-    new UserCreatedListener(natsService.client).listen()
-    new CustomerCreatedListener(natsService.client).listen()
+    new UserVerifiedListener(natsService.client).listen()
     new PaymentCreatedListener(natsService.client).listen()
     new AuthActionListener(natsService.client).listen()
     new NotificationCreatedListener(natsService.client).listen()

@@ -16,7 +16,7 @@ import isEmail from "validator/lib/isEmail"
 declare global {
   namespace Express {
     interface Request {
-      currentUser: IUserDocument | null | undefined
+      currentUser?: IUserDocument
       session:
         | {
             jwt: IJwtAccessTokens
@@ -81,12 +81,13 @@ export class AuthMiddleWare {
   static findCurrentUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
       const currentUser = await CookieService.findUserByJwt(req.currentUserJwt)
+      const isVerifyEmailPath = req.path === "/verify-otp"
 
       if (!currentUser) {
         throw new BadRequestError(`Authentication failed`)
       }
 
-      if (!currentUser.account.isVerified) {
+      if (!currentUser.isVerified && !isVerifyEmailPath) {
         throw new BadRequestError(
           `Please verify account via an email sent to: ${currentUser.email}`
         )

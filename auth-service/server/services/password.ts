@@ -11,6 +11,10 @@ export class PasswordManager {
     return `${_buffer.toString("hex")}.${salt}`
   }
 
+  static addMinutesToDate(date: Date, minutes: number) {
+    return new Date(date.getTime() + minutes * 60000)
+  }
+
   static async compare(
     storedPassword: string,
     suppliedPassword: string

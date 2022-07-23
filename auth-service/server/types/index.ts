@@ -60,3 +60,5 @@ export interface IAuthTokenOptions {
   refreshExpiresAt?: string
   isRefreshingToken?: boolean
 }
+
+export type TokenType = "otp" | "refresh"
