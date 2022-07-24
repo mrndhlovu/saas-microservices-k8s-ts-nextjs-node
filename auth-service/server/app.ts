@@ -2,7 +2,7 @@ import "express-async-errors"
 import cookieParser from "cookie-parser"
 import cookieSession from "cookie-session"
 import express from "express"
-import cors from "cors"
+// import cors from "cors"
 
 import { errorService } from "@tusksui/shared"
 
@@ -18,7 +18,7 @@ const app = express()
 
 app.set("trust proxy", true)
 app.use(AuthMiddleWare.credentials)
-app.use(cors(AuthService.getCorsOptions()))
+// app.use(cors(AuthService.getCorsOptions()))
 app.use(cookieParser())
 app.use(express.json())
 app.use(cookieSession({ signed: false, secure: !inTestMode }))

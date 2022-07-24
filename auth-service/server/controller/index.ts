@@ -8,7 +8,14 @@ import {
   permissionManager,
 } from "@tusksui/shared"
 import { AuthService } from "../services/auth"
-import { DEFAULT_EMAIL, editableUserFields } from "../utils/constants"
+import {
+  BASE_URL,
+  DEFAULT_EMAIL,
+  editableUserFields,
+  DID_NOT_UPDATE_PASSWORD_ENDPOINT,
+  RESTORE_ACCOUNT_ENDPOINT,
+  LOGIN_ENDPOINT,
+} from "../utils/constants"
 import { natsService } from "../services/nats"
 import { IUserDocument, User } from "../models/User"
 import {
@@ -17,11 +24,6 @@ import {
 } from "../events/publishers"
 import { mfaService, CookieService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
-
-const BASE_URL = "https://tusks.dev"
-const DID_NOT_UPDATE_PASSWORD_ENDPOINT = `${BASE_URL}/api/auth/pause-account`
-const RESTORE_ACCOUNT_ENDPOINT = `${BASE_URL}/api/auth/restore-account`
-const LOGIN_ENDPOINT = `${BASE_URL}/api/auth/login`
 
 declare global {
   namespace Express {

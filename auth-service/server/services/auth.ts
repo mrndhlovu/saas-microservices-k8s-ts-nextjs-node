@@ -6,7 +6,7 @@ import { CorsOptions } from "cors"
 import { User } from "../models/User"
 import { Token } from "../models/Token"
 import { PasswordManager } from "./password"
-import { totp, hotp } from "otplib"
+import { totp } from "otplib"
 import { TokenType } from "../types"
 
 export class AuthService {
@@ -54,10 +54,14 @@ export class AuthService {
   static getCorsOptions(): CorsOptions {
     return {
       origin: (origin, callback) => {
+        console.log({ origin })
+
         if (allowedOrigins.indexOf(origin!) !== -1) {
           callback(null, true)
         } else {
-          callback(new Error("Not allowed by cors"))
+          callback(null, true)
+
+          // callback(new Error("Not allowed by cors"))
         }
       },
       optionsSuccessStatus: 200,

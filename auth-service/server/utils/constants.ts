@@ -16,6 +16,7 @@ export const allowedOrigins = [
   "http://tusks.dev",
   "http://localhost:5000",
   "http://127.0.0.1:5555",
+  "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local",
 ]
 
 export const BOARDS_QUEUE_GROUP_NAME = "boards-service"
@@ -27,3 +28,8 @@ export const SECURITY_QUESTIONS = {
   friendName: "What is the name of your best friend?",
   petName: "What is the name of your favorite pet?",
 }
+
+export const BASE_URL = "https://tusks.dev"
+export const DID_NOT_UPDATE_PASSWORD_ENDPOINT = `${BASE_URL}/api/auth/pause-account`
+export const RESTORE_ACCOUNT_ENDPOINT = `${BASE_URL}/api/auth/restore-account`
+export const LOGIN_ENDPOINT = `${BASE_URL}/api/auth/login`

@@ -18,14 +18,14 @@ build:
           - src: 'server/**/*.ts'
             dest: .
 
-    # - image: ndhlovu/client
-    #   context: client
-    #   docker:
-    #     dockerfile: Dockerfile
-    #   sync:
-    #     infer:
-    #       - '**/*.tsx'
-    #       - '**/*.ts'
+    - image: ndhlovu/client
+      context: client
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        infer:
+          - 'src/**/*.tsx'
+          - 'src/**/*.ts'
 
     - image: ndhlovu/boards
       context: board-service
