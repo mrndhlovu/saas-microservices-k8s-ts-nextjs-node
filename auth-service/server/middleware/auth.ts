@@ -125,6 +125,25 @@ export class AuthMiddleWare {
     }
   )
 
+  static findRequiredRefreshJwt = errorService.catchAsyncError(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      console.log(req?.session?.jwt)
+
+      if (!req.session || !req.session.jwt?.refresh) {
+        throw new NotAuthorisedError("Authorization credentials are missing.")
+      }
+
+      const currentUserJwt = jwt.verify(
+        req.session.jwt.refresh,
+        process.env.JWT_REFRESH_TOKEN_SIGNATURE!
+      )
+
+      req.currentUserJwt = currentUserJwt as IJwtAuthToken
+
+      next()
+    }
+  )
+
   static validateRequiredBearerToken = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
       const token = req.headers.authorization?.split(" ")?.[1]

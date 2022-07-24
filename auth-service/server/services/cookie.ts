@@ -44,35 +44,27 @@ export class CookieService {
   }
 
   static async generateRefreshToken(
-    jwtAccessToken: IJwtAuthToken,
-    expiresIn: string,
-    currentRefreshTokenId?: string
+    tokenToSign: IJwtAuthToken,
+    expiresIn: string
   ) {
-    let existingToken =
-      currentRefreshTokenId &&
-      (await CookieService.findRefreshTokenOnlyById(currentRefreshTokenId!))
+    let existingToken = await CookieService.findRefreshTokenByUserId(
+      tokenToSign.userId!
+    )
 
-    if (existingToken && !existingToken.invalidated) {
-      const tokenIsValid = CookieService.isTokenValid(
+    console.log({ existingToken })
+
+    const tokenIsValid =
+      existingToken &&
+      existingToken.useCount <= 5 &&
+      CookieService.isTokenValid(
         existingToken.token,
         process.env.JWT_REFRESH_TOKEN_SIGNATURE!
       )
 
-      // if (tokenIsValid) {
-      //   existingToken.used = true
-      //   existingToken.save()
-      //   return existingToken._id
-      // }
-    }
-
-    // if (existingToken && existingToken.used && !existingToken.invalidated) {
-    //   existingToken.invalidated = true
-    //   existingToken.save()
-    //   throw new BadRequestError("Refresh Token has been used.")
-    // }
+    if (tokenIsValid && existingToken) return existingToken.token
 
     const token = jwt.sign(
-      jwtAccessToken,
+      tokenToSign,
       process.env.JWT_REFRESH_TOKEN_SIGNATURE!,
       {
         expiresIn,
@@ -80,14 +72,14 @@ export class CookieService {
     )
 
     const refreshToken = new Token({
-      userId: jwtAccessToken.userId,
+      userId: tokenToSign.userId,
       token,
       tokenType: "refresh",
     })
 
     await refreshToken.save()
 
-    return refreshToken?._id.toHexString()
+    return refreshToken?.token
   }
 
   static isTokenValid(token?: string, signature?: string) {
@@ -147,7 +139,7 @@ export class CookieService {
 
     if (options?.isRefreshingToken) {
       accessTokenExpiresIn = options?.accessExpiresAt || "2d"
-      refreshTokenExpiresIn = options?.accessExpiresAt || "7d"
+      refreshTokenExpiresIn = options?.refreshExpiresAt || "7d"
     } else {
       accessTokenExpiresIn = options?.accessExpiresAt || "10h"
       refreshTokenExpiresIn = options?.refreshExpiresAt || "1d"
@@ -161,8 +153,7 @@ export class CookieService {
 
     const refreshToken = await CookieService.generateRefreshToken(
       tokenToSign,
-      refreshTokenExpiresIn,
-      options?.refreshTokenId
+      refreshTokenExpiresIn
     )
 
     const tokens: IJwtAccessTokens = {
@@ -187,8 +178,21 @@ export class CookieService {
     return token
   }
 
-  static findUserByRefreshJwt = async (tokenId: string) => {
-    const token = await CookieService.findRefreshTokenOnlyById(tokenId)
+  static async findRefreshTokenByUserId(userId: string) {
+    const token = await Token.findOne({
+      userId,
+      tokenType: "refresh",
+      invalidated: false,
+    })
+    return token
+  }
+
+  static findUserByRefreshJwt = async (userId: string) => {
+    const token = await Token.findOne({
+      tokenType: "refresh",
+      userId,
+      invalidated: false,
+    })
 
     if (!token) {
       throw new BadRequestError("Token may have expired.")

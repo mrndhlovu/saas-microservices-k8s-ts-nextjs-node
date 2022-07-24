@@ -20,6 +20,7 @@ router.post(
 
 router.get(
   "/me",
+  middlewareUtils.validateRequiredAccessJwt,
   middlewareUtils.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.getCurrentUser)
@@ -67,7 +68,8 @@ router.patch(
 
 router.get(
   "/refresh-token",
-  // middlewareUtils.validateRequiredRefreshJwt,
+  middlewareUtils.validateRequiredRefreshJwt,
+  AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.refreshToken)
 )
 
@@ -105,8 +107,7 @@ router.delete(
 
 router.post(
   "/verify-otp",
-  middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.validateRequiredBearerToken,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.verifyOtp)
 )

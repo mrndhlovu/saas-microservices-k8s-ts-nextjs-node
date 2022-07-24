@@ -1,7 +1,5 @@
 {
-  "cSpell.words": [
-    "organises"
-  ],
+  "cSpell.words": ["chakra", "organises"],
   "editor.fontFamily": "'Fira Code', Menlo, Monaco, 'Courier New', monospace",
-  "editor.fontLigatures": true,
+  "editor.fontLigatures": true
 }

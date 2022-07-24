@@ -54,8 +54,9 @@ class AuthController {
       username: user?.username,
     }
 
-    const tokens = await CookieService.getAuthTokens(tokenToSign)
-    CookieService.generateCookies(req, tokens)
+    const tokens = await CookieService.getAuthTokens(tokenToSign, {
+      accessExpiresAt: "10m",
+    })
 
     await user.save()
     const otp = await AuthService.generateOtp(user._id)
@@ -65,7 +66,10 @@ class AuthController {
       body: `
       <p>To complete your sign up, and as an additional security measure, 
       you are requested to enter the one-time password (OTP) provided 
-      in this email.<p><br>The OTP code is: <strong>${otp}</strong>`,
+      in this email.<p>
+      <p>Copy the One Time Pin below.</p>
+      <br>The OTP code is: <strong>${otp}</strong>
+      <p><a href="${BASE_URL}/auth/verify?token=${tokens.access}" rel="noreferrer" target="_blank">Verify your code here.</a></p>`,
       subject: "Email verification to activate your account.",
       from: DEFAULT_EMAIL,
     }
@@ -88,7 +92,10 @@ class AuthController {
       username: user?.username,
     }
 
-    const tokens = await CookieService.getAuthTokens(tokenToSign)
+    const tokens = await CookieService.getAuthTokens(tokenToSign, {
+      accessExpiresAt: "1h",
+      refreshExpiresAt: "1d",
+    })
     CookieService.generateCookies(req, tokens)
 
     await user.save()
@@ -153,15 +160,27 @@ class AuthController {
 
     const otp = await AuthService.generateOtp(user._id)
 
+    const tokenToSign: IJwtAuthToken = {
+      userId: user._id,
+      username: user.username,
+      email: req.body.email,
+    }
+    const EXPIRES_IN = "5m"
+    const token = CookieService.generateAccessToken(tokenToSign, EXPIRES_IN)
+
     const email = {
       email: user.email!,
       body: `
       <p>To complete your sign up, and as an additional security measure, 
       you are requested to enter the one-time password (OTP) provided 
-      in this email.<p><br>The OTP code is: <strong>${otp}</strong>`,
+      in this email.<p>
+      <p>Copy the One Time Pin below.</p>
+      <br>The OTP code is: <strong>${otp}</strong>
+      <p><a href="${BASE_URL}/auth/verify?token=${token}" rel="noreferrer" target="_blank">Verify your code here.</a></p>`,
       subject: "Email verification to activate your account.",
       from: DEFAULT_EMAIL,
     }
+
     await new SendEmailPublisher(natsService.client).publish(email)
 
     res.send({ message: "Please check you email for your verification link" })
@@ -352,13 +371,11 @@ class AuthController {
 
   refreshToken = async (req: Request, res: Response) => {
     const REFRESH_TOKEN_MAX_REUSE = 5
-    const user = await CookieService.findUserByRefreshJwt(
-      req.session!.jwt?.refresh!
-    )
+    const user = req.currentUser
 
-    var refreshToken = await CookieService.findRefreshTokenOnlyById(
-      req.session!.jwt?.refresh!
-    )
+    if (!user) throw new NotAuthorisedError("User not found.")
+
+    var refreshToken = await CookieService.findRefreshTokenByUserId(user?._id)
 
     if (!user || refreshToken?.invalidated || !refreshToken) {
       req.session = null
@@ -377,7 +394,7 @@ class AuthController {
     refreshToken.useCount = refreshToken.useCount + 1
     refreshToken.save()
 
-    if (!user?.account.isVerified) {
+    if (!user?.isVerified) {
       CookieService.invalidateRefreshToken(user)
       throw new NotAuthorisedError(
         `Please verify account via link sent to: ${user.email}`
@@ -389,7 +406,7 @@ class AuthController {
       email: user.email,
       username: user?.username,
     }
-    const expiresIn = "2d"
+    const expiresIn = "3h"
     user.tokens = {
       access: CookieService.generateAccessToken(tokenToSign, expiresIn),
       refresh: req.session?.jwt?.refresh,
