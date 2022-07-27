@@ -24,7 +24,7 @@ class NatsService {
     })
   }
 
-  handleOnclose() {
+  disconnect() {
     natsService.client.on("close", () => {
       console.log("[AS] NATS process closed")
       process.exit()

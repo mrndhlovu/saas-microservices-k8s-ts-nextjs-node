@@ -1,26 +1,19 @@
-import { Schema, Document, model } from "mongoose"
-import { PasswordManager } from "../services"
+import { Schema, model, Document } from "mongoose"
 import { TokenType } from "../types"
 
-const TokenSchema = new Schema<TokenDocument>(
+const TokenSchema = new Schema<ITokenDocument>(
   {
-    invalidated: {
+    valid: {
       type: Boolean,
-      default: false,
+      default: true,
     },
-    useCount: {
-      type: Number,
-      default: 0,
-    },
-    token: {
-      type: String,
-    },
+    token: { type: String, required: true },
     tokenType: {
       type: String,
       required: true,
     },
     userId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: "User",
     },
     expiresAt: {
@@ -37,7 +30,7 @@ const TokenSchema = new Schema<TokenDocument>(
 
 TokenSchema.methods.toJSON = function () {
   const userObject = this.toObject({
-    transform: function (_doc, ret, _options) {
+    transform: function (_doc: ITokenDocument, ret: ITokenDocument) {
       ret.id = ret._id
       delete ret._id
       delete ret.__v
@@ -48,13 +41,12 @@ TokenSchema.methods.toJSON = function () {
   return userObject
 }
 
-export interface TokenDocument extends Document {
-  invalidated?: boolean
-  userId: string
-  token: string
-  useCount: number
-  tokenType: TokenType
+export interface ITokenDocument extends Document {
   expiresAt?: Date
+  valid: boolean
+  token: string
+  tokenType: TokenType
+  userId: string
 }
 
-export const Token = model<TokenDocument>("Token", TokenSchema)
+export const Token = model<ITokenDocument>("Token", TokenSchema)

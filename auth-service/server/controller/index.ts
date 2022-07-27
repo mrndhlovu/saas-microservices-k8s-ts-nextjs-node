@@ -130,12 +130,12 @@ class AuthController {
     const user = req.currentUser
     if (!user) throw new BadRequestError("User not found.")
 
-    const isVerified = await AuthService.verifyOtp(
+    const isValid = await AuthService.verifyOtp(
       req.body.verificationCode,
       user._id
     )
 
-    user.isVerified = isVerified
+    user.isVerified = isValid
     user.status = "active"
     user.save()
 
@@ -154,7 +154,7 @@ class AuthController {
 
     const existingOtpToken = await AuthService.getTokenByUserId(user._id, "otp")
     if (existingOtpToken) {
-      existingOtpToken.invalidated = true
+      existingOtpToken.valid = false
       existingOtpToken.save()
     }
 
@@ -377,21 +377,13 @@ class AuthController {
 
     var refreshToken = await CookieService.findRefreshTokenByUserId(user?._id)
 
-    if (!user || refreshToken?.invalidated || !refreshToken) {
+    if (!user || !refreshToken?.valid || !refreshToken) {
       req.session = null
       throw new NotAuthorisedError(
         "Authentication credentials may have expired."
       )
     }
 
-    if (refreshToken.useCount > REFRESH_TOKEN_MAX_REUSE) {
-      CookieService.invalidateRefreshToken(user)
-
-      throw new NotAuthorisedError(
-        "Authentication credentials may have expired."
-      )
-    }
-    refreshToken.useCount = refreshToken.useCount + 1
     refreshToken.save()
 
     if (!user?.isVerified) {

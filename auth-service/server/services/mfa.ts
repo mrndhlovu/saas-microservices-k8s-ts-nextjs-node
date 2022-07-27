@@ -45,7 +45,6 @@ class MultiFactorAuth {
   generate2StepRecoveryPassword = (user: IUserDocument) => {
     const token = authenticator.generateSecret()
 
-    user.twoStepRecovery.token = token
     return user
   }
 

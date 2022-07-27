@@ -5,7 +5,7 @@ build:
 	cd $(f) && docker build . && docker push ndhlovu/$(d) -a
 
 env: 
-	create secret generic env-config --from-env-file=.env 
+	kubectl create secret generic env-config --from-env-file=.env 
 
 stan: 
 	cd /boards/nats-test && kubectl port-forward 

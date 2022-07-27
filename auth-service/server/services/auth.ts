@@ -44,7 +44,7 @@ export class AuthService {
     if (!user)
       throw new BadRequestError("Login error: check your login credentials.")
 
-    isMatch = await bcrypt.compare(password.trim(), user.password)
+    isMatch = await bcrypt.compare(password.trim(), user.password!)
     if (!isMatch)
       throw new BadRequestError("Login error: check your login credentials.")
 
@@ -85,39 +85,39 @@ export class AuthService {
   }
 
   static async getTokenByUserId(userId: string, tokenType: TokenType) {
-    const token = await Token.findOne({ userId, tokenType, invalidated: false })
+    const token = await Token.findOne({ userId, tokenType, valid: true })
 
     return token
   }
 
   static async verifyOtp(submittedNumber: string, userId: string) {
-    const storedOtp = await Token.findOne({
+    const storedOtpToken = await Token.findOne({
       userId,
       tokenType: "otp",
-      invalidated: false,
+      valid: true,
     })
 
-    if (!storedOtp)
+    if (!storedOtpToken)
       throw new BadRequestError("Pass code did not match or may have expired")
 
-    const tokenExpired = new Date() > new Date(storedOtp.expiresAt!)
+    const tokenExpired = new Date() > new Date(storedOtpToken?.expiresAt!)
 
     if (tokenExpired) {
-      storedOtp.invalidated = true
-      await storedOtp.save()
+      storedOtpToken.valid = false
+      await storedOtpToken.save()
       throw new BadRequestError("Pass code has expired")
     }
 
-    const numbersMatch = PasswordManager.compare(
-      storedOtp.token,
+    const codesMatch = PasswordManager.compare(
+      storedOtpToken.token,
       submittedNumber
     )
 
-    if (!numbersMatch) throw new BadRequestError("Pass code did not match")
+    if (!codesMatch) throw new BadRequestError("Pass code did not match")
 
-    storedOtp.invalidated = true
-    await storedOtp.save()
+    storedOtpToken.valid = true
+    await storedOtpToken.save()
 
-    return numbersMatch
+    return codesMatch
   }
 }

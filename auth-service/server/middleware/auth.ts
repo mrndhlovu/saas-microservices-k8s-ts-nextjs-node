@@ -102,25 +102,6 @@ export class AuthMiddleWare {
 
   static findPendingMfaUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const existingUser = await AuthService.findUserOnlyByEmail(req.body.email)
-
-      if (!existingUser) throw new BadRequestError("User not found.")
-
-      const { isValid, user } = await CookieService.verifyMfaToken(
-        req.body?.code,
-        existingUser
-      )
-
-      if (!isValid) throw new BadRequestError("Link may have expired.")
-
-      if (!user.account.isVerified) {
-        throw new BadRequestError(
-          `Please verify account sent to: ${user.email}`
-        )
-      }
-
-      req.currentUser = user
-
       next()
     }
   )
@@ -229,7 +210,7 @@ export class AuthMiddleWare {
       }
 
       const passwordsMatch = await PasswordManager.compare(
-        existingUser.password,
+        existingUser.password!,
         password
       )
 

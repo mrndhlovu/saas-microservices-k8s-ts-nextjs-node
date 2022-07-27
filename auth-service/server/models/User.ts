@@ -51,9 +51,6 @@ const UserSchema = new Schema<IUserDocument>(
       required: true,
       default: [],
     },
-    accountId: {
-      type: String,
-    },
     permissionFlag: {
       type: Number,
       required: true,
@@ -72,12 +69,10 @@ const UserSchema = new Schema<IUserDocument>(
       required: true,
       default: [],
     },
-
     multiFactorAuth: {
       type: Boolean,
       default: false,
     },
-
     avatar: {
       type: Array,
       required: true,
@@ -88,34 +83,9 @@ const UserSchema = new Schema<IUserDocument>(
       trim: true,
       minlength: 4,
     },
-    tokens: {
-      type: Object,
-      default: {
-        access: String,
-        mfa: String,
-        refresh: {
-          type: Schema.Types.ObjectId,
-          ref: "Token",
-        },
-      },
-    },
     account: {
       type: Object,
       default: {},
-    },
-    twoStepRecovery: {
-      type: Object,
-      default: {
-        token: String,
-        setupDate: Date,
-      },
-    },
-    resetPassword: {
-      type: Object,
-      default: {
-        token: String,
-        expiresAt: Date,
-      },
     },
     isVerified: {
       type: Boolean,
@@ -135,11 +105,10 @@ const UserSchema = new Schema<IUserDocument>(
 
 UserSchema.methods.toJSON = function () {
   const userObject = this.toObject({
-    transform: function (_doc, ret, _options) {
+    transform: function (_doc: IUserDocument, ret: IUserDocument) {
       ret.id = ret._id
       delete ret._id
       delete ret.__v
-      delete ret.tokens
       delete ret.password
       return ret
     },
@@ -177,40 +146,25 @@ interface IUseBoardRoles {
   [key: string]: Types.ObjectId[]
 }
 
-type IRecoveryToken = {
-  token: string
-  setupDate: string
-}
-
-export interface IUser {
+export interface IUserDocument extends Document {
   avatar?: string
   bio?: string
-  email: string
+  email: Readonly<string>
   firstName?: string
   initials?: string
   lastName?: string
-  loginTypes: string[]
-  password: string
+  password?: string
   account: IAccountCreatedEvent["data"]
   boardIds: string[]
   workspaces: string[]
-  resetPasswordExpires?: string
-  resetPasswordToken?: string
   roles: IUseBoardRoles[]
   starred?: string[]
-  tokens: IJwtAccessTokens
   username: string
   viewedRecent?: string[]
   multiFactorAuth: boolean
   permissionFlag: number
-  twoStepRecovery: IRecoveryToken
   isVerified: boolean
   status: UserAccountStatus
-}
-
-export interface IUserDocument extends Document, IUser {
-  createdAt: boolean | string | number
-  updatedAt: boolean | string | number
 }
 
 export const User = model<IUserDocument>("User", UserSchema)

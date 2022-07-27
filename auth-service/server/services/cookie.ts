@@ -6,7 +6,6 @@ import {
 } from "@tusksui/shared"
 import { IAuthTokenOptions } from "../types"
 import { IUserDocument, User } from "../models/User"
-import { mfaService } from "./mfa"
 import { Request } from "express"
 import { AuthService } from "./auth"
 import { Token } from "../models/Token"
@@ -51,17 +50,14 @@ export class CookieService {
       tokenToSign.userId!
     )
 
-    console.log({ existingToken })
-
-    const tokenIsValid =
-      existingToken &&
-      existingToken.useCount <= 5 &&
-      CookieService.isTokenValid(
-        existingToken.token,
+    if (existingToken) {
+      const tokenIsValid = CookieService.isTokenValid(
+        existingToken.token!,
         process.env.JWT_REFRESH_TOKEN_SIGNATURE!
       )
 
-    if (tokenIsValid && existingToken) return existingToken.token
+      if (tokenIsValid) return existingToken.token
+    }
 
     const token = jwt.sign(
       tokenToSign,
@@ -91,41 +87,15 @@ export class CookieService {
     }
   }
 
-  static verifyMfaToken = async <T extends string, Y extends IJwtAuthToken>(
-    mfaToken: T,
-    authJwt: Y
-  ): Promise<{ isValid: boolean; user: IUserDocument }> => {
-    const user = await CookieService.findUserByJwt(authJwt)
-
-    if (!user) throw new BadRequestError("User not found")
-
-    const isValid = mfaService.validatedToken(mfaToken)
-
-    return { isValid, user }
-  }
-
-  static verify = async <T extends string, Y extends IJwtAuthToken>(
-    token: T,
-    authJwt: Y
-  ): Promise<{ isValid: boolean; user: IUserDocument }> => {
-    const user = await CookieService.findUserByJwt(authJwt)
-
-    if (!user) throw new BadRequestError("User not found")
-
-    const isValid = mfaService.validatedToken(token)
-
-    return { isValid, user }
-  }
-
   static async invalidateRefreshToken(user: IUserDocument) {
     const refreshToken = await Token.findOne({
-      userId: user._id,
-      invalidated: false,
+      userId: user.id,
+      valid: true,
       tokenType: "refresh",
     })
 
     if (refreshToken) {
-      refreshToken.invalidated = true
+      refreshToken.valid = false
       refreshToken?.save()
     }
   }
@@ -182,7 +152,7 @@ export class CookieService {
     const token = await Token.findOne({
       userId,
       tokenType: "refresh",
-      invalidated: false,
+      valid: true,
     })
     return token
   }
@@ -191,7 +161,7 @@ export class CookieService {
     const token = await Token.findOne({
       tokenType: "refresh",
       userId,
-      invalidated: false,
+      valid: true,
     })
 
     if (!token) {

@@ -2,13 +2,9 @@ import "express-async-errors"
 import cookieParser from "cookie-parser"
 import cookieSession from "cookie-session"
 import express from "express"
-// import cors from "cors"
-
 import { errorService } from "@tusksui/shared"
-
 import authRoutes from "./routes"
 import { AuthMiddleWare } from "./middleware/auth"
-import { AuthService } from "./services/auth"
 
 const BASE_URL = "/api/auth"
 

@@ -1,6 +1,5 @@
 import { BadRequestError } from "@tusksui/shared"
-
-import { database } from "./services"
+import { Database } from "./services"
 import app from "./app"
 import { natsService } from "./services/nats"
 import {
@@ -13,7 +12,7 @@ import {
 } from "./events/listeners"
 
 class Server {
-  private validateEnvVariables() {
+  private static validateEnvVariables() {
     const {
       PORT,
       JWT_TOKEN_SIGNATURE,
@@ -39,8 +38,8 @@ class Server {
     }
   }
 
-  async start() {
-    this.validateEnvVariables()
+  static async start() {
+    Server.validateEnvVariables()
 
     const { NODE_ENV, PORT } = process.env
 
@@ -51,7 +50,7 @@ class Server {
       process.env.NATS_CLIENT_ID!,
       process.env.NATS_URL!
     )
-    natsService.handleOnclose()
+    natsService.disconnect()
 
     new BoardCreatedListener(natsService.client).listen()
     new BoardDeletedListener(natsService.client).listen()
@@ -60,7 +59,7 @@ class Server {
     new NewActionListener(natsService.client).listen()
     new WorkspaceCreatedListener(natsService.client).listen()
 
-    await database.connect()
+    await Database.connect()
     app.listen(port, () => {
       const serverStatus = [
         {
@@ -74,6 +73,4 @@ class Server {
   }
 }
 
-const server = new Server()
-
-server.start()
+Server.start()
