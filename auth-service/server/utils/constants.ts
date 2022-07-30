@@ -19,6 +19,8 @@ export const allowedOrigins = [
   "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local",
 ]
 
+export const USER_EXCLUDED_OPTIONS = "-refreshTokens -accessTokens -mfaTokens"
+
 export const BOARDS_QUEUE_GROUP_NAME = "boards-service"
 
 export const DEFAULT_EMAIL = "kandhlovuie@gmail.com"
@@ -31,5 +33,5 @@ export const SECURITY_QUESTIONS = {
 
 export const BASE_URL = "https://tusks.dev"
 export const DID_NOT_UPDATE_PASSWORD_ENDPOINT = `${BASE_URL}/api/auth/pause-account`
-export const RESTORE_ACCOUNT_ENDPOINT = `${BASE_URL}/api/auth/restore-account`
+export const RESTORE_ACCOUNT_ENDPOINT = `${BASE_URL}/auth/restore-account`
 export const LOGIN_ENDPOINT = `${BASE_URL}/api/auth/login`

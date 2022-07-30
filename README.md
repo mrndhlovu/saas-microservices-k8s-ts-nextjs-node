@@ -80,7 +80,7 @@ This installation process assumes that you are running the project locally on yo
     MONGO_URI=mongodb://payments-mongo-srv:27017/<DB_NAME>
     MONGO_URI=mongodb://email-mongo-srv:27017/<DB_NAME>
 
-    JWT_TOKEN_SIGNATURE=<YOUR_JWT_TOKEN_SIGNATURE>
+    JWT_ACCESS_TOKEN_SIGNATURE=<YOUR_JWT_TOKEN_SIGNATURE>
     JWT_REFRESH_TOKEN_SIGNATURE=<YOUR_REFRESH_JWT_TOKEN_SIGNATURE>
 
     STRIPE_SECRET_KEY=<YOUR_STRIPE_SECRET_KEY>

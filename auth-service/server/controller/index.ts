@@ -5,6 +5,7 @@ import {
   IJwtAccessTokens,
   IJwtAuthToken,
   NotAuthorisedError,
+  NotFoundError,
   permissionManager,
 } from "@tusksui/shared"
 import { AuthService } from "../services/auth"
@@ -15,6 +16,7 @@ import {
   DID_NOT_UPDATE_PASSWORD_ENDPOINT,
   RESTORE_ACCOUNT_ENDPOINT,
   LOGIN_ENDPOINT,
+  USER_EXCLUDED_OPTIONS,
 } from "../utils/constants"
 import { natsService } from "../services/nats"
 import { IUserDocument, User } from "../models/User"
@@ -22,19 +24,21 @@ import {
   UserDeletedPublisher,
   UserVerifiedPublisher,
 } from "../events/publishers"
-import { mfaService, CookieService } from "../services"
+import { mfaService, TokenService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
 
 declare global {
   namespace Express {
     interface Request {
       currentUser?: IUserDocument
-      session:
-        | {
-            jwt: IJwtAccessTokens
-          }
-        | null
-        | undefined
+      bearerToken?: string
+      session?: {
+        jwt: IJwtAccessTokens
+        httpOnly?: boolean
+        domain?: string
+        sameSite?: boolean
+        signed?: boolean
+      } | null
     }
   }
 }
@@ -49,17 +53,18 @@ class AuthController {
     )
 
     const tokenToSign: IJwtAuthToken = {
-      userId: user._id.toHexString(),
       email: user.email,
       username: user?.username,
     }
 
-    const tokens = await CookieService.getAuthTokens(tokenToSign, {
-      accessExpiresAt: "10m",
+    const [otp, otpHash] = await AuthService.generateOtp()
+    const accessToken = await TokenService.generateToken(tokenToSign, {
+      expiresIn: "5m",
+      type: "otp",
     })
+    AuthService.addUserToken(user, `${otpHash}:${accessToken}`)
 
     await user.save()
-    const otp = await AuthService.generateOtp(user._id)
 
     const email = {
       email: user.email!,
@@ -69,34 +74,43 @@ class AuthController {
       in this email.<p>
       <p>Copy the One Time Pin below.</p>
       <br>The OTP code is: <strong>${otp}</strong>
-      <p><a href="${BASE_URL}/auth/verify?token=${tokens.access}" rel="noreferrer" target="_blank">Verify your code here.</a></p>`,
+      <p><a href="${BASE_URL}/auth/verify?token=${accessToken}" rel="noreferrer" target="_blank">Verify your code here.</a></p>`,
       subject: "Email verification to activate your account.",
       from: DEFAULT_EMAIL,
     }
 
     await new SendEmailPublisher(natsService.client).publish(email)
 
-    res.status(201).send(user)
+    res.status(201).send({})
   }
 
   getCurrentUser = async (req: Request, res: Response) => {
+    if (req?.currentUser!.status !== "active") {
+      req.session = null
+      throw new NotAuthorisedError("This account is not active.")
+    }
     res.status(200).send(req.currentUser)
   }
 
   loginUser = async (req: Request, res: Response) => {
     const user = req.currentUser!
+    AuthService.removeUserToken(user, req.session?.jwt?.access!)
 
     const tokenToSign: IJwtAuthToken = {
-      userId: user._id.toHexString(),
       email: user.email,
+      userId: user.id,
       username: user?.username,
     }
 
-    const tokens = await CookieService.getAuthTokens(tokenToSign, {
-      accessExpiresAt: "1h",
-      refreshExpiresAt: "1d",
+    const tokens = await TokenService.getAuthTokens(tokenToSign, {
+      accessExpiresAt: "30m",
+      refreshExpiresAt: "12h",
     })
-    CookieService.generateCookies(req, tokens)
+    AuthService.addUserToken(user, `${tokens.access}:${tokens.refresh}`)
+    TokenService.generateCookies(req, {
+      tokens,
+      httpOnly: true,
+    })
 
     await user.save()
 
@@ -116,11 +130,19 @@ class AuthController {
   }
 
   logoutUser = async (req: Request, res: Response) => {
+    AuthService.removeUserToken(req.currentUser!, req.session?.jwt?.access!)
     await req.currentUser!.save()
-    CookieService.invalidateRefreshToken(req.currentUser!)
 
     req.session = null
-    res.send({})
+    res.status(200).send({ success: true })
+  }
+
+  logoutAllSessions = async (req: Request, res: Response) => {
+    req.currentUser!.authTokens = []
+    await req.currentUser!.save()
+
+    req.session = null
+    res.status(200).send({ success: true })
   }
 
   verifyOtp = async (req: Request, res: Response) => {
@@ -128,16 +150,22 @@ class AuthController {
       throw new BadRequestError("verificationCode is required")
 
     const user = req.currentUser
+
     if (!user) throw new BadRequestError("User not found.")
 
     const isValid = await AuthService.verifyOtp(
       req.body.verificationCode,
-      user._id
+      req.session?.jwt.access!,
+      user.email,
+      req.path
     )
 
     user.isVerified = isValid
     user.status = "active"
-    user.save()
+
+    AuthService.removeUserToken(user, req.session?.jwt?.access!)
+
+    await user.save()
 
     new UserVerifiedPublisher(natsService.client).publish({
       id: user._id,
@@ -145,59 +173,98 @@ class AuthController {
       verified: user.isVerified,
     })
 
-    res.send({ user })
+    req.session = null
+    res.send({ success: true })
   }
 
   resendOtp = async (req: Request, res: Response) => {
     const user = await AuthService.findUserOnlyByEmail(req.body.email)
     if (!user) throw new BadRequestError("User not found")
 
-    const existingOtpToken = await AuthService.getTokenByUserId(user._id, "otp")
-    if (existingOtpToken) {
-      existingOtpToken.valid = false
-      existingOtpToken.save()
+    AuthService.removeUserToken(user, req.session?.jwt?.access!)
+
+    if (!req.session?.jwt?.access) {
+      user.authTokens = []
     }
 
-    const otp = await AuthService.generateOtp(user._id)
+    const [otp, otpHash] = await AuthService.generateOtp()
 
     const tokenToSign: IJwtAuthToken = {
-      userId: user._id,
       username: user.username,
       email: req.body.email,
     }
     const EXPIRES_IN = "5m"
-    const token = CookieService.generateAccessToken(tokenToSign, EXPIRES_IN)
+    const accessToken = await TokenService.generateToken(tokenToSign, {
+      expiresIn: EXPIRES_IN,
+      type: "otp",
+    })
+
+    AuthService.addUserToken(user, `${otpHash}:${accessToken}`)
+    TokenService.generateCookies(req, {
+      tokens: { access: accessToken },
+      httpOnly: true,
+    })
+
+    await user.save()
 
     const email = {
       email: user.email!,
       body: `
-      <p>To complete your sign up, and as an additional security measure, 
-      you are requested to enter the one-time password (OTP) provided 
+      <p>To complete your sign up, and as an additional security measure,
+      you are requested to enter the one-time password (OTP) provided
       in this email.<p>
       <p>Copy the One Time Pin below.</p>
       <br>The OTP code is: <strong>${otp}</strong>
-      <p><a href="${BASE_URL}/auth/verify?token=${token}" rel="noreferrer" target="_blank">Verify your code here.</a></p>`,
+      <p><a href="${BASE_URL}/auth/verify?token=${accessToken}" rel="noreferrer" target="_blank">Verify your code here.</a></p>`,
       subject: "Email verification to activate your account.",
       from: DEFAULT_EMAIL,
     }
 
     await new SendEmailPublisher(natsService.client).publish(email)
 
-    res.send({ message: "Please check you email for your verification link" })
+    res.send({
+      message: "Please check you email for your verification link",
+    })
   }
 
   updatePassword = async (req: Request, res: Response) => {
     if (!req.body.password)
       throw new BadRequestError("password field is required")
 
-    const user = await User.findById(req?.currentUser?._id)
+    const user = req.currentUser
     if (!user) throw new BadRequestError("Bad credentials")
 
     user.password = req.body.password
-    user.save()
+    AuthService.removeUserToken(user, req.session?.jwt!?.access!)
     req.session = null
-    CookieService.invalidateRefreshToken(user)
-    res.send(user)
+
+    const tokenToSign: IJwtAuthToken = {
+      username: "",
+      email: user.email,
+    }
+
+    const EXPIRES_IN = "365d"
+    const token = await TokenService.generateToken(tokenToSign, {
+      expiresIn: EXPIRES_IN,
+      type: "otp",
+    })
+
+    AuthService.addUserToken(user, token)
+    user.save()
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>Your password was updated.</p
+      ><p>If you did not make this change, click the link below:</p>
+      <a rel="noreferrer" target="_blank" href="${DID_NOT_UPDATE_PASSWORD_ENDPOINT}/${token}">${DID_NOT_UPDATE_PASSWORD_ENDPOINT}</a>
+      `,
+      subject: "Password updated.",
+      from: DEFAULT_EMAIL,
+    }
+    await new SendEmailPublisher(natsService.client).publish(email)
+
+    res.send({ success: true })
   }
 
   updateUser = async (req: Request, res: Response) => {
@@ -222,14 +289,15 @@ class AuthController {
 
     if (updateFields.includes("username")) {
       req.session = null
-      CookieService.invalidateRefreshToken(updatedRecord)
     }
 
     res.send(updatedRecord)
   }
 
   deleteUser = async (req: Request, res: Response) => {
-    const user = await CookieService.findUserByJwt(req.currentUserJwt)
+    const user = await AuthService.findUserOnlyByEmail(
+      req.currentUserJwt?.email
+    )
 
     if (!user) throw new BadRequestError("User not found.")
 
@@ -247,7 +315,7 @@ class AuthController {
       })
     }
     req.session = null
-    CookieService.invalidateRefreshToken(user)
+    // TokenService.invalidateRefreshToken(user)
     res.status(200).send({})
   }
 
@@ -256,18 +324,25 @@ class AuthController {
     if (!user) throw new BadRequestError("User not found.")
 
     const tokenToSign: IJwtAuthToken = {
-      userId: user._id,
       username: user.username,
       email: req.body.email,
     }
     const EXPIRES_IN = "5m"
-    const token = CookieService.generateAccessToken(tokenToSign, EXPIRES_IN)
+    const accessToken = await TokenService.generateToken(tokenToSign, {
+      expiresIn: EXPIRES_IN,
+      type: "otp",
+    })
+
+    AuthService.addUserToken(user, accessToken)
+
+    await user.save()
 
     const email = {
       email: user.email!,
       body: `
       <p>Use the link below to reset your password.<p>
-      <br>The OTP code is: <a href="${BASE_URL}/auth/verify?token=${token}" rel="noreferrer" target="_blank">RESET YOUR PASSWORD NOW!</a>`,
+        <p>Click the link below to update password.</p>
+      <br><a href="${BASE_URL}/auth/forgot-password?token=${accessToken}" rel="noreferrer" target="_blank">RESET YOUR PASSWORD NOW!</a>`,
       subject: "Password recovery.",
       from: DEFAULT_EMAIL,
     }
@@ -278,7 +353,6 @@ class AuthController {
       message: "Please check you email for your reset password link.",
     }
 
-    CookieService.invalidateRefreshToken(user)
     req.session = null
 
     res.status(200).send(response)
@@ -287,21 +361,25 @@ class AuthController {
   validateAccount = async (req: Request, res: Response) => {
     const user = req.currentUser
     if (!user) throw new BadRequestError("User not found.")
-    if (!req.body.newPassword)
+    if (!req.body.newPassword) {
       throw new BadRequestError("Password field is required")
+    }
 
     user.password = req.body.newPassword
-    user.save()
-    req.session = null
-    CookieService.invalidateRefreshToken(user)
+    AuthService.removeUserToken(user, req.session?.jwt!?.access!)
 
     const tokenToSign: IJwtAuthToken = {
-      userId: "",
       username: "",
       email: user.email,
     }
     const EXPIRES_IN = "365d"
-    const token = CookieService.generateAccessToken(tokenToSign, EXPIRES_IN)
+    const token = await TokenService.generateToken(tokenToSign, {
+      expiresIn: EXPIRES_IN,
+      type: "otp",
+    })
+
+    AuthService.addUserToken(user, token)
+    await user.save()
 
     const email = {
       email: user.email!,
@@ -315,96 +393,95 @@ class AuthController {
     }
     await new SendEmailPublisher(natsService.client).publish(email)
 
-    res.status(200).send({ ok: !!user })
+    res.status(200).send({ success: true })
   }
 
   enableMfa = async (req: Request, res: Response) => {
     res.status(200).send(req.currentUser)
   }
 
-  verifyMfa = async (req: Request, res: Response) => {
-    const tokenToSign: IJwtAuthToken = {
-      userId: req.currentUser!._id.toHexString(),
-      email: req.currentUser!.email,
-      username: req.currentUser!.username,
-      mfa: {
-        validated: true,
-        enabled: req.currentUser!.multiFactorAuth,
-      },
-    }
+  // verifyMfa = async (req: Request, res: Response) => {
+  //   const tokenToSign: IJwtAuthToken = {
+  //     userId: req.currentUser!._id.toHexString(),
+  //     email: req.currentUser!.email,
+  //     username: req.currentUser!.username,
+  //     mfa: {
+  //       validated: true,
+  //       enabled: req.currentUser!.multiFactorAuth,
+  //     },
+  //   }
 
-    const tokens = await CookieService.getAuthTokens(tokenToSign)
-    req.currentUser!.multiFactorAuth = true
-    CookieService.generateCookies(req, tokens)
+  //   const tokens = await TokenService.getAuthTokens(tokenToSign)
+  //   req.currentUser!.multiFactorAuth = true
+  //   TokenService.generateCookies(req, tokens)
 
-    await req.currentUser!.save()
+  //   await req.currentUser!.save()
 
-    res.status(200).send(req.currentUser)
-  }
+  //   res.status(200).send(req.currentUser)
+  // }
 
-  connectMfa = async (req: Request, res: Response) => {
-    const isConnected = mfaService.validatedToken(req.body.code)
+  // connectMfa = async (req: Request, res: Response) => {
+  //   const isConnected = mfaService.validatedToken(req.body.code)
 
-    if (!isConnected) throw new BadRequestError("Validation failed")
+  //   if (!isConnected) throw new BadRequestError("Validation failed")
 
-    const tokenToSign: IJwtAuthToken = {
-      userId: req.currentUser!._id.toHexString(),
-      email: req.currentUser!.email,
-      username: req.currentUser!.username,
+  //   const tokenToSign: IJwtAuthToken = {
+  //     userId: req.currentUser!._id.toHexString(),
+  //     email: req.currentUser!.email,
+  //     username: req.currentUser!.username,
 
-      mfa: {
-        validated: true,
-        enabled: isConnected,
-      },
-    }
+  //     mfa: {
+  //       validated: true,
+  //       enabled: isConnected,
+  //     },
+  //   }
 
-    req.currentUser!.tokens = await CookieService.getAuthTokens(tokenToSign)
+  //   req.currentUser!.tokens = await TokenService.getAuthTokens(tokenToSign)
 
-    CookieService.generateCookies(req, req.currentUser!.tokens)
+  //   TokenService.generateCookies(req, req.currentUser!.tokens)
 
-    mfaService.generate2StepRecoveryPassword(req.currentUser!)
+  //   mfaService.generate2StepRecoveryPassword(req.currentUser!)
 
-    await req.currentUser!.save()
+  //   await req.currentUser!.save()
 
-    res.status(200).send(req.currentUser)
-  }
+  //   res.status(200).send(req.currentUser)
+  // }
 
   refreshToken = async (req: Request, res: Response) => {
-    const REFRESH_TOKEN_MAX_REUSE = 5
     const user = req.currentUser
 
     if (!user) throw new NotAuthorisedError("User not found.")
 
-    var refreshToken = await CookieService.findRefreshTokenByUserId(user?._id)
+    var refreshToken = req.session?.jwt.refresh
 
-    if (!user || !refreshToken?.valid || !refreshToken) {
+    if (!user || !refreshToken) {
       req.session = null
       throw new NotAuthorisedError(
         "Authentication credentials may have expired."
       )
     }
 
-    refreshToken.save()
+    AuthService.removeUserToken(user, refreshToken)
 
     if (!user?.isVerified) {
-      CookieService.invalidateRefreshToken(user)
       throw new NotAuthorisedError(
         `Please verify account via link sent to: ${user.email}`
       )
     }
 
     const tokenToSign: IJwtAuthToken = {
-      userId: user._id.toHexString(),
       email: user.email,
       username: user?.username,
     }
-    const expiresIn = "3h"
-    user.tokens = {
-      access: CookieService.generateAccessToken(tokenToSign, expiresIn),
-      refresh: req.session?.jwt?.refresh,
-    }
-
-    CookieService.generateCookies(req, user.tokens)
+    const tokens = await TokenService.getAuthTokens(tokenToSign, {
+      accessExpiresAt: "30m",
+      refreshExpiresAt: "12h",
+    })
+    AuthService.addUserToken(user, `${tokens.access}:${tokens.refresh}`)
+    TokenService.generateCookies(req, {
+      tokens,
+      httpOnly: true,
+    })
 
     await user.save()
 
@@ -412,7 +489,7 @@ class AuthController {
   }
 
   pauseAccount = async (req: Request, res: Response) => {
-    const user = await AuthService.findUserOnlyByEmail(req.currentUserJwt.email)
+    const user = req.currentUser
 
     if (!user) throw new NotAuthorisedError("User not found.")
     user.status = "paused"
@@ -423,21 +500,79 @@ class AuthController {
       body: `
       <p>Account paused.</p
       ><p>Please click the link below to restore you account:</p>
-      <a rel="noreferrer" target="_blank" href="${RESTORE_ACCOUNT_ENDPOINT}">${BASE_URL}</a>
+      <a rel="noreferrer" target="_blank" href="${RESTORE_ACCOUNT_ENDPOINT}">${RESTORE_ACCOUNT_ENDPOINT}</a>
       `,
-      subject: "Password updated.",
+      subject: "Account locked.",
       from: DEFAULT_EMAIL,
     }
     await new SendEmailPublisher(natsService.client).publish(email)
 
-    res.status(200).send({})
+    res.status(200).send({ success: true })
+  }
+
+  verifyRecoveryEmail = async (req: Request, res: Response) => {
+    if (!req?.body?.email) {
+      throw new NotFoundError("Email field is required.")
+    }
+
+    const user = await AuthService.findUserOnlyByEmail(req.body.email)
+    if (!user) throw new NotAuthorisedError("User not found.")
+
+    const [otp, otpHash] = await AuthService.generateOtp()
+    AuthService.removeUserToken(user, req.session?.jwt!?.access!)
+
+    const tokenToSign: IJwtAuthToken = {
+      username: "",
+      email: user.email,
+    }
+    const EXPIRES_IN = "5m"
+    const token = await TokenService.generateToken(tokenToSign, {
+      expiresIn: EXPIRES_IN,
+      type: "otp",
+    })
+    AuthService.addUserToken(user, `${otpHash}:${token}`)
+    TokenService.generateCookies(req, {
+      tokens: { access: token },
+      httpOnly: true,
+    })
+
+    await user.save()
+
+    const email = {
+      email: user.email!,
+      body: `
+      <p>To complete your account recovery, and as an additional security measure, 
+      you are requested to enter the one-time password (OTP) provided 
+      in this email.<p>
+      <p>Copy the One Time Pin below.</p>
+      <br>The OTP code is: <strong>${otp}</strong>`,
+      subject: "Account recovery.",
+      from: DEFAULT_EMAIL,
+    }
+    await new SendEmailPublisher(natsService.client).publish(email)
+
+    res.status(200).send({ success: true })
   }
 
   restoreAccount = async (req: Request, res: Response) => {
     const user = req.currentUser
     if (!user) throw new NotAuthorisedError("User not found.")
 
+    const isValid = await AuthService.verifyOtp(
+      req.body.verificationCode,
+      req.session?.jwt.access!,
+      user.email,
+      req.path
+    )
+
+    if (!isValid) {
+      req.session = null
+      throw new NotAuthorisedError("Access token expired.")
+    }
+
+    user.isVerified = isValid
     user.status = "active"
+
     await user.save()
 
     const email = {

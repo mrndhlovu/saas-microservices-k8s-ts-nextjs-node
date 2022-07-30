@@ -15,8 +15,9 @@ class Server {
   private static validateEnvVariables() {
     const {
       PORT,
-      JWT_TOKEN_SIGNATURE,
+      JWT_ACCESS_TOKEN_SIGNATURE,
       JWT_REFRESH_TOKEN_SIGNATURE,
+      JWT_OTP_TOKEN_SIGNATURE,
       MONGO_URI,
       NATS_URL,
       NATS_CLIENT_ID,
@@ -26,8 +27,9 @@ class Server {
 
     if (
       !PORT ||
-      !JWT_TOKEN_SIGNATURE ||
+      !JWT_ACCESS_TOKEN_SIGNATURE ||
       !JWT_REFRESH_TOKEN_SIGNATURE ||
+      !JWT_OTP_TOKEN_SIGNATURE ||
       !MONGO_URI ||
       !NATS_CLUSTER_ID ||
       !NATS_CLIENT_ID ||

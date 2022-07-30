@@ -54,7 +54,7 @@ class AccountMiddleware {
     async (req: Request, _res: Response, next: NextFunction) => {
       const verificationJwt = jwt.verify(
         req.params.token,
-        process.env.JWT_TOKEN_SIGNATURE!
+        process.env.JWT_ACCESS_TOKEN_SIGNATURE!
       ) as IVerificationJwt
 
       const account = await accountService.findAccountOnlyByUseId(

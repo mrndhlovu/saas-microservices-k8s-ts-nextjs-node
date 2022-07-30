@@ -20,7 +20,7 @@ beforeAll(async () => {
   process.env.NATS_URL = "JEST_TEST_KEYQWERTYUIO"
   process.env.NATS_CLIENT_ID = "JEST_TEST_KEYQWERTYUIO"
   process.env.NATS_CLUSTER_ID = "JEST_TEST_KEYQWERTYUIO"
-  process.env.JWT_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
+  process.env.JWT_ACCESS_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
 
   mongo = await MongoMemoryServer.create()
   const mongoUri = mongo.getUri()
@@ -61,7 +61,10 @@ global.signup = async () => {
     accountId: response.body.id,
   }
 
-  const token: string = jwt.sign(payload, process.env.JWT_TOKEN_SIGNATURE!)
+  const token: string = jwt.sign(
+    payload,
+    process.env.JWT_ACCESS_TOKEN_SIGNATURE!
+  )
   const tokens: IJwtAccessTokens = { access: token, refresh: token }
 
   const session = { jwt: tokens }

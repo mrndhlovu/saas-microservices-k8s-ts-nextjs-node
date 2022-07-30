@@ -12,7 +12,7 @@ class Server {
   private loadEnvVariables() {
     const {
       PORT,
-      JWT_TOKEN_SIGNATURE,
+      JWT_ACCESS_TOKEN_SIGNATURE,
       JWT_REFRESH_TOKEN_SIGNATURE,
       MONGO_URI,
       NATS_URL,
@@ -32,7 +32,7 @@ class Server {
 
     if (
       !PORT ||
-      !JWT_TOKEN_SIGNATURE ||
+      !JWT_ACCESS_TOKEN_SIGNATURE ||
       !JWT_REFRESH_TOKEN_SIGNATURE ||
       !MONGO_URI ||
       !NATS_CLUSTER_ID ||

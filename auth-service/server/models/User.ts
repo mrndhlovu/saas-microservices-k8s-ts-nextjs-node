@@ -1,8 +1,8 @@
 import isEmail from "validator/lib/isEmail"
 import { Schema, Document, model, Types } from "mongoose"
-import { IAccountCreatedEvent, IJwtAccessTokens } from "@tusksui/shared"
+import { IAccountCreatedEvent } from "@tusksui/shared"
 import { PasswordManager } from "../services/password"
-import { UserAccountStatus } from "../types"
+import { IAuthTokenOptions, IAuthTypes, UserAccountStatus } from "../types"
 
 const UserSchema = new Schema<IUserDocument>(
   {
@@ -69,10 +69,6 @@ const UserSchema = new Schema<IUserDocument>(
       required: true,
       default: [],
     },
-    multiFactorAuth: {
-      type: Boolean,
-      default: false,
-    },
     avatar: {
       type: Array,
       required: true,
@@ -94,6 +90,12 @@ const UserSchema = new Schema<IUserDocument>(
     status: {
       type: String,
       default: "pending",
+    },
+    authType: {
+      type: String,
+    },
+    authTokens: {
+      type: [String],
     },
   },
   {
@@ -161,10 +163,11 @@ export interface IUserDocument extends Document {
   starred?: string[]
   username: string
   viewedRecent?: string[]
-  multiFactorAuth: boolean
+  authType: IAuthTypes
   permissionFlag: number
   isVerified: boolean
   status: UserAccountStatus
+  authTokens: string[]
 }
 
 export const User = model<IUserDocument>("User", UserSchema)

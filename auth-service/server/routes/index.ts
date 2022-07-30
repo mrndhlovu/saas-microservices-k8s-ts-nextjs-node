@@ -1,10 +1,8 @@
 import { Router } from "express"
-
 import {
   errorService,
   authMiddleware as middlewareUtils,
 } from "@tusksui/shared"
-
 import { authController } from "../controller"
 import { AuthMiddleWare } from "../middleware/auth"
 
@@ -21,7 +19,7 @@ router.post(
 router.get(
   "/me",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.getCurrentUser)
 )
@@ -45,9 +43,17 @@ router.post(
 router.get(
   "/logout",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.logoutUser)
+)
+
+router.get(
+  "/logout-all",
+  middlewareUtils.validateRequiredAccessJwt,
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.logoutAllSessions)
 )
 
 router.patch(
@@ -60,15 +66,14 @@ router.patch(
 
 router.patch(
   "/update-password",
-  middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.updatePassword)
 )
 
 router.get(
   "/refresh-token",
-  middlewareUtils.validateRequiredRefreshJwt,
+  AuthMiddleWare.findRequiredRefreshJwt,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.refreshToken)
 )
@@ -80,7 +85,7 @@ router.post(
 
 router.post(
   "/recover-account",
-  AuthMiddleWare.validateRequiredBearerToken,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.validateAccount)
 )
@@ -88,26 +93,32 @@ router.post(
 router.get(
   "/pause-account/:token",
   AuthMiddleWare.validateParamAuthToken,
+  AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.pauseAccount)
 )
 
 router.post(
+  "/restore-account/verify-email",
+  errorService.catchAsyncError(authController.verifyRecoveryEmail)
+)
+
+router.post(
   "/restore-account",
-  AuthMiddleWare.checkRequiredLoginFields,
-  AuthMiddleWare.validateUser,
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.restoreAccount)
 )
 
 router.delete(
   "/delete",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.checkIsAuthenticated,
   errorService.catchAsyncError(authController.deleteUser)
 )
 
 router.post(
   "/verify-otp",
-  AuthMiddleWare.validateRequiredBearerToken,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.verifyOtp)
 )
@@ -120,7 +131,7 @@ router.post(
 router.post(
   "/mfa/enable",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.enableMfa)
 )
@@ -128,7 +139,7 @@ router.post(
 router.get(
   "/mfa/qr-code",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
+  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser,
   errorService.catchAsyncError(authController.getQrCode)
 )
@@ -136,17 +147,17 @@ router.get(
 router.post(
   "/mfa/validate",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
-  AuthMiddleWare.findPendingMfaUser,
-  errorService.catchAsyncError(authController.verifyMfa)
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findPendingMfaUser
+  // errorService.catchAsyncError(authController.verifyMfa)
 )
 
 router.post(
   "/mfa/connect",
   middlewareUtils.validateRequiredAccessJwt,
-  middlewareUtils.checkIsAuthenticated,
-  AuthMiddleWare.findCurrentUser,
-  errorService.catchAsyncError(authController.connectMfa)
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser
+  // errorService.catchAsyncError(authController.connectMfa)
 )
 
 // router.post(

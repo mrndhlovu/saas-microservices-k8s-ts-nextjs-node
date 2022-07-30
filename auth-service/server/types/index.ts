@@ -1,3 +1,4 @@
+import { IJwtAccessTokens } from "@tusksui/shared"
 import { Application } from "express"
 
 import { IUserDocument } from "../models/User"
@@ -54,14 +55,14 @@ export interface IPendingMfaCredentials {
 }
 
 export interface IAuthTokenOptions {
-  accessToken?: string
-  refreshTokenId?: string
+  accessTokens?: string[]
+  refreshTokens?: string[]
+  mfaTokens?: string[]
   accessExpiresAt?: string
   refreshExpiresAt?: string
-  isRefreshingToken?: boolean
 }
 
-export type TokenType = "otp" | "refresh"
+export type SignatureType = "refresh" | "access" | "otp"
 
 export type UserAccountStatus =
   | "pending"
@@ -69,3 +70,28 @@ export type UserAccountStatus =
   | "paused"
   | "archived"
   | "active"
+
+export interface IGenerateTokenOptions {
+  expiresIn?: string
+  httpOnly?: boolean
+  type: SignatureType
+}
+
+export interface IGenerateCookieOptions {
+  tokens: Pick<IJwtAccessTokens, "access" | "refresh">
+  httpOnly?: boolean
+}
+
+export type IAuthTypes = "identifier" | "google"
+
+export interface IUpdateUserTokens {
+  tokenType: keyof Pick<
+    IAuthTokenOptions,
+    "accessTokens" | "refreshTokens" | "mfaTokens"
+  >
+  token: string
+}
+
+export type SignatureOptions = {
+  [type in SignatureType]: string
+}

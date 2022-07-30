@@ -26,6 +26,7 @@ build:
         infer:
           - 'src/**/*.tsx'
           - 'src/**/*.ts'
+          - 'next.config.js'
 
     - image: ndhlovu/boards
       context: board-service

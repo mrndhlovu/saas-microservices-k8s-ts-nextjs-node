@@ -20,7 +20,7 @@ jest.mock("../services/nats")
 let mongo: any
 beforeAll(async () => {
   process.env.PORT = "8000"
-  process.env.JWT_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
+  process.env.JWT_ACCESS_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
   process.env.JWT_REFRESH_TOKEN_SIGNATURE = "JEST_TEST_KEYQWERTYUIO"
   process.env.MONGO_URI = "JEST_TEST_KEYQWERTYUIO"
   process.env.NATS_URL = "JEST_TEST_KEYQWERTYUIO"

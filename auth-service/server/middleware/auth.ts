@@ -10,20 +10,23 @@ import {
 import { AuthService } from "../services/auth"
 import { IUserDocument } from "../models/User"
 import { allowedOrigins } from "../utils/constants"
-import { CookieService, PasswordManager } from "../services"
+import { TokenService, PasswordManager } from "../services"
 import isEmail from "validator/lib/isEmail"
 import jwt from "jsonwebtoken"
+import { getSignatureKey } from "../helpers"
 
 declare global {
   namespace Express {
     interface Request {
       currentUser?: IUserDocument
-      session:
-        | {
-            jwt: IJwtAccessTokens
-          }
-        | null
-        | undefined
+      bearerToken?: string
+      session?: {
+        jwt: IJwtAccessTokens
+        httpOnly?: boolean
+        domain?: string
+        sameSite?: boolean
+        signed?: boolean
+      } | null
     }
   }
 }
@@ -79,9 +82,49 @@ export class AuthMiddleWare {
     next()
   }
 
+  static checkIsAuthenticated = errorService.catchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const authorization = req?.get("authorization")!?.replace("Bearer ", "")
+      const authorizationToken =
+        authorization !== "" ? authorization : undefined
+
+      const jwtSignatureKey = getSignatureKey(req.path)
+
+      if (req?.currentUserJwt?.userId) {
+        next()
+      }
+
+      const sessionJwtToken = req?.session!.jwt?.access
+        ? req?.session!.jwt?.access
+        : authorizationToken?.trim()
+
+      if (!sessionJwtToken) {
+        req.session = null
+        throw new NotAuthorisedError("Authorization credentials are missing.")
+      }
+      console.log({ authorizationToken, jwtSignatureKey })
+
+      const currentUserJwt = TokenService.getVerifiedJwtValue(
+        sessionJwtToken,
+        jwtSignatureKey
+      )
+
+      req.currentUserJwt = currentUserJwt
+
+      if (authorizationToken) {
+        req.session!.jwt = { access: authorizationToken }
+      }
+
+      next()
+    }
+  )
+
   static findCurrentUser = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      const currentUser = await CookieService.findUserByJwt(req.currentUserJwt)
+      const currentUser = await AuthService.findUserOnlyByEmail(
+        req?.currentUserJwt?.email
+      )
+
       const isVerifyEmailPath = req.path === "/verify-otp"
 
       if (!currentUser) {
@@ -95,6 +138,7 @@ export class AuthMiddleWare {
       }
 
       req.currentUser = currentUser
+      console.log(req.currentUser.id)
 
       next()
     }
@@ -108,38 +152,20 @@ export class AuthMiddleWare {
 
   static findRequiredRefreshJwt = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
-      console.log(req?.session?.jwt)
-
       if (!req.session || !req.session.jwt?.refresh) {
         throw new NotAuthorisedError("Authorization credentials are missing.")
       }
 
-      const currentUserJwt = jwt.verify(
-        req.session.jwt.refresh,
-        process.env.JWT_REFRESH_TOKEN_SIGNATURE!
-      )
+      try {
+        const currentUserJwt = jwt.verify(
+          req.session.jwt.refresh,
+          process.env.JWT_ACCESS_TOKEN_SIGNATURE!
+        )
 
-      req.currentUserJwt = currentUserJwt as IJwtAuthToken
-
-      next()
-    }
-  )
-
-  static validateRequiredBearerToken = errorService.catchAsyncError(
-    async (req: Request, _res: Response, next: NextFunction) => {
-      const token = req.headers.authorization?.split(" ")?.[1]
-
-      if (!token) {
-        throw new NotAuthorisedError("Authorization credentials are missing.")
+        req.currentUserJwt = currentUserJwt as IJwtAuthToken
+      } catch (error) {
+        throw new NotAuthorisedError("Session expired.")
       }
-
-      const currentUserJwt = jwt.verify(
-        token!,
-        process.env.JWT_TOKEN_SIGNATURE!
-      )
-
-      req.currentUserJwt = currentUserJwt as IJwtAuthToken
-
       next()
     }
   )
@@ -147,17 +173,21 @@ export class AuthMiddleWare {
   static validateParamAuthToken = errorService.catchAsyncError(
     async (req: Request, _res: Response, next: NextFunction) => {
       const token = req.params.token
+      let path
 
       if (!token) {
         throw new NotAuthorisedError("Authorization credentials are missing.")
       }
 
-      const currentUserJwt = jwt.verify(
-        token!,
-        process.env.JWT_TOKEN_SIGNATURE!
-      )
+      if (req.path.indexOf("/pause-account") > -1) {
+        path = "/pause-account"
+      }
 
-      console.log(currentUserJwt)
+      const jwtSignatureKey = getSignatureKey(path || req.path)
+      const currentUserJwt = TokenService.getVerifiedJwtValue(
+        token,
+        jwtSignatureKey
+      )
 
       req.currentUserJwt = currentUserJwt as IJwtAuthToken
 
@@ -165,33 +195,33 @@ export class AuthMiddleWare {
     }
   )
 
-  static async check2FactorAuth(
-    req: Request,
-    res: Response,
-    existingUser: IUserDocument
-  ) {
-    const tokenToSign: IJwtAuthToken = {
-      userId: existingUser._id.toHexString(),
-      email: existingUser.email,
-      username: existingUser?.username,
-      mfa: {
-        enabled: existingUser.multiFactorAuth,
-        validated: false,
-      },
-    }
+  // static async check2FactorAuth(
+  //   req: Request,
+  //   res: Response,
+  //   existingUser: IUserDocument
+  // ) {
+  //   const tokenToSign: IJwtAuthToken = {
+  //     userId: existingUser._id.toHexString(),
+  //     email: existingUser.email,
+  //     username: existingUser?.username,
+  //     mfa: {
+  //       enabled: existingUser.multiFactorAuth,
+  //       validated: false,
+  //     },
+  //   }
 
-    existingUser.tokens = {
-      ...(await CookieService.getAuthTokens(tokenToSign, {
-        accessExpiresAt: "3m",
-        refreshExpiresAt: "3m",
-      })),
-    }
+  //   existingUser.tokens = {
+  //     ...(await TokenService.getAuthTokens(tokenToSign, {
+  //       accessExpiresAt: "3m",
+  //       refreshExpiresAt: "3m",
+  //     })),
+  //   }
 
-    CookieService.generateCookies(req, existingUser.tokens)
+  //   TokenService.generateCookies(req, existingUser.tokens)
 
-    await existingUser.save()
-    return res.send({ multiFactorAuth: true })
-  }
+  //   await existingUser.save()
+  //   return res.send({ multiFactorAuth: true })
+  // }
 
   static validateUser = errorService.catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -205,9 +235,9 @@ export class AuthMiddleWare {
         throw new BadRequestError("User not found.")
       }
 
-      if (existingUser.multiFactorAuth) {
-        AuthMiddleWare.check2FactorAuth(req, res, existingUser)
-      }
+      // if (existingUser.multiFactorAuth) {
+      //   AuthMiddleWare.check2FactorAuth(req, res, existingUser)
+      // }
 
       const passwordsMatch = await PasswordManager.compare(
         existingUser.password!,

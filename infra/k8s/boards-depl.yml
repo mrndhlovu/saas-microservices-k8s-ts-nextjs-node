@@ -20,11 +20,11 @@ spec:
           #     memory: 912Mi
           #     cpu: '900m'
           env:
-            - name: JWT_TOKEN_SIGNATURE
+            - name: JWT_ACCESS_TOKEN_SIGNATURE
               valueFrom:
                 secretKeyRef:
                   name: env-config
-                  key: JWT_TOKEN_SIGNATURE
+                  key: JWT_ACCESS_TOKEN_SIGNATURE
 
             - name: JWT_REFRESH_TOKEN_SIGNATURE
               valueFrom:
