@@ -61,17 +61,15 @@ class BoardServices {
     board: BoardDocument,
     options: IUpdateBoardMemberOptions
   ) => {
-    const boardMember: IBoardMember = {
-      id: options.userId,
-      permissionFlag: permissionManager.updatePermission(
-        options.currentPermFlag,
-        options.newRole
-      ),
-    }
+    const permissionFlag = permissionManager.updatePermission(
+      options.currentPermFlag,
+      options.newRole
+    )
+
+    const updatedMemberPermission = `${options.userId}:${permissionFlag}`
 
     if (options.isNew) {
-      board.members.push(boardMember)
-
+      board.members.push(updatedMemberPermission)
       return board
     }
 
@@ -83,19 +81,17 @@ class BoardServices {
         }
 
         const existingBoardMember = record?.members.find(
-          (member: IBoardMember) => member.id === options.userId
+          (member: string) => member.indexOf(options.userId) > -1
         )
+
         if (existingBoardMember) {
-          record?.members.map((member: IBoardMember) => {
-            if (existingBoardMember?.id === member.id) {
-              member.permissionFlag = permissionManager.updatePermission(
-                member.permissionFlag,
-                options.newRole
-              )
+          record?.members.map((member: string) => {
+            if (member.indexOf(options.userId) > -1) {
+              return updatedMemberPermission
             }
           })
         } else {
-          record?.members.push(boardMember)
+          record?.members.push(updatedMemberPermission)
         }
 
         await record.save()
@@ -119,8 +115,6 @@ class BoardServices {
     fileFilter: function (_req, file, cb) {
       const mimetype = file.mimetype.split("/")?.[1]
 
-      console.log({ mimetype })
-
       if (allowedUploadTypes.includes(mimetype)) return cb(null, true)
       cb(new BadRequestError("File type cannot be uploaded!"))
     },
@@ -136,6 +130,30 @@ class BoardServices {
       },
     }),
   })
+
+  async boardWithUpdatedMember(options: {
+    memberId: string
+    boardId: string
+    role: IPermissionType
+    board?: BoardDocument
+  }) {
+    const permissionFlag = permissionManager.updatePermission(
+      permissionManager.permissions.BLOCKED,
+      options.role
+    )
+    const boardMemberIdentifier = `${options.memberId}:${permissionFlag}`
+
+    if (!options.board) {
+      return await Board.findOneAndUpdate(
+        { _id: options.boardId },
+        { $push: { members: boardMemberIdentifier } },
+        { new: true }
+      )
+    }
+
+    options.board.members.push(boardMemberIdentifier)
+    return options.board
+  }
 
   validatedUpload(files: IUploadFile[]) {
     return files.every(file => allowedUploadTypes.includes(file.extension))
@@ -182,9 +200,14 @@ class BoardServices {
     return board
   }
 
-  getPopulatedBoard = async (boardId: string) => {
-    const board = await Board.findOne({
-      _id: idToObjectId(boardId),
+  getPopulatedBoard = async (boardId: string, userId?: string) => {
+    const regex = new RegExp(userId!, "i")
+
+    console.log(regex, userId)
+
+    const board = await Board.find({
+      _id: boardId,
+      members: { $regex: regex },
       archived: false,
     }).populate([
       {
@@ -210,7 +233,7 @@ class BoardServices {
       },
     ])
 
-    return board
+    return board?.[0]
   }
 
   async getUnsplash(query: string, pageIndex: number, perPage: number) {

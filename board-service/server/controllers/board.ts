@@ -43,9 +43,10 @@ class BoardController {
     const { archived } = req.query
 
     const isArchived = Boolean(archived !== "false")
+    const regex = new RegExp(req.currentUserJwt.userId!, "i")
 
     const boards = await Board.find({
-      owner: req.currentUserJwt.userId,
+      members: { $regex: regex },
       archived: !isArchived,
     }).populate({
       path: "lists",
@@ -63,7 +64,10 @@ class BoardController {
   }
 
   getBoardById = async (req: Request, res: Response) => {
-    const board = await boardService.getPopulatedBoard(req.params.boardId)
+    const board = await boardService.getPopulatedBoard(
+      req.params.boardId,
+      req.currentUserJwt?.userId
+    )
 
     if (board) {
       board.lastViewed = Date.now()
@@ -237,6 +241,11 @@ class BoardController {
       workspaces: req.body?.workspaceId ? [req.body?.workspaceId] : [],
     })
 
+    const workspace = await Workspace.findById(req.body?.workspaceId)
+    if (!workspace) {
+      throw new BadRequestError("Workspace id is required")
+    }
+
     const updatedBoard = await boardService.updateBoardMemberRole(board!, {
       currentPermFlag: permissionManager.permissions.BLOCKED,
       isNew: true,
@@ -284,7 +293,9 @@ class BoardController {
       },
     ])
 
+    workspace.boards.push(board?._id)
     await updatedBoard.save()
+    await workspace.save()
 
     await new BoardCreatedPublisher(natsService.client).publish({
       id: updatedBoard._id,

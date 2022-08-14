@@ -40,10 +40,6 @@ const BoardSchema = new Schema<BoardDocument>(
       required: true,
       default: false,
     },
-    workspaces: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Workspace" }],
-      default: [],
-    },
     members: {
       type: Array,
       default: [],
@@ -117,10 +113,9 @@ export interface IBoard extends Document {
   archived: boolean
   comments: string[]
   activities: string[]
-  members: IBoardMember[]
+  members: string[]
   description: string
   lastViewed: number
-  workspaces: Types.ObjectId[]
 }
 
 export interface IBoardMember {

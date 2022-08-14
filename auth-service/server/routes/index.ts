@@ -152,10 +152,24 @@ router.post(
   // errorService.catchAsyncError(authController.verifyMfa)
 )
 
+router.get(
+  "/invite-to-board",
+  middlewareUtils.validateRequiredAccessJwt,
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.inviteToBoard)
+)
+
+router.get(
+  "/accept-board-invite",
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.acceptBoardInvite)
+)
+
 router.post(
   "/mfa/connect",
   middlewareUtils.validateRequiredAccessJwt,
-  AuthMiddleWare.checkIsAuthenticated,
   AuthMiddleWare.findCurrentUser
   // errorService.catchAsyncError(authController.connectMfa)
 )

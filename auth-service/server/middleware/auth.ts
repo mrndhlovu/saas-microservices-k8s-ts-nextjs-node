@@ -94,15 +94,13 @@ export class AuthMiddleWare {
         next()
       }
 
-      const sessionJwtToken = req?.session!.jwt?.access
-        ? req?.session!.jwt?.access
-        : authorizationToken?.trim()
+      const sessionJwtToken =
+        authorizationToken?.trim() || req?.session!.jwt?.access
 
       if (!sessionJwtToken) {
         req.session = null
         throw new NotAuthorisedError("Authorization credentials are missing.")
       }
-      console.log({ authorizationToken, jwtSignatureKey })
 
       const currentUserJwt = TokenService.getVerifiedJwtValue(
         sessionJwtToken,
@@ -138,7 +136,6 @@ export class AuthMiddleWare {
       }
 
       req.currentUser = currentUser
-      console.log(req.currentUser.id)
 
       next()
     }

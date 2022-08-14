@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import {
   ACCOUNT_TYPE,
   BadRequestError,
+  HTTPStatusCode,
   IJwtAccessTokens,
   IJwtAuthToken,
   NotAuthorisedError,
@@ -16,16 +17,17 @@ import {
   DID_NOT_UPDATE_PASSWORD_ENDPOINT,
   RESTORE_ACCOUNT_ENDPOINT,
   LOGIN_ENDPOINT,
-  USER_EXCLUDED_OPTIONS,
 } from "../utils/constants"
 import { natsService } from "../services/nats"
 import { IUserDocument, User } from "../models/User"
 import {
   UserDeletedPublisher,
   UserVerifiedPublisher,
+  AddBoardMemberPublisher,
 } from "../events/publishers"
 import { mfaService, TokenService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
+import isEmail from "validator/lib/isEmail"
 
 declare global {
   namespace Express {
@@ -55,6 +57,7 @@ class AuthController {
     const tokenToSign: IJwtAuthToken = {
       email: user.email,
       username: user?.username,
+      boardInviteId: req?.body.boardInviteId,
     }
 
     const [otp, otpHash] = await AuthService.generateOtp()
@@ -166,7 +169,6 @@ class AuthController {
     AuthService.removeUserToken(user, req.session?.jwt?.access!)
 
     await user.save()
-
     new UserVerifiedPublisher(natsService.client).publish({
       id: user._id,
       email: user.email,
@@ -588,6 +590,72 @@ class AuthController {
     await new SendEmailPublisher(natsService.client).publish(email)
 
     res.status(200).send({})
+  }
+
+  inviteToBoard = async (req: Request, res: Response) => {
+    const { identifier, boardId } = req.query
+
+    let boardHost = req.currentUser!
+
+    const isValidEmail = isEmail(identifier as string)
+
+    const invitee = isValidEmail
+      ? await AuthService.findUserOnlyByEmail(identifier as string)
+      : await AuthService.findUserOnlyByUsername(identifier as string)
+
+    if (!isValidEmail && !invitee) {
+      throw new BadRequestError(
+        `User with username: ${identifier} was not found.`
+      )
+    }
+
+    const tokenToSign = {
+      email: invitee?.email || (identifier as string),
+      userId: boardHost.id,
+      username: "",
+      boardId: boardId as string,
+    }
+
+    const tokens = await TokenService.getAuthTokens(tokenToSign, {
+      accessExpiresAt: "2d",
+    })
+
+    if (invitee) {
+      AuthService.addUserToken(invitee, `${tokens.access}`)
+    }
+
+    AuthService.addUserToken(boardHost, `${tokens.access}`)
+
+    const email = {
+      email: invitee?.email || (identifier as string),
+      body: `
+      <p>${boardHost?.email} invited you to access a board.<p>
+      <p>Click the link below to accept the invite</p>
+      <p><a href="https://tusks.dev/auth/accept-board-invite?token=${tokens.access}&boardInviteId=${boardId}" rel="noreferrer" target="_blank">Accept</a></p>`,
+      subject: "You have be invited to access a board.",
+      from: DEFAULT_EMAIL,
+    }
+
+    await new SendEmailPublisher(natsService.client).publish(email)
+    res.status(HTTPStatusCode.NoContent).send()
+  }
+
+  async acceptBoardInvite(req: Request, res: Response) {
+    const user = req.currentUser!
+
+    if (!req?.query?.boardInviteId) {
+      throw new BadRequestError("Board id is required")
+    }
+
+    user.boardIds.push(req?.query?.boardInviteId as string)
+    await user?.save()
+
+    await new AddBoardMemberPublisher(natsService.client).publish({
+      memberId: user.id,
+      boardInviteId: req?.query?.boardInviteId as string,
+    })
+
+    res.status(HTTPStatusCode.OK).send("OK")
   }
 }
 

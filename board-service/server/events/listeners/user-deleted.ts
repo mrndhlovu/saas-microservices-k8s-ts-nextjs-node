@@ -15,7 +15,10 @@ export class UserDeletedListener extends Listener<IUserDeletedEvent> {
   async onMessage(data: IUserDeletedEvent["data"], msg: Message) {
     console.log("Event data ", data)
 
-    const result = await Board.deleteMany({ _id: data.boardIds })
+    await Board.deleteMany({
+      _id: data.boardIds,
+      owner: data?.id,
+    })
 
     msg.ack()
   }

@@ -6,7 +6,6 @@ import { CorsOptions } from "cors"
 import { User, IUserDocument } from "../models/User"
 import { totp } from "otplib"
 import { TokenService } from "./token"
-import { IUpdateUserTokens } from "../types"
 import { PasswordManager } from "./password"
 import { getSignatureKey } from "../helpers"
 

@@ -43,15 +43,17 @@ class BoardMiddleware {
         if (!board) throw new NotFoundError("Board with that id was not found")
 
         const existingBoardMember = board.members.find(
-          (member: IBoardMember) => member.id === userId
+          (member: string) => member.indexOf(userId) > -1
         )
 
         if (!existingBoardMember) {
           throw new PermissionRequestError()
         }
 
+        const [, permissionFlag] = existingBoardMember.split(":")
+
         const isGrantedPermission = permissionManager.checkIsPermitted(
-          existingBoardMember.permissionFlag,
+          +permissionFlag,
           requirePermissionFlag
         )
 
