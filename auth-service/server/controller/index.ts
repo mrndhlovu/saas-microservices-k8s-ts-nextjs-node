@@ -675,9 +675,10 @@ class AuthController {
   }
 
   async getBoardMembers(req: Request, res: Response) {
-    const memberIds = (req.query?.memberIds as string).split(":")
+    const memberIds = (req.query?.memberIds as string).split("-")
+    const ids = memberIds.map(memberId => memberId?.split(":")?.[0])
 
-    const members = await User.find({ _ids: memberIds })
+    const members = await User.find({ _id: { $in: ids } })
 
     const data = members.map(member => ({
       id: member.id,
