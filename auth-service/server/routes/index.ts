@@ -24,6 +24,14 @@ router.get(
   errorService.catchAsyncError(authController.getCurrentUser)
 )
 
+router.get(
+  "/board-members",
+  middlewareUtils.validateRequiredAccessJwt,
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.getBoardMembers)
+)
+
 router.post(
   "/login",
   AuthMiddleWare.checkRequiredLoginFields,

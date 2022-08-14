@@ -2,7 +2,7 @@ export const editableUserFields = [
   "firstName",
   "lastName",
   "email",
-  "starred",
+  "starredBoards",
   "username",
   "avatar",
   "bio",

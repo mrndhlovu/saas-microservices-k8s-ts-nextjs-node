@@ -595,9 +595,21 @@ class AuthController {
   inviteToBoard = async (req: Request, res: Response) => {
     const { identifier, boardId } = req.query
 
-    let boardHost = req.currentUser!
+    let user = req.currentUser!
 
     const isValidEmail = isEmail(identifier as string)
+
+    if (isValidEmail && identifier === user.email) {
+      throw new BadRequestError(
+        `User with email ${user.email} is already a board member.`
+      )
+    }
+
+    if (!isValidEmail && identifier === user.username) {
+      throw new BadRequestError(
+        `User with username ${user.username} is already a board member.`
+      )
+    }
 
     const invitee = isValidEmail
       ? await AuthService.findUserOnlyByEmail(identifier as string)
@@ -609,9 +621,13 @@ class AuthController {
       )
     }
 
+    if (invitee?.boardIds?.includes(boardId as string)) {
+      throw new BadRequestError(`User already a board member.`)
+    }
+
     const tokenToSign = {
       email: invitee?.email || (identifier as string),
-      userId: boardHost.id,
+      userId: user.id,
       username: "",
       boardId: boardId as string,
     }
@@ -624,12 +640,12 @@ class AuthController {
       AuthService.addUserToken(invitee, `${tokens.access}`)
     }
 
-    AuthService.addUserToken(boardHost, `${tokens.access}`)
+    AuthService.addUserToken(user, `${tokens.access}`)
 
     const email = {
       email: invitee?.email || (identifier as string),
       body: `
-      <p>${boardHost?.email} invited you to access a board.<p>
+      <p>${user?.email} invited you to access a board.<p>
       <p>Click the link below to accept the invite</p>
       <p><a href="https://tusks.dev/auth/accept-board-invite?token=${tokens.access}&boardInviteId=${boardId}" rel="noreferrer" target="_blank">Accept</a></p>`,
       subject: "You have be invited to access a board.",
@@ -656,6 +672,23 @@ class AuthController {
     })
 
     res.status(HTTPStatusCode.OK).send("OK")
+  }
+
+  async getBoardMembers(req: Request, res: Response) {
+    const memberIds = (req.query?.memberIds as string).split(":")
+
+    const members = await User.find({ _ids: memberIds })
+
+    const data = members.map(member => ({
+      id: member.id,
+      username: member.username,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      profileImage: member?.avatar,
+      initials: member?.initials,
+    }))
+
+    res.status(HTTPStatusCode.OK).send(data)
   }
 }
 

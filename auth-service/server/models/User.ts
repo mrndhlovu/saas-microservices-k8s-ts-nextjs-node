@@ -51,6 +51,11 @@ const UserSchema = new Schema<IUserDocument>(
       required: true,
       default: [],
     },
+    starredBoards: {
+      type: [String],
+      required: true,
+      default: [],
+    },
     permissionFlag: {
       type: Number,
       required: true,
@@ -58,11 +63,6 @@ const UserSchema = new Schema<IUserDocument>(
     },
     initials: {
       type: String,
-    },
-    starred: {
-      type: [{ type: String }],
-      required: true,
-      default: [],
     },
     viewedRecent: {
       type: [{ type: String }],
@@ -160,7 +160,6 @@ export interface IUserDocument extends Document {
   boardIds: string[]
   workspaces: string[]
   roles: IUseBoardRoles[]
-  starred?: string[]
   username: string
   viewedRecent?: string[]
   authType: IAuthTypes
@@ -168,6 +167,7 @@ export interface IUserDocument extends Document {
   isVerified: boolean
   status: UserAccountStatus
   authTokens: string[]
+  starredBoards: string[]
 }
 
 export const User = model<IUserDocument>("User", UserSchema)
