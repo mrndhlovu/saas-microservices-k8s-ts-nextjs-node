@@ -27,7 +27,7 @@ export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
       const workspace =
         (await workspaceService.findWorkspaceByCategory({
           ownerId: data.memberId,
-          category: "default",
+          category: "guest",
         })) ||
         workspaceService.createWorkspace({
           category: "guest",
