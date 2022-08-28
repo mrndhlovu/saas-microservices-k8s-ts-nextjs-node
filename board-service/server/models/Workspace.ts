@@ -60,18 +60,18 @@ WorkspaceSchema.pre("remove", async function (next) {
   next()
 })
 
-export interface IList {
+export interface IWorkspace {
   name: string
   boards: Types.ObjectId[]
   category: string
-  description: string
+  description?: string
   owner: string
   iconColor: string
-  shortname: string
-  visibility: string
+  shortname?: string
+  visibility?: string
 }
 
-export interface IWorkspaceDocument extends Document, IList {
+export interface IWorkspaceDocument extends Document, IWorkspace {
   createdAt: boolean | string | number
   updatedAt: boolean | string | number
 }

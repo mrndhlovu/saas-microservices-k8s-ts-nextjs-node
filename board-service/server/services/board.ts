@@ -5,7 +5,6 @@ import AWS from "aws-sdk"
 import axios from "axios"
 import multer from "multer"
 import multerS3 from "multer-s3"
-
 import {
   ACTION_KEYS,
   ACTION_TYPES,
@@ -18,10 +17,9 @@ import {
 
 import { allowedUploadTypes } from "../utils/constants"
 import { IActionLoggerWithCardAndListOptions } from "./card"
-import { idToObjectId } from "../helpers"
 import { IRemoveRecordIdOptions, IUploadFile } from "../types"
 import { natsService } from "."
-import Board, { BoardDocument, IBoardMember } from "../models/Board"
+import Board, { BoardDocument } from "../models/Board"
 
 const cloudinary = v2
 const s3 = new AWS.S3()

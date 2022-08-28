@@ -6,9 +6,9 @@ import {
   ROLES,
   Subjects,
 } from "@tusksui/shared"
-import Board from "../../models/Board"
 import { boardService } from "../../services"
-import Workspace from "../../models/Workspace"
+import { workspaceService } from "../../services/workspace"
+import { generateRandomColor } from "../../utils/constants"
 
 export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
   readonly subject: Subjects.AddBoardMember = Subjects.AddBoardMember
@@ -24,14 +24,21 @@ export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
         boardId: data.boardInviteId,
       })
 
-      const workspace = await Workspace.findOne({
-        owner: data.memberId,
-        category: "default",
-      })
+      const workspace =
+        (await workspaceService.findWorkspaceByCategory({
+          ownerId: data.memberId,
+          category: "default",
+        })) ||
+        workspaceService.createWorkspace({
+          category: "guest",
+          owner: data.memberId,
+          name: "Guest",
+          iconColor: generateRandomColor(),
+        })
 
       if (workspace) {
         workspace.boards.push(data.boardInviteId)
-        await workspace.save()
+        await workspace?.save()
       }
 
       if (board) {

@@ -51,3 +51,15 @@ export enum TASK_STATUS {
 export interface TemplateList {
   name: string
 }
+
+export interface INewWorkspaceProps {
+  category: string
+  owner: string
+  name: string
+  iconColor: string
+}
+
+export interface IFindWorkspaceProps {
+  category: string
+  ownerId: string
+}
