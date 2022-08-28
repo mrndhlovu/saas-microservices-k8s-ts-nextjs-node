@@ -50,12 +50,16 @@ class BoardMiddleware {
           throw new PermissionRequestError()
         }
 
-        const [, permissionFlag] = existingBoardMember.split(":")
+        const [, memberPermission] = existingBoardMember.split(":")
 
         const isGrantedPermission = permissionManager.checkIsPermitted(
-          +permissionFlag,
+          +memberPermission,
           requirePermissionFlag
         )
+
+        console.log({
+          isGrantedPermission,
+        })
 
         if (!isGrantedPermission) {
           throw new PermissionRequestError()

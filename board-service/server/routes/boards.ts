@@ -118,6 +118,14 @@ router.post(
   errorService.catchAsyncError(boardController.createBoard)
 )
 
+router.get(
+  "/:boardId/archive",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  boardMiddleware.verifyAccessPermission(ROLES.OWNER),
+  errorService.catchAsyncError(boardController.archiveBoard)
+)
+
 router.post(
   "/new-workspace",
   authMiddleware.validateRequiredAccessJwt,

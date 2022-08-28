@@ -247,7 +247,6 @@ class BoardController {
     }
 
     const updatedBoard = await boardService.updateBoardMemberRole(board!, {
-      currentPermFlag: permissionManager.permissions.BLOCKED,
       isNew: true,
       newRole: ROLES.OWNER,
       userId,

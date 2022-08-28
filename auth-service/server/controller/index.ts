@@ -1,6 +1,5 @@
 import { Request, Response } from "express"
 import {
-  ACCOUNT_TYPE,
   BadRequestError,
   HTTPStatusCode,
   IJwtAccessTokens,
@@ -49,10 +48,7 @@ class AuthController {
   signUpUser = async (req: Request, res: Response) => {
     let user = new User({ ...req.body })
 
-    user.permissionFlag = permissionManager.updatePermission(
-      permissionManager.permissions.TRIAL,
-      ACCOUNT_TYPE.STANDARD
-    )
+    user.permissionFlag = permissionManager.permissions.STANDARD
 
     const tokenToSign: IJwtAuthToken = {
       email: user.email,

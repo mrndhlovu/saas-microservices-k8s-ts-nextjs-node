@@ -38,7 +38,6 @@ s3.config.update({
 })
 
 export interface IUpdateBoardMemberOptions {
-  currentPermFlag: number
   newRole: IPermissionType
   isNew: boolean
   userId: string
@@ -59,12 +58,9 @@ class BoardServices {
     board: BoardDocument,
     options: IUpdateBoardMemberOptions
   ) => {
-    const permissionFlag = permissionManager.updatePermission(
-      options.currentPermFlag,
-      options.newRole
-    )
-
-    const updatedMemberPermission = `${options.userId}:${permissionFlag}`
+    const updatedMemberPermission = `${options.userId}:${
+      permissionManager.permissions[options.newRole]
+    }`
 
     if (options.isNew) {
       board.members.push(updatedMemberPermission)
@@ -135,11 +131,9 @@ class BoardServices {
     role: IPermissionType
     board?: BoardDocument
   }) {
-    const permissionFlag = permissionManager.updatePermission(
-      permissionManager.permissions.BLOCKED,
-      options.role
-    )
-    const boardMemberIdentifier = `${options.memberId}:${permissionFlag}`
+    const boardMemberIdentifier = `${options.memberId}:${
+      permissionManager.permissions[options.role]
+    }`
 
     if (!options.board) {
       return await Board.findOneAndUpdate(
