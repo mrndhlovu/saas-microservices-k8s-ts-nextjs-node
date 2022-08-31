@@ -9,6 +9,7 @@ import {
 import { boardService } from "../../services"
 import { workspaceService } from "../../services/workspace"
 import { generateRandomColor } from "../../utils/constants"
+import { idToObjectId } from "../../helpers"
 
 export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
   readonly subject: Subjects.AddBoardMember = Subjects.AddBoardMember
@@ -18,10 +19,12 @@ export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
     console.log("Event data ", data)
 
     try {
+      const [boardId, role] = data.boardInviteId?.split(":")
+
       const board = await boardService.boardWithUpdatedMember({
         memberId: data.memberId,
-        role: ROLES.EDITOR,
-        boardId: data.boardInviteId,
+        role: ROLES?.[role.toUpperCase()],
+        boardId,
       })
 
       const workspace =
@@ -37,7 +40,7 @@ export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
         })
 
       if (workspace) {
-        workspace.boards.push(data.boardInviteId)
+        workspace.boards.push(idToObjectId(boardId))
         await workspace?.save()
       }
 

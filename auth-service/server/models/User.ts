@@ -168,6 +168,7 @@ export interface IUserDocument extends Document {
   status: UserAccountStatus
   authTokens: string[]
   starredBoards: string[]
+  id: string
 }
 
 export const User = model<IUserDocument>("User", UserSchema)

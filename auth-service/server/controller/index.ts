@@ -4,9 +4,11 @@ import {
   HTTPStatusCode,
   IJwtAccessTokens,
   IJwtAuthToken,
+  IPermissionType,
   NotAuthorisedError,
   NotFoundError,
   permissionManager,
+  ROLES,
 } from "@tusksui/shared"
 import { AuthService } from "../services/auth"
 import {
@@ -27,6 +29,7 @@ import {
 import { mfaService, TokenService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
 import isEmail from "validator/lib/isEmail"
+import { RolesType } from "../types"
 
 declare global {
   namespace Express {
@@ -589,7 +592,7 @@ class AuthController {
   }
 
   inviteToBoard = async (req: Request, res: Response) => {
-    const { identifier, boardId } = req.query
+    const { identifier, boardId, role } = req.query
 
     let user = req.currentUser!
 
@@ -621,11 +624,15 @@ class AuthController {
       throw new BadRequestError(`User already a board member.`)
     }
 
+    const boardInviteId = `${boardId?.toString()}:${role
+      ?.toString()
+      .toUpperCase()}`
+
     const tokenToSign = {
       email: invitee?.email || (identifier as string),
       userId: user.id,
       username: "",
-      boardId: boardId as string,
+      boardId: boardInviteId,
     }
 
     const tokens = await TokenService.getAuthTokens(tokenToSign, {
@@ -643,7 +650,7 @@ class AuthController {
       body: `
       <p>${user?.email} invited you to access a board.<p>
       <p>Click the link below to accept the invite</p>
-      <p><a href="https://tusks.dev/auth/accept-board-invite?token=${tokens.access}&boardInviteId=${boardId}" rel="noreferrer" target="_blank">Accept</a></p>`,
+      <p><a href="https://tusks.dev/auth/accept-board-invite?token=${tokens.access}&boardInviteId=${boardInviteId}" rel="noreferrer" target="_blank">Accept</a></p>`,
       subject: "You have be invited to access a board.",
       from: DEFAULT_EMAIL,
     }
@@ -659,7 +666,9 @@ class AuthController {
       throw new BadRequestError("Board id is required")
     }
 
-    user.boardIds.push(req?.query?.boardInviteId as string)
+    const [boardId] = (req.query?.boardInviteId as string)?.split(":")
+
+    user.boardIds.push(boardId)
     await user?.save()
 
     await new AddBoardMemberPublisher(natsService.client).publish({
@@ -671,10 +680,30 @@ class AuthController {
   }
 
   async getBoardMembers(req: Request, res: Response) {
-    const memberIds = (req.query?.memberIds as string).split("-")
+    const memberIds = (req.query?.memberIds as string)?.split("-")
+    const boardId = req.query?.boardId as string
+
+    if (!memberIds || memberIds?.length === 0) {
+      throw new BadRequestError("Member ids required")
+    }
+
     const ids = memberIds.map(memberId => memberId?.split(":")?.[0])
 
-    const members = await User.find({ _id: { $in: ids } })
+    const members: IUserDocument[] = await User.find({
+      _id: { $in: ids },
+      boardIds: { $in: [boardId] },
+    })
+
+    const getRole = (id: string) => {
+      const [, permissionFlag] = id?.split(":")
+      const role = Object.keys(permissionManager.permissions).find(
+        key =>
+          permissionManager.permissions[key as IPermissionType] ===
+          +permissionFlag
+      )
+
+      return role
+    }
 
     const data = members.map(member => ({
       id: member.id,
@@ -683,6 +712,7 @@ class AuthController {
       lastName: member.lastName,
       profileImage: member?.avatar,
       initials: member?.initials,
+      role: getRole(memberIds.find(id => id.indexOf(member.id) > -1)!),
     }))
 
     res.status(HTTPStatusCode.OK).send(data)
