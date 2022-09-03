@@ -95,3 +95,7 @@ export interface IUpdateUserTokens {
 export type SignatureOptions = {
   [type in SignatureType]: string
 }
+
+export interface IBoardMember {
+  [id: string]: string | undefined
+}

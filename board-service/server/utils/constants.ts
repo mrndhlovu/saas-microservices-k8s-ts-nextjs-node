@@ -5,6 +5,7 @@ export const allowedBoardUpdateFields = [
   "prefs.starred",
   "prefs.image",
   "prefs.color",
+  "members",
 ]
 
 export const DEFAULT_EMAIL = "kandhlovuie@gmail.com"

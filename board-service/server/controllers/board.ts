@@ -387,7 +387,7 @@ class BoardController {
       },
     })
 
-    algoliaClient.removeObjects([boardId])
+    // algoliaClient.removeObjects([boardId])
 
     res.status(HTTPStatusCode.NoContent).send()
   }
@@ -464,6 +464,34 @@ class BoardController {
     res
       .status(HTTPStatusCode.OK)
       .send({ boards, cards, tasks, lists, workspaces })
+  }
+
+  async updateBoardMember(req: Request, res: Response) {
+    const { boardId, role, memberId }: { [key: string]: string } = req.body
+
+    if (!boardId) {
+      throw new BadRequestError("Board id is required")
+    }
+
+    const board = await boardService.findBoardOnlyById(boardId)
+
+    if (!board) {
+      throw new BadRequestError("Board not found")
+    }
+
+    const permission =
+      permissionManager.permissions?.[
+        role.toUpperCase() as keyof typeof permissionManager.permissions
+      ]
+    const updatedMemberId = `${memberId}:${permission}`
+    const memberBoards = board.members.map(id =>
+      id.indexOf(memberId) > -1 ? updatedMemberId : id
+    )
+    board.members = memberBoards
+
+    await board.save()
+
+    res.status(HTTPStatusCode.OK).send(board)
   }
 }
 

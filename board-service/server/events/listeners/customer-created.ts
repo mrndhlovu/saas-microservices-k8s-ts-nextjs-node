@@ -1,5 +1,4 @@
 import { Message } from "node-nats-streaming"
-
 import {
   ICustomerCreated,
   Listener,

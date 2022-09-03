@@ -57,10 +57,6 @@ class BoardMiddleware {
           requirePermissionFlag
         )
 
-        console.log({
-          isGrantedPermission,
-        })
-
         if (!isGrantedPermission) {
           throw new PermissionRequestError()
         }

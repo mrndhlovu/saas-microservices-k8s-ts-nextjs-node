@@ -1,6 +1,11 @@
 import isEmail from "validator/lib/isEmail"
 import bcrypt from "bcryptjs"
-import { BadRequestError, NotFoundError } from "@tusksui/shared"
+import {
+  BadRequestError,
+  IPermissionType,
+  NotFoundError,
+  permissionManager,
+} from "@tusksui/shared"
 import { allowedOrigins } from "../utils/constants"
 import { CorsOptions } from "cors"
 import { User, IUserDocument } from "../models/User"
@@ -8,6 +13,7 @@ import { totp } from "otplib"
 import { TokenService } from "./token"
 import { PasswordManager } from "./password"
 import { getSignatureKey } from "../helpers"
+import { IBoardMember } from "../types"
 
 export class AuthService {
   static findUserOnlyByEmail = async (email: string) => {
@@ -122,5 +128,40 @@ export class AuthService {
     )
 
     user.authTokens = tokens
+  }
+
+  static async getBoardMembers(
+    memberIds: string[],
+    boardId: string
+  ): Promise<IBoardMember[]> {
+    const ids = memberIds?.map(memberId => memberId?.split(":")?.[0])
+
+    const members: IUserDocument[] = await User.find({
+      _id: { $in: ids },
+      boardIds: { $in: [boardId] },
+    })
+
+    const getRole = (id: string) => {
+      const [, permissionFlag] = id?.split(":")
+      const role = Object.keys(permissionManager.permissions).find(
+        key =>
+          permissionManager.permissions[key as IPermissionType] ===
+          +permissionFlag
+      )
+
+      return role
+    }
+
+    const data = members!.map(member => ({
+      id: member.id,
+      username: member.username,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      profileImage: member?.avatar,
+      initials: member?.initials,
+      role: getRole(memberIds.find(id => id.indexOf(member.id) > -1)!),
+    }))
+
+    return data
   }
 }

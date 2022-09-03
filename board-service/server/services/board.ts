@@ -147,6 +147,14 @@ class BoardServices {
     return options.board
   }
 
+  removeBoardMember(board: BoardDocument, memberId: string) {
+    board.members = board.members.filter(
+      member => member.indexOf(memberId) === -1
+    )
+
+    return board
+  }
+
   validatedUpload(files: IUploadFile[]) {
     return files.every(file => allowedUploadTypes.includes(file.extension))
   }

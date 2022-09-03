@@ -32,6 +32,14 @@ router.get(
   errorService.catchAsyncError(authController.getBoardMembers)
 )
 
+router.get(
+  "/remove-board-member",
+  middlewareUtils.validateRequiredAccessJwt,
+  AuthMiddleWare.checkIsAuthenticated,
+  AuthMiddleWare.findCurrentUser,
+  errorService.catchAsyncError(authController.removeBoardMember)
+)
+
 router.post(
   "/login",
   AuthMiddleWare.checkRequiredLoginFields,

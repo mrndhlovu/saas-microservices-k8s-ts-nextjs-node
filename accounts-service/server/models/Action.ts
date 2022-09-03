@@ -24,6 +24,7 @@ const ActionSchema = new Schema(
         id: String,
         username: String,
         fullName: String,
+        initials: String,
       },
     },
   },

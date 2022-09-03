@@ -25,11 +25,12 @@ import {
   UserDeletedPublisher,
   UserVerifiedPublisher,
   AddBoardMemberPublisher,
+  RemoveBoardMemberPublisher,
 } from "../events/publishers"
 import { mfaService, TokenService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
 import isEmail from "validator/lib/isEmail"
-import { RolesType } from "../types"
+import { log } from "console"
 
 declare global {
   namespace Express {
@@ -639,10 +640,6 @@ class AuthController {
       accessExpiresAt: "2d",
     })
 
-    if (invitee) {
-      AuthService.addUserToken(invitee, `${tokens.access}`)
-    }
-
     AuthService.addUserToken(user, `${tokens.access}`)
 
     const email = {
@@ -679,6 +676,35 @@ class AuthController {
     res.status(HTTPStatusCode.OK).send("OK")
   }
 
+  async removeBoardMember(req: Request, res: Response) {
+    const user = req.currentUser!
+    const boardId = req.query.boardId as string
+
+    if (!boardId) {
+      throw new BadRequestError("Board id is required")
+    }
+    const userBoards = user.boardIds.filter(id => id !== boardId)
+    user.boardIds = userBoards
+    await user.save()
+
+    const email = {
+      email: user?.email,
+      body: `
+      <p>${user?.email} removed from board.<p>
+      <p>You where removed from board</p>`,
+      subject: "You have be invited to access a board.",
+      from: DEFAULT_EMAIL,
+    }
+
+    await new SendEmailPublisher(natsService.client).publish(email)
+    await new RemoveBoardMemberPublisher(natsService.client).publish({
+      boardId,
+      memberId: user.id,
+    })
+
+    res.status(HTTPStatusCode.NoContent).send()
+  }
+
   async getBoardMembers(req: Request, res: Response) {
     const memberIds = (req.query?.memberIds as string)?.split("-")
     const boardId = req.query?.boardId as string
@@ -687,35 +713,10 @@ class AuthController {
       throw new BadRequestError("Member ids required")
     }
 
-    const ids = memberIds.map(memberId => memberId?.split(":")?.[0])
+    console.log(memberIds, boardId)
 
-    const members: IUserDocument[] = await User.find({
-      _id: { $in: ids },
-      boardIds: { $in: [boardId] },
-    })
-
-    const getRole = (id: string) => {
-      const [, permissionFlag] = id?.split(":")
-      const role = Object.keys(permissionManager.permissions).find(
-        key =>
-          permissionManager.permissions[key as IPermissionType] ===
-          +permissionFlag
-      )
-
-      return role
-    }
-
-    const data = members.map(member => ({
-      id: member.id,
-      username: member.username,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      profileImage: member?.avatar,
-      initials: member?.initials,
-      role: getRole(memberIds.find(id => id.indexOf(member.id) > -1)!),
-    }))
-
-    res.status(HTTPStatusCode.OK).send(data)
+    const members = await AuthService.getBoardMembers(memberIds, boardId)
+    res.status(HTTPStatusCode.OK).send(members)
   }
 }
 
