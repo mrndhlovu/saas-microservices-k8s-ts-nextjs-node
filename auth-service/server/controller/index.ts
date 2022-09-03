@@ -4,7 +4,6 @@ import {
   HTTPStatusCode,
   IJwtAccessTokens,
   IJwtAuthToken,
-  IPermissionType,
   NotAuthorisedError,
   NotFoundError,
   permissionManager,
@@ -30,7 +29,6 @@ import {
 import { mfaService, TokenService } from "../services"
 import { SendEmailPublisher } from "../events/publishers/send-email"
 import isEmail from "validator/lib/isEmail"
-import { log } from "console"
 
 declare global {
   namespace Express {
@@ -712,10 +710,8 @@ class AuthController {
     if (!memberIds || memberIds?.length === 0) {
       throw new BadRequestError("Member ids required")
     }
-
-    console.log(memberIds, boardId)
-
     const members = await AuthService.getBoardMembers(memberIds, boardId)
+
     res.status(HTTPStatusCode.OK).send(members)
   }
 }

@@ -9,10 +9,10 @@ import {
   ACTION_KEYS,
   ACTION_TYPES,
   BadRequestError,
-  IPermissionType,
   NewActionPublisher,
   NotFoundError,
   permissionManager,
+  ROLES,
 } from "@tusksui/shared"
 
 import { allowedUploadTypes } from "../utils/constants"
@@ -38,9 +38,10 @@ s3.config.update({
 })
 
 export interface IUpdateBoardMemberOptions {
-  newRole: IPermissionType
-  isNew: boolean
+  newRole: keyof typeof ROLES
+  isNew?: boolean
   userId: string
+  board?: BoardDocument
 }
 
 export interface IActionLogger {
@@ -55,44 +56,36 @@ export interface IActionLogger {
 
 class BoardServices {
   updateBoardMemberRole = async (
-    board: BoardDocument,
+    boardId: string,
     options: IUpdateBoardMemberOptions
-  ) => {
+  ): Promise<BoardDocument> => {
     const updatedMemberPermission = `${options.userId}:${
-      permissionManager.permissions[options.newRole]
+      permissionManager.permissions[
+        options.newRole as keyof typeof permissionManager.permissions
+      ]
     }`
 
     if (options.isNew) {
-      board.members.push(updatedMemberPermission)
-      return board
+      const boardDoc = options?.board || (await this.findBoardOnlyById(boardId))
+
+      if (!boardDoc) throw new NotFoundError("Board not found")
+
+      boardDoc!.members.push(updatedMemberPermission)
+      return boardDoc!
     }
 
-    const updateBoardRecord = await Board.findById(
-      board._id,
-      async (err: CallbackError, record: BoardDocument) => {
-        if (err) {
-          return new BadRequestError("Board not found")
-        }
+    const updateBoardRecord = await this.findBoardOnlyById(boardId)
 
-        const existingBoardMember = record?.members.find(
-          (member: string) => member.indexOf(options.userId) > -1
-        )
-
-        if (existingBoardMember) {
-          record?.members.map((member: string) => {
-            if (member.indexOf(options.userId) > -1) {
-              return updatedMemberPermission
-            }
-          })
-        } else {
-          record?.members.push(updatedMemberPermission)
-        }
-
-        await record.save()
-
-        return record
+    const recordMembers = updateBoardRecord?.members.map((member: string) => {
+      if (member.indexOf(options.userId) > -1) {
+        return updatedMemberPermission
       }
-    )
+      return member
+    })
+
+    updateBoardRecord.members = recordMembers as string[]
+
+    console.log(updateBoardRecord.members)
 
     return updateBoardRecord
   }
@@ -124,28 +117,6 @@ class BoardServices {
       },
     }),
   })
-
-  async boardWithUpdatedMember(options: {
-    memberId: string
-    boardId: string
-    role: IPermissionType
-    board?: BoardDocument
-  }) {
-    const boardMemberIdentifier = `${options.memberId}:${
-      permissionManager.permissions[options.role]
-    }`
-
-    if (!options.board) {
-      return await Board.findOneAndUpdate(
-        { _id: options.boardId },
-        { $push: { members: boardMemberIdentifier } },
-        { new: true }
-      )
-    }
-
-    options.board.members.push(boardMemberIdentifier)
-    return options.board
-  }
 
   removeBoardMember(board: BoardDocument, memberId: string) {
     board.members = board.members.filter(

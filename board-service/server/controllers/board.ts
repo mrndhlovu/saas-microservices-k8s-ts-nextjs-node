@@ -5,7 +5,6 @@ import {
   BadRequestError,
   HTTPStatusCode,
   NotFoundError,
-  permissionManager,
   ROLES,
   ACTION_TYPES,
   ACTION_KEYS,
@@ -246,10 +245,11 @@ class BoardController {
       throw new BadRequestError("Workspace id is required")
     }
 
-    const updatedBoard = await boardService.updateBoardMemberRole(board!, {
+    const updatedBoard = await boardService.updateBoardMemberRole(board.id!, {
       isNew: true,
-      newRole: ROLES.OWNER,
+      newRole: ROLES.ADMIN,
       userId,
+      board,
     })
 
     if (!updatedBoard) throw new BadRequestError("Fail to create board")
@@ -269,8 +269,8 @@ class BoardController {
           type: ACTION_TYPES.LIST,
           actionKey: ACTION_KEYS.CREATE_LIST,
           entities: {
-            boardId: board?._id,
-            name: board.title,
+            boardId: updatedBoard?._id,
+            name: updatedBoard.title,
           },
           list: {
             id: list?._id,
@@ -282,17 +282,17 @@ class BoardController {
 
     algoliaClient.addObjects([
       {
-        objectID: board?._id,
+        objectID: updatedBoard?._id,
         type: "board",
         userId: req.currentUserJwt.userId!,
         board: {
-          title: board.title,
-          description: board.description,
+          title: updatedBoard.title,
+          description: updatedBoard.description,
         },
       },
     ])
 
-    workspace.boards.push(board?._id)
+    workspace.boards.push(updatedBoard?._id)
     await updatedBoard.save()
     await workspace.save()
 
@@ -473,25 +473,14 @@ class BoardController {
       throw new BadRequestError("Board id is required")
     }
 
-    const board = await boardService.findBoardOnlyById(boardId)
+    const updatedBoard = await boardService.updateBoardMemberRole(boardId!, {
+      newRole: role.toUpperCase() as keyof typeof ROLES,
+      userId: memberId,
+    })
 
-    if (!board) {
-      throw new BadRequestError("Board not found")
-    }
+    await updatedBoard.save()
 
-    const permission =
-      permissionManager.permissions?.[
-        role.toUpperCase() as keyof typeof permissionManager.permissions
-      ]
-    const updatedMemberId = `${memberId}:${permission}`
-    const memberBoards = board.members.map(id =>
-      id.indexOf(memberId) > -1 ? updatedMemberId : id
-    )
-    board.members = memberBoards
-
-    await board.save()
-
-    res.status(HTTPStatusCode.OK).send(board)
+    res.status(HTTPStatusCode.OK).send(updatedBoard)
   }
 }
 

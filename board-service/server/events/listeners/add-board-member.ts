@@ -1,5 +1,6 @@
 import { Message } from "node-nats-streaming"
 import {
+  BadRequestError,
   IAddBoardMemberEvent,
   Listener,
   queueGroupNames,
@@ -21,11 +22,16 @@ export class AddBoardMemberListener extends Listener<IAddBoardMemberEvent> {
     try {
       const [boardId, role] = data.boardInviteId?.split(":")
 
-      const board = await boardService.boardWithUpdatedMember({
-        memberId: data.memberId,
-        role: ROLES?.[role.toUpperCase()],
-        boardId,
+      const board = await boardService.updateBoardMemberRole(boardId, {
+        isNew: true,
+        newRole: role.toUpperCase() as keyof typeof ROLES,
+        userId: data.memberId,
       })
+
+      if (!board) {
+        console.log("Board not found")
+        return msg.ack()
+      }
 
       const workspace =
         (await workspaceService.findWorkspaceByCategory({

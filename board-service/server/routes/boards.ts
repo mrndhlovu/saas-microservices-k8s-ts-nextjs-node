@@ -105,7 +105,7 @@ router
   .delete(
     authMiddleware.validateRequiredAccessJwt,
     authMiddleware.checkIsAuthenticated,
-    boardMiddleware.verifyAccessPermission(ROLES.OWNER),
+    boardMiddleware.verifyAccessPermission(ROLES.ADMIN),
     errorService.catchAsyncError(boardController.deleteBoard)
   )
 
@@ -122,7 +122,7 @@ router.get(
   "/:boardId/archive",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
-  boardMiddleware.verifyAccessPermission(ROLES.OWNER),
+  boardMiddleware.verifyAccessPermission(ROLES.ADMIN),
   errorService.catchAsyncError(boardController.archiveBoard)
 )
 
