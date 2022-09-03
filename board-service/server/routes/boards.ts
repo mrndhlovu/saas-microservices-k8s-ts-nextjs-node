@@ -127,6 +127,13 @@ router.get(
 )
 
 router.post(
+  "/update-board-member",
+  authMiddleware.validateRequiredAccessJwt,
+  authMiddleware.checkIsAuthenticated,
+  errorService.catchAsyncError(boardController.updateBoardMember)
+)
+
+router.post(
   "/new-workspace",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
