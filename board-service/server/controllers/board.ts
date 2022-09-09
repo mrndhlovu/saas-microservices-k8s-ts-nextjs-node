@@ -31,7 +31,7 @@ import Task from "../models/Task"
 declare global {
   namespace Express {
     interface Request {
-      board: BoardDocument | null | undefined
+      board?: BoardDocument | null
       uploadFiles?: IUploadFile[]
     }
   }

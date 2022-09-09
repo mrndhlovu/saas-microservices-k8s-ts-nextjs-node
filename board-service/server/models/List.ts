@@ -19,11 +19,6 @@ const ListSchema = new Schema<IListDocument>(
       default: false,
       required: true,
     },
-    cards: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Card" }],
-      default: [],
-      required: true,
-    },
   },
   {
     timestamps: true,
@@ -80,7 +75,6 @@ export interface IList {
   title: string
   boardId: Types.ObjectId
   archived: boolean
-  cards: Types.ObjectId[]
 }
 
 export interface IListDocument extends Document, IList {

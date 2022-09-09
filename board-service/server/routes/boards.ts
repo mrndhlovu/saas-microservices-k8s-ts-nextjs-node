@@ -130,6 +130,7 @@ router.post(
   "/update-board-member",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
+  // boardMiddleware.verifyAccessPermission(ROLES.ADMIN),
   errorService.catchAsyncError(boardController.updateBoardMember)
 )
 

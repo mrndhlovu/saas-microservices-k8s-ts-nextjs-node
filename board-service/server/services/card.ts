@@ -9,7 +9,7 @@ import {
 } from "@tusksui/shared"
 
 import { IActionLogger, natsService } from "."
-import { IChangePosition } from "../types"
+import { IMoveCardOptions } from "../types"
 import { idToObjectId } from "../helpers"
 import { listService } from "./list"
 import Attachment, { IAttachmentDocument } from "../models/Attachment"
@@ -148,126 +148,56 @@ class CardServices {
     return attachments
   }
 
-  async changePosition(
+  async moveToNewBoard(
     board: BoardDocument,
-    options: IChangePosition,
+    card: CardDocument,
+    options: IMoveCardOptions
+  ) {
+    board.cards.filter(card => card.toString() === options.cardId)
+
+    await board.save()
+    const targetBoard = await Board.findOneAndUpdate(
+      { _id: options.newBoardId },
+      {
+        $addToSet: { cards: idToObjectId(options.cardId) },
+      }
+    )
+
+    card.boardId = idToObjectId(options.newBoardId!)
+
+    await targetBoard!.save()
+  }
+
+  async moveToNewList(
+    board: BoardDocument,
+    options: IMoveCardOptions,
     req: Request
   ) {
-    if (options.isSwitchingList) {
-      const targetList = await listService.findListById(options.targetListId!)
+    const sourceCard = await this.findCardOnlyById(options.cardId)
+    if (!sourceCard) throw new NotFoundError("Dragging card not found.")
 
-      if (!targetList) throw new NotFoundError("Target list not found.")
+    const cards = [...board.cards]
+    const cardId = idToObjectId(options.cardId)
 
-      const card = await this.findCardOnlyById(options.sourceCardId)
-      if (!card) throw new NotFoundError("Drag source not found.")
-
-      card.listId = options.targetListId!
-      let targetBoard
-
-      if (options.isSwitchingBoard) {
-        board.cards.filter(card => card.toString() === options.sourceCardId)
-
-        await board.save()
-        targetBoard = await Board.findOneAndUpdate(
-          { _id: options.targetBoardId },
-          {
-            $addToSet: { cards: idToObjectId(options.sourceCardId) },
-          }
-        )
-
-        card.boardId = idToObjectId(options.targetBoardId!)
-
-        await targetBoard!.save()
-      }
-
-      await card?.save()
-
-      var sourceList = await List.findOneAndUpdate(
-        { _id: options.sourceListId! },
-        {
-          $pull: { cards: { $eq: idToObjectId(options.sourceCardId) } },
-        }
-      )
-
-      if (!sourceList) throw new NotFoundError("Source list not found.")
-
-      await sourceList.save()
-
-      const targetPosition = targetList.cards.findIndex(
-        cardId => cardId.toString() === options.targetCardId
-      )
-
-      const cardsCopy = [...targetList.cards]
-      const cardId = idToObjectId(options.targetCardId)
-
-      if (targetPosition === -1) {
-        cardsCopy.splice(0, 0, cardId)
-      } else {
-        cardsCopy.splice(targetPosition, 0, cardId)
-      }
-
-      targetList.cards = cardsCopy
-
-      await targetList.save()
-
-      await this.logAction(req, {
-        type: ACTION_TYPES.CARD,
-        actionKey: options?.isSwitchingBoard
-          ? ACTION_KEYS.TRANSFER_CARD
-          : ACTION_KEYS.MOVE_CARD_TO_LIST,
-        entities: {
-          boardId: req.body.boardId,
-        },
-        card: {
-          id: options.sourceCardId,
-          name: card.title,
-        },
-        list: {
-          id: sourceList._id.toString(),
-          name: sourceList.title,
-        },
-        targetList: {
-          id: targetList._id.toString(),
-          name: targetList.title,
-        },
-        targetBoard:
-          options.isSwitchingBoard && targetBoard
-            ? { id: targetBoard._id.toString(), name: targetBoard.title }
-            : undefined,
-      })
-
-      return
-    }
-
-    var sourceList = await listService.findListById(options.sourceListId!)
-    var sourceCard = await this.findCardOnlyById(options.sourceCardId!)
-    if (!sourceList || !sourceCard)
-      throw new NotFoundError("Source list not found.")
-
-    const cardsCopy = [...sourceList.cards]
-
-    const sourcePosition = cardsCopy.findIndex(
-      id => id.toString() === options.sourceCardId
+    const sourceCardIndex = cards.findIndex(
+      id => id.toString() === options.cardId
+    )
+    const destinationIndex = cards.findIndex(
+      id => id.toString() === options.destinationCardId!
     )
 
-    const targetPosition = cardsCopy.findIndex(
-      id => id.toString() === options.targetCardId
-    )
+    cards.splice(sourceCardIndex, 1)
 
-    if (sourcePosition === targetPosition) return
-    const isMovingUp = sourcePosition > targetPosition
+    cards.splice(destinationIndex === -1 ? 0 : destinationIndex, 0, cardId)
 
-    cardsCopy.splice(sourcePosition, 1)
+    board.cards = cards
+    sourceCard.listId = options.newListId!
 
-    const cardId = idToObjectId(options.sourceCardId)
+    await sourceCard.save()
 
-    cardsCopy.splice(targetPosition, 0, cardId!)
-
-    sourceList.cards = cardsCopy
-    board.cards = sourceList.cards
-
-    await sourceList.save()
     await board.save()
+
+    const isMovingUp = sourceCardIndex > destinationIndex
 
     await this.logAction(req, {
       type: ACTION_TYPES.CARD,
@@ -282,8 +212,64 @@ class CardServices {
         id: sourceCard?._id.toString(),
       },
     })
+  }
 
-    return
+  async moveCard(
+    board: BoardDocument,
+    options: IMoveCardOptions,
+    req: Request
+  ) {
+    const sourceList = await listService.findListById(options.sourceListId!)
+
+    if (!sourceList) throw new NotFoundError("Source list not found.")
+
+    const card = await this.findCardOnlyById(options.cardId)
+
+    if (!card) throw new NotFoundError("Drag source not found.")
+
+    const sourceListCards = [...board.cards]
+    const cardId = idToObjectId(options.cardId)
+
+    const cardIndex = sourceListCards.findIndex(
+      id => id.toString() === options.cardId
+    )
+    const destinationIndex = sourceListCards.findIndex(
+      id => id.toString() === options?.destinationCardId!
+    )
+
+    sourceListCards.splice(cardIndex, 1)
+    sourceListCards.splice(
+      destinationIndex === -1 ? 0 : destinationIndex,
+      0,
+      cardId
+    )
+
+    board.cards = sourceListCards
+
+    await board.save()
+
+    await this.logAction(req, {
+      type: ACTION_TYPES.CARD,
+      actionKey: Boolean(options?.newBoardId)
+        ? ACTION_KEYS.TRANSFER_CARD
+        : ACTION_KEYS.MOVE_CARD_TO_LIST,
+      entities: {
+        boardId: req.body.boardId,
+      },
+      card: {
+        id: options.cardId,
+        name: card.title,
+      },
+      list: {
+        id: sourceList._id.toString(),
+        name: sourceList.title,
+      },
+      targetList: {
+        id: sourceList._id.toString(),
+        name: sourceList.title,
+      },
+      targetBoard: { id: options.newBoardId || "", name: board.title },
+    })
   }
 
   async logAction(req: Request, options: IActionLoggerWithCardAndListOptions) {

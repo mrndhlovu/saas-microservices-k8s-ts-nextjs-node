@@ -5,7 +5,6 @@ export const getSignatureKey = (path?: string): SignatureType => {
     "/update-password",
     "/pause-account",
     "/restore-account",
-    "/refresh-token",
     "/verify-otp",
     "/restore-account/verify-email",
   ]

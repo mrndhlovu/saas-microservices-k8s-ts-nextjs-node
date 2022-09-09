@@ -1,14 +1,12 @@
 import { Types } from "mongoose"
 
-export interface IChangePosition {
-  sourceCardId: string
-  targetCardId: string
-  sourceListId?: string
-  targetListId?: string
-  boardId?: string
-  targetBoardId?: string
-  isSwitchingList?: boolean
-  isSwitchingBoard?: boolean
+export interface IMoveCardOptions {
+  newListId?: string
+  newBoardId?: string
+  sourceListId: string
+  sourceIndex: number
+  destinationCardId: string
+  cardId: string
 }
 
 export interface IUploadFile {

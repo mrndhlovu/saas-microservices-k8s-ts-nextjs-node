@@ -8,7 +8,7 @@ import {
 import { Request, Response } from "express"
 import { idToObjectId } from "../helpers"
 import Attachment from "../models/Attachment"
-import Board from "../models/Board"
+import Board, { BoardDocument } from "../models/Board"
 
 import { allowedCardUpdateFields } from "../utils/constants"
 import { algoliaClient, boardService } from "../services"
@@ -24,6 +24,7 @@ declare global {
   namespace Express {
     interface Request {
       uploadFiles?: IUploadFile[]
+      board?: BoardDocument | null
     }
     namespace MulterS3 {
       interface File extends Multer.File {
@@ -85,29 +86,25 @@ class CardController {
 
   createCard = async (req: Request, res: Response) => {
     const { listId, boardId } = req.params
-    const { title, position } = req.body
+    const { title } = req.body
 
     const card = new Card({ title, listId, boardId })
-    if (!card) throw new BadRequestError("Card failed to create card.")
-
-    const list = await List.findOneAndUpdate(
-      { _id: listId },
-      { $push: { cards: card._id } }
-    )
+    const list = await List.findById(listId)
+    if (!card || !list) throw new BadRequestError("Card failed to create card.")
 
     const board = await Board.findOneAndUpdate(
       { _id: boardId },
       { $push: { cards: card._id } }
     )
 
-    if (!list || !board) {
+    if (!board) {
       throw new BadRequestError(
         "Card should be linked to a valid board and list"
       )
     }
 
     await card.save()
-    await list.save()
+
     await board.save()
 
     await cardService.logAction(req, {
@@ -118,7 +115,7 @@ class CardController {
         name: title,
       },
       list: {
-        id: list._id,
+        id: list?.id,
         name: list.title,
       },
       card: {
@@ -311,7 +308,6 @@ class CardController {
       const cards = await Card.find({ listId })
       cards.map(async (card: CardDocument) => await card.delete())
 
-      //TODO pull from  list after deleting cards
       return res.status(200).send({})
     }
 
@@ -557,15 +553,32 @@ class CardController {
   }
 
   moveCard = async (req: Request, res: Response) => {
-    const board = await boardService.findBoardOnlyById(req.body.boardId)
+    const board = req.board!
+    const { newBoardId, newListId } = req.body
 
     if (!board) throw new NotFoundError("Board id is required")
 
-    await cardService.changePosition(board, req.body, req)
+    switch (true) {
+      case Boolean(newListId):
+        await cardService.moveToNewList(board, req.body, req)
+        break
 
-    await board.save()
+      case Boolean(newBoardId):
+        break
 
-    res.status(HTTPStatusCode.Accepted).send()
+      default:
+        await cardService.moveCard(board, req.body, req)
+        break
+    }
+
+    const updateBoard = await boardService.getPopulatedBoard(
+      board?.id,
+      req.currentUserJwt?.userId
+    )
+
+    // await board.save()
+
+    res.status(HTTPStatusCode.Accepted).send(updateBoard)
   }
 
   updateCard = async (req: Request, res: Response) => {

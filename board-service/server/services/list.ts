@@ -9,7 +9,6 @@ import {
 } from "@tusksui/shared"
 
 import { boardService, natsService } from "."
-import { IChangePosition } from "../types"
 import Board, { IBoard } from "../models/Board"
 import Card from "../models/Card"
 import List from "../models/List"
@@ -61,7 +60,7 @@ class ListServices {
     return list
   }
 
-  async changePosition(board: IBoard, options: IChangePosition, req: Request) {
+  async changePosition(board: IBoard, options: any, req: Request) {
     const listsCopy = [...board.lists]
     const sourceList = await this.findListById(options.sourceListId!)
 

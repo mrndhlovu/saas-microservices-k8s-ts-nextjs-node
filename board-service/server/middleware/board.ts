@@ -21,7 +21,7 @@ const { catchAsyncError } = errorService
 declare global {
   namespace Express {
     interface Request {
-      board: BoardDocument | null | undefined
+      board?: BoardDocument | null
       uploadFiles?: IUploadFile[]
     }
   }
@@ -31,7 +31,7 @@ class BoardMiddleware {
   verifyAccessPermission(requirePermissionFlag: IPermissionType) {
     return catchAsyncError(
       async (req: Request, _res: Response, next: NextFunction) => {
-        const _id = req.params.boardId
+        const _id = req.params?.boardId || (req.query?.boardId as string)
 
         if (!isValidObjectId(_id))
           throw new BadRequestError("Board id is required")

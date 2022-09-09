@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { errorService, authMiddleware } from "@tusksui/shared"
+import { errorService, authMiddleware, ROLES } from "@tusksui/shared"
 
 import { cardController } from "../controllers"
 import { boardMiddleware, cardMiddleware } from "../middleware"
@@ -166,9 +166,10 @@ router
   )
 
 router.patch(
-  "/move",
+  "/move-card",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
+  boardMiddleware.verifyAccessPermission(ROLES.EDITOR),
   errorService.catchAsyncError(cardController.moveCard)
 )
 
