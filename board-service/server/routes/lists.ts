@@ -40,7 +40,8 @@ router.patch(
   "/move",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
-  errorService.catchAsyncError(listController.moveList)
+  boardMiddleware.verifyAccessPermission(ROLES.EDITOR),
+  errorService.catchAsyncError(listController.dragItem)
 )
 
 router.post(

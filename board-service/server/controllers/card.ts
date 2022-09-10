@@ -552,9 +552,9 @@ class CardController {
     res.status(HTTPStatusCode.OK).send()
   }
 
-  moveCard = async (req: Request, res: Response) => {
+  dragItem = async (req: Request, res: Response) => {
     const board = req.board!
-    const { newBoardId, newListId } = req.body
+    const { newBoardId, moveList, newListId } = req.body
 
     if (!board) throw new NotFoundError("Board id is required")
 
@@ -564,6 +564,7 @@ class CardController {
         break
 
       case Boolean(newBoardId):
+        await cardService.moveToAnotherBoard(board, req.body)
         break
 
       default:

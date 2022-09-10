@@ -166,11 +166,11 @@ router
   )
 
 router.patch(
-  "/move-card",
+  "/move",
   authMiddleware.validateRequiredAccessJwt,
   authMiddleware.checkIsAuthenticated,
   boardMiddleware.verifyAccessPermission(ROLES.EDITOR),
-  errorService.catchAsyncError(cardController.moveCard)
+  errorService.catchAsyncError(cardController.dragItem)
 )
 
 export { router as cardRoutes }

@@ -1,5 +1,4 @@
 import { Request, Response } from "express"
-
 import {
   ACTION_KEYS,
   ACTION_TYPES,
@@ -11,12 +10,13 @@ import {
 import { allowedListUpdateFields } from "../utils/constants"
 import { algoliaClient, boardService } from "../services"
 import { listService } from "../services/list"
-import Board from "../models/Board"
+import Board, { BoardDocument } from "../models/Board"
 import List, { IListDocument } from "../models/List"
 
 declare global {
   namespace Express {
     interface Request {
+      board?: BoardDocument | null
       list: IListDocument | null | undefined
     }
   }
@@ -88,16 +88,28 @@ class ListController {
     res.status(201).send(list)
   }
 
-  moveList = async (req: Request, res: Response) => {
-    const board = await boardService.findBoardOnlyById(req.body.boardId)
+  dragItem = async (req: Request, res: Response) => {
+    const board = req.board!
+    const { newBoardId } = req.body
 
     if (!board) throw new NotFoundError("Board id is required")
 
-    await listService.changePosition(board, req.body, req)
+    switch (true) {
+      case Boolean(newBoardId):
+        await listService.moveListToNewBoard(board, req.body)
+        break
 
-    await board.save()
+      default:
+        await listService.moveList(board, req.body)
+        break
+    }
 
-    res.status(HTTPStatusCode.Accepted).send()
+    const updateBoard = await boardService.getPopulatedBoard(
+      board?.id,
+      req.currentUserJwt?.userId
+    )
+
+    res.status(HTTPStatusCode.Accepted).send(updateBoard)
   }
 
   updateList = async (req: Request, res: Response) => {

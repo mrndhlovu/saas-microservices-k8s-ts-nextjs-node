@@ -9,12 +9,13 @@ import {
 } from "@tusksui/shared"
 
 import { boardService, natsService } from "."
-import Board, { IBoard } from "../models/Board"
+import Board, { BoardDocument, IBoard } from "../models/Board"
 import Card from "../models/Card"
 import List from "../models/List"
 import { idToObjectId } from "../helpers"
 import { IActionLoggerWithCardAndListOptions } from "./card"
 import { Request } from "express"
+import { IMoveListOptions } from "../types"
 
 export interface IUpdateListMemberOptions {
   currentPermFlag: number
@@ -60,99 +61,86 @@ class ListServices {
     return list
   }
 
-  async changePosition(board: IBoard, options: any, req: Request) {
-    const listsCopy = [...board.lists]
+  async moveListToNewBoard(board: BoardDocument, options: IMoveListOptions) {
+    const cardIds: ObjectId[] = []
     const sourceList = await this.findListById(options.sourceListId!)
-
-    if (!sourceList) throw new NotFoundError("Source list not found")
-
-    const sourcePosition = listsCopy.findIndex(
-      id => id?.toString() === options.sourceListId
+    const sourceBoardLists = [...board.lists]
+    const sourceBoardCards = [...board.cards]
+    const sourceIndex = sourceBoardLists.findIndex(
+      list => list.toString() === options.sourceListId
     )
 
-    const targetPosition = listsCopy.findIndex(
-      id => id?.toString() === options.targetListId
-    )
+    if (!sourceList) throw new NotFoundError("List not found")
 
-    const isMovingLeft = sourcePosition > targetPosition
+    sourceBoardLists.splice(sourceIndex, 1)
 
-    const sourceId = listsCopy.find(
-      id => id?.toString() === options.sourceListId
-    )
+    sourceList.boardId = idToObjectId(options.newBoardId!)
 
-    listsCopy.splice(sourcePosition, 1)
-
-    const newPosition = isMovingLeft
-      ? targetPosition === 0
-        ? 0
-        : targetPosition
-      : targetPosition
-
-    if (options.isSwitchingBoard) {
-      const cardIds: ObjectId[] = []
-
-      await Card.find({ listId: options.sourceListId! }, (err, records) => {
-        records?.map(async record => {
-          cardIds.push(record._id)
-          record.boardId = new ObjectId(options.targetBoardId!)
-          await record.save()
-        })
+    await Card.find({ listId: options.sourceListId! }, (err, records) => {
+      records?.map(async record => {
+        cardIds.push(record._id)
+        record.boardId = new ObjectId(options.newBoardId!)
+        await record.save()
       })
+    })
 
-      if (cardIds.length > 0) {
-        await boardService.removeRecordIds(board._id, {
-          cards: { $in: cardIds },
-          lists: { $in: [idToObjectId(options.sourceListId!)] },
-        })
-      }
-
-      const targetBoard = await Board.findByIdAndUpdate(
-        { _id: options.targetBoardId },
-        {
-          $push: {
-            lists: { $each: [options.sourceListId], $position: newPosition },
-            cards: { $each: cardIds },
-          },
-        }
-      )
-
-      await targetBoard!.save()
-
-      await this.logAction(req, {
-        type: ACTION_TYPES.LIST,
-        actionKey: ACTION_KEYS.TRANSFER_LIST,
-        entities: {
-          boardId: req.body.boardId,
-        },
-        list: {
-          id: sourceList._id.toString(),
-          name: sourceList.title,
-        },
-        targetBoard:
-          options.isSwitchingBoard && targetBoard
-            ? { id: targetBoard._id.toString(), name: targetBoard.title }
-            : undefined,
+    if (cardIds.length > 0) {
+      await boardService.removeRecordIds(board._id, {
+        cards: { $in: cardIds },
+        lists: { $in: [idToObjectId(options.sourceListId!)] },
       })
-    } else {
-      await this.logAction(req, {
-        type: ACTION_TYPES.LIST,
-        actionKey: isMovingLeft
-          ? ACTION_KEYS.MOVE_LIST_LEFT
-          : ACTION_KEYS.MOVE_LIST_RIGHT,
-        entities: {
-          boardId: req.body.boardId,
-        },
-        list: {
-          id: sourceList._id.toString(),
-          name: sourceList.title,
-        },
-      })
-
-      listsCopy.splice(newPosition, 0, sourceId!)
     }
 
-    board.lists = listsCopy
-    return board
+    const targetBoard = await Board.findByIdAndUpdate(
+      { _id: options.newBoardId! },
+      {
+        $push: {
+          lists: { $each: [options.sourceListId] },
+          cards: { $each: cardIds },
+        },
+      }
+    )
+    board.lists = sourceBoardLists
+
+    await board.save()
+    await sourceList.save()
+    await targetBoard!.save()
+  }
+
+  async moveList(board: BoardDocument, options: IMoveListOptions) {
+    const lists = [...board.lists]
+    const listId = idToObjectId(options.sourceListId)
+
+    const sourceListIndex = lists.findIndex(
+      id => id.toString() === options.sourceListId
+    )
+    const destinationIndex = lists.findIndex(
+      id => id.toString() === options.destinationListId!
+    )
+
+    lists.splice(sourceListIndex, 1)
+    lists.splice(destinationIndex, 0, listId)
+
+    console.log({ sourceListIndex, destinationIndex })
+
+    board.lists = lists
+    await board.save()
+
+    // const isMovingUp = sourceCardIndex > destinationIndex
+
+    // await this.logAction(req, {
+    //   type: ACTION_TYPES.CARD,
+    //   actionKey: isMovingUp
+    //     ? ACTION_KEYS.MOVE_CARD_UP
+    //     : ACTION_KEYS.MOVE_CARD_DOWN,
+    //   entities: {
+    //     boardId: req.body.boardId,
+    //   },
+    //   card: {
+    //     name: sourceCard.title,
+    //     id: sourceCard?._id.toString(),
+    //   },
+    // })
   }
 
   validateEditableFields = <T>(allowedFields: T[], updates: T[]) => {

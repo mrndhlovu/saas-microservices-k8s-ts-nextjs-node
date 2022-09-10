@@ -6,7 +6,14 @@ export interface IMoveCardOptions {
   sourceListId: string
   sourceIndex: number
   destinationCardId: string
+  targetListId?: string
   cardId: string
+}
+
+export interface IMoveListOptions {
+  sourceListId: string
+  newBoardId?: string
+  destinationListId: string
 }
 
 export interface IUploadFile {

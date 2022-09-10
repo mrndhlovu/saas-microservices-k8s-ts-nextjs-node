@@ -7,7 +7,6 @@ import {
   NewActionPublisher,
   NotFoundError,
 } from "@tusksui/shared"
-
 import { IActionLogger, natsService } from "."
 import { IMoveCardOptions } from "../types"
 import { idToObjectId } from "../helpers"
@@ -16,7 +15,6 @@ import Attachment, { IAttachmentDocument } from "../models/Attachment"
 import Board, { BoardDocument } from "../models/Board"
 import Card, { CardDocument } from "../models/Card"
 import Checklist from "../models/Checklist"
-import List from "../models/List"
 import Task from "../models/Task"
 
 export type ResourceProps = {
@@ -148,23 +146,29 @@ class CardServices {
     return attachments
   }
 
-  async moveToNewBoard(
-    board: BoardDocument,
-    card: CardDocument,
-    options: IMoveCardOptions
-  ) {
-    board.cards.filter(card => card.toString() === options.cardId)
+  async moveToAnotherBoard(board: BoardDocument, options: IMoveCardOptions) {
+    const card = await this.findCardById(options.cardId)
 
-    await board.save()
-    const targetBoard = await Board.findOneAndUpdate(
-      { _id: options.newBoardId },
-      {
-        $addToSet: { cards: idToObjectId(options.cardId) },
-      }
+    if (!card) throw new NotFoundError("Card not found")
+    const filteredCards = board.cards.filter(
+      card => card.toString() === options.cardId
+    )
+    board.cards = filteredCards
+
+    const targetBoard = await Board.findOne({ _id: options.newBoardId })
+
+    if (!targetBoard) throw new NotFoundError("Target board not found")
+
+    const destinationIndex = targetBoard.cards.findIndex(
+      id => id.toString() === options?.destinationCardId!
     )
 
+    targetBoard.cards.splice(destinationIndex, 0, card._id)
     card.boardId = idToObjectId(options.newBoardId!)
+    card.listId = options.targetListId!
 
+    await card.save()
+    await board.save()
     await targetBoard!.save()
   }
 
